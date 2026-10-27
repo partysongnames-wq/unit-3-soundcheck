@@ -1,12 +1,12 @@
 {
-  "when": "2026-10-27T15:16:46.269Z",
-  "passed": 300,
+  "when": "2026-10-27T16:25:54.301Z",
+  "passed": 472,
   "failed": 0,
   "results": [
     {
       "name": "exactly the ten target words",
       "pass": true,
-      "detail": "add,although,belief,collect,magical,primarily,publish,scary,suitable,text"
+      "detail": ""
     },
     {
       "name": "apply has >=1 challenge for \"add\"",
@@ -59,1077 +59,1362 @@
       "detail": ""
     },
     {
-      "name": "apply covers although vs because",
+      "name": "apply: although vs because (>=2)",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "apply covers primarily = mainly",
+      "name": "apply: primarily = mainly",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "apply covers suitable = appropriate",
+      "name": "apply: suitable = appropriate",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "apply covers belief as noun",
+      "name": "apply: belief is a noun (vs believe)",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "apply covers magical = having magic, not merely beautiful",
+      "name": "apply: magical = magic/special powers, not just beauty",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "apply covers text = written words",
+      "name": "apply: text = written words",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "every challenge has a WHY for each option",
+      "name": "apply: every question has 2-3 options and a WHY per option",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "start round shown on load",
+      "name": "no target word inside clue/hint/picture label of \"add\"",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "10 word checkboxes",
+      "name": "\"add\" has its own line-art picture (23 drawable shapes)",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "start with no words shows warning",
+      "name": "no target word inside clue/hint/picture label of \"although\"",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "shuffle changes order",
+      "name": "\"although\" has its own line-art picture (33 drawable shapes)",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "shuffle is a permutation of 0..9",
+      "name": "no target word inside clue/hint/picture label of \"belief\"",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "order text reflects shuffle",
+      "name": "\"belief\" has its own line-art picture (9 drawable shapes)",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "A-Z resets order",
+      "name": "no target word inside clue/hint/picture label of \"collect\"",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "typing in an input does not trigger shortcuts",
+      "name": "\"collect\" has its own line-art picture (14 drawable shapes)",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "? opens keyboard help",
+      "name": "no target word inside clue/hint/picture label of \"magical\"",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "shortcuts paused while help open",
+      "name": "\"magical\" has its own line-art picture (15 drawable shapes)",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "Esc closes keyboard help",
+      "name": "no target word inside clue/hint/picture label of \"primarily\"",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "Start Discover goes to discover",
+      "name": "\"primarily\" has its own line-art picture (9 drawable shapes)",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "[add] progress shows 1 of 10",
+      "name": "no target word inside clue/hint/picture label of \"publish\"",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "[add] word not visible before reveal",
+      "name": "\"publish\" has its own line-art picture (21 drawable shapes)",
       "pass": true,
-      "detail": "A storyteller has a story. She puts one more surprise into it. Now the story is bigger."
+      "detail": ""
+    },
+    {
+      "name": "no target word inside clue/hint/picture label of \"scary\"",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "\"scary\" has its own line-art picture (14 drawable shapes)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "no target word inside clue/hint/picture label of \"suitable\"",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "\"suitable\" has its own line-art picture (10 drawable shapes)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "no target word inside clue/hint/picture label of \"text\"",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "\"text\" has its own line-art picture (18 drawable shapes)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "10 different pictures",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "host one-liners never contain a target word",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "twist cards never contain a target word",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "six twist types incl. rare swap",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "create: 4 story sets with 3-4 target words each",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "create: teen scenarios (horror film, K-pop, school drama, social media)",
+      "pass": true,
+      "detail": "horror-film sleepover. something in the house is not a guest. a k-pop fan group chat. one message was never meant to be seen. school drama: the classroom nobody wants to enter after 4 p.m. social media: an influencer whose posts start coming true."
+    },
+    {
+      "name": "create: every model story uses its words",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "no babyish praise lines",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "start: no target word visible on the projected start screen",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "start: title, '10 mystery words', Start",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "start: 4 editable team name boxes",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "start: teacher panel collapsed by default",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "start: stage markup contains no target word (not even hidden)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "S opens the teacher panel with 10 word ticks",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "panel open: other shortcuts ignored",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "Esc closes the teacher panel",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "gear button opens the teacher panel",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "select none -> warning",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "shuffle gives a real permutation in a new order",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "A–Z restores order",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "start shows chosen subset count (3 mystery words)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "subset of 3 -> Discover deck has 3 words",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "subset -> Apply filtered to those words",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "start: no network / console errors",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "discover \"add\": no unrevealed word visible on clue screen",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "discover \"add\": stage markup contains no unrevealed word",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "discover \"add\": picture + 3 face-down tiles",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "discover \"add\": example not shown before reveal",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "discover \"add\" (Space): hint shown",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "discover \"add\": still no unrevealed word after hint",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "discover \"add\": reveal flips all tiles to the word",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "discover \"add\": part of speech shown after reveal",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "discover \"add\": meaning screen = word + definition + example",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "discover \"add\": clue is not crammed onto the meaning screen",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "discover \"add\": separate talk screen with prompt",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "discover \"although\": no unrevealed word visible on clue screen",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "discover \"although\": stage markup contains no unrevealed word",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "discover \"although\": picture + 8 face-down tiles",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "discover \"although\": example not shown before reveal",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "discover \"although\" (L): one letter flips and shows \"a\"",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "discover \"although\": one letter does not reveal the word",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "discover \"although\": reveal flips all tiles to the word",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "discover \"although\": part of speech shown after reveal",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "discover \"although\": meaning screen = word + definition + example",
+      "pass": true,
+      "detail": ""
     },
     {
-      "name": "[add] picture is an inline SVG with a label",
+      "name": "discover \"although\": clue is not crammed onto the meaning screen",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "[add] letter slots = word length",
+      "name": "discover \"although\": separate talk screen with prompt",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "[add] H shows hint",
+      "name": "discover \"belief\": no unrevealed word visible on clue screen",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "[add] hint does not spoil word",
+      "name": "discover \"belief\": stage markup contains no unrevealed word",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "[add] one letter revealed",
+      "name": "discover \"belief\": picture + 6 face-down tiles",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "[add] reveal panel still hidden after 1 letter",
+      "name": "discover \"belief\": example not shown before reveal",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "[add] all letters -> word revealed",
+      "name": "discover \"belief\" (Space): hint shown",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "[add] example hidden until requested",
+      "name": "discover \"belief\": still no unrevealed word after hint",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "[add] example + talk prompt shown",
+      "name": "discover \"belief\": reveal flips all tiles to the word",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "[add] challenge prompt shown",
+      "name": "discover \"belief\": part of speech shown after reveal",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "[add] Hide all resets reveals",
+      "name": "discover \"belief\": meaning screen = word + definition + example",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "[add] W button reveals whole word",
+      "name": "discover \"belief\": clue is not crammed onto the meaning screen",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "[add] ArrowRight then ArrowLeft returns, state kept",
+      "name": "discover \"belief\": separate talk screen with prompt",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "[although] progress shows 2 of 10",
+      "name": "discover \"collect\": no unrevealed word visible on clue screen",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "[although] word not visible before reveal",
+      "name": "discover \"collect\": stage markup contains no unrevealed word",
       "pass": true,
-      "detail": "≠\n\nIt is raining hard. The children still go outside and fly their kite. Two ideas that do not usually go together."
+      "detail": ""
     },
     {
-      "name": "[although] picture is an inline SVG with a label",
+      "name": "discover \"collect\": picture + 7 face-down tiles",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "[although] letter slots = word length",
+      "name": "discover \"collect\": example not shown before reveal",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "[although] Space 1 = hint",
+      "name": "discover \"collect\" (L): one letter flips and shows \"c\"",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "[although] Space 2 = first letter",
+      "name": "discover \"collect\": one letter does not reveal the word",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "[although] Space 3 = whole word",
+      "name": "discover \"collect\": reveal flips all tiles to the word",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "[although] example + talk prompt shown",
+      "name": "discover \"collect\": part of speech shown after reveal",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "[although] challenge prompt shown",
+      "name": "discover \"collect\": meaning screen = word + definition + example",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "[belief] progress shows 3 of 10",
+      "name": "discover \"collect\": clue is not crammed onto the meaning screen",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "[belief] word not visible before reveal",
+      "name": "discover \"collect\": separate talk screen with prompt",
       "pass": true,
-      "detail": "?\n\nIn one village, people think a white owl brings good luck. Nobody has proved it. It is an idea they hold."
+      "detail": ""
     },
     {
-      "name": "[belief] picture is an inline SVG with a label",
+      "name": "discover \"magical\": no unrevealed word visible on clue screen",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "[belief] letter slots = word length",
+      "name": "discover \"magical\": stage markup contains no unrevealed word",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "[belief] H shows hint",
+      "name": "discover \"magical\": picture + 7 face-down tiles",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "[belief] hint does not spoil word",
+      "name": "discover \"magical\": example not shown before reveal",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "[belief] one letter revealed",
+      "name": "discover \"magical\" (Space): hint shown",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "[belief] reveal panel still hidden after 1 letter",
+      "name": "discover \"magical\": still no unrevealed word after hint",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "[belief] all letters -> word revealed",
+      "name": "discover \"magical\": reveal flips all tiles to the word",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "[belief] example hidden until requested",
+      "name": "discover \"magical\": part of speech shown after reveal",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "[belief] example + talk prompt shown",
+      "name": "discover \"magical\": meaning screen = word + definition + example",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "[belief] challenge prompt shown",
+      "name": "discover \"magical\": clue is not crammed onto the meaning screen",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "[collect] progress shows 4 of 10",
+      "name": "discover \"magical\": separate talk screen with prompt",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "[collect] word not visible before reveal",
+      "name": "discover \"primarily\": no unrevealed word visible on clue screen",
       "pass": true,
-      "detail": "A girl walks from house to house. At each house she writes down one old story. Soon she has a whole basket of stories."
+      "detail": ""
     },
     {
-      "name": "[collect] picture is an inline SVG with a label",
+      "name": "discover \"primarily\": stage markup contains no unrevealed word",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "[collect] letter slots = word length",
+      "name": "discover \"primarily\": picture + 9 face-down tiles",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "[collect] Space 1 = hint",
+      "name": "discover \"primarily\": example not shown before reveal",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "[collect] Space 2 = first letter",
+      "name": "discover \"primarily\" (L): one letter flips and shows \"p\"",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "[collect] Space 3 = whole word",
+      "name": "discover \"primarily\": one letter does not reveal the word",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "[collect] example + talk prompt shown",
+      "name": "discover \"primarily\": reveal flips all tiles to the word",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "[collect] challenge prompt shown",
+      "name": "discover \"primarily\": part of speech shown after reveal",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "[magical] progress shows 5 of 10",
+      "name": "discover \"primarily\": meaning screen = word + definition + example",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "[magical] word not visible before reveal",
+      "name": "discover \"primarily\": clue is not crammed onto the meaning screen",
       "pass": true,
-      "detail": "An old woman touches a pumpkin with a stick. Sparkles fly. The pumpkin can now talk and grant one wish."
+      "detail": ""
     },
     {
-      "name": "[magical] picture is an inline SVG with a label",
+      "name": "discover \"primarily\": separate talk screen with prompt",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "[magical] letter slots = word length",
+      "name": "discover \"publish\": no unrevealed word visible on clue screen",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "[magical] H shows hint",
+      "name": "discover \"publish\": stage markup contains no unrevealed word",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "[magical] hint does not spoil word",
+      "name": "discover \"publish\": picture + 7 face-down tiles",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "[magical] one letter revealed",
+      "name": "discover \"publish\": example not shown before reveal",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "[magical] reveal panel still hidden after 1 letter",
+      "name": "discover \"publish\" (Space): hint shown",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "[magical] all letters -> word revealed",
+      "name": "discover \"publish\": still no unrevealed word after hint",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "[magical] example hidden until requested",
+      "name": "discover \"publish\": reveal flips all tiles to the word",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "[magical] example + talk prompt shown",
+      "name": "discover \"publish\": part of speech shown after reveal",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "[magical] challenge prompt shown",
+      "name": "discover \"publish\": meaning screen = word + definition + example",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "[primarily] progress shows 6 of 10",
+      "name": "discover \"publish\": clue is not crammed onto the meaning screen",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "[primarily] word not visible before reveal",
+      "name": "discover \"publish\": separate talk screen with prompt",
       "pass": true,
-      "detail": "80%\n20%\nkids\nadults\n\nA library has 100 books. 80 are for children. Only 20 are for adults. The library is mostly for chi"
+      "detail": ""
     },
     {
-      "name": "[primarily] picture is an inline SVG with a label",
+      "name": "discover \"scary\": no unrevealed word visible on clue screen",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "[primarily] letter slots = word length",
+      "name": "discover \"scary\": stage markup contains no unrevealed word",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "[primarily] Space 1 = hint",
+      "name": "discover \"scary\": picture + 5 face-down tiles",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "[primarily] Space 2 = first letter",
+      "name": "discover \"scary\": example not shown before reveal",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "[primarily] Space 3 = whole word",
+      "name": "discover \"scary\" (L): one letter flips and shows \"s\"",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "[primarily] example + talk prompt shown",
+      "name": "discover \"scary\": one letter does not reveal the word",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "[primarily] challenge prompt shown",
+      "name": "discover \"scary\": reveal flips all tiles to the word",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "[publish] progress shows 7 of 10",
+      "name": "discover \"scary\": part of speech shown after reveal",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "[publish] word not visible before reveal",
+      "name": "discover \"scary\": meaning screen = word + definition + example",
       "pass": true,
-      "detail": "A writer finishes her story. A company prints 5,000 copies. Now people in many cities can buy it."
+      "detail": ""
     },
     {
-      "name": "[publish] picture is an inline SVG with a label",
+      "name": "discover \"scary\": clue is not crammed onto the meaning screen",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "[publish] letter slots = word length",
+      "name": "discover \"scary\": separate talk screen with prompt",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "[publish] H shows hint",
+      "name": "discover \"suitable\": no unrevealed word visible on clue screen",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "[publish] hint does not spoil word",
+      "name": "discover \"suitable\": stage markup contains no unrevealed word",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "[publish] one letter revealed",
+      "name": "discover \"suitable\": picture + 8 face-down tiles",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "[publish] reveal panel still hidden after 1 letter",
+      "name": "discover \"suitable\": example not shown before reveal",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "[publish] all letters -> word revealed",
+      "name": "discover \"suitable\" (Space): hint shown",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "[publish] example hidden until requested",
+      "name": "discover \"suitable\": still no unrevealed word after hint",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "[publish] example + talk prompt shown",
+      "name": "discover \"suitable\": reveal flips all tiles to the word",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "[publish] challenge prompt shown",
+      "name": "discover \"suitable\": part of speech shown after reveal",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "[scary] progress shows 8 of 10",
+      "name": "discover \"suitable\": meaning screen = word + definition + example",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "[scary] word not visible before reveal",
+      "name": "discover \"suitable\": clue is not crammed onto the meaning screen",
       "pass": true,
-      "detail": "It is midnight in a dark forest. Two yellow eyes look at you from behind a tree. Your heart beats fast."
+      "detail": ""
     },
     {
-      "name": "[scary] picture is an inline SVG with a label",
+      "name": "discover \"suitable\": separate talk screen with prompt",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "[scary] letter slots = word length",
+      "name": "discover \"text\": no unrevealed word visible on clue screen",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "[scary] Space 1 = hint",
+      "name": "discover \"text\": stage markup contains no unrevealed word",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "[scary] Space 2 = first letter",
+      "name": "discover \"text\": picture + 4 face-down tiles",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "[scary] Space 3 = whole word",
+      "name": "discover \"text\": example not shown before reveal",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "[scary] example + talk prompt shown",
+      "name": "discover \"text\" (L): one letter flips and shows \"t\"",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "[scary] challenge prompt shown",
+      "name": "discover \"text\": one letter does not reveal the word",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "[suitable] progress shows 9 of 10",
+      "name": "discover \"text\": reveal flips all tiles to the word",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "[suitable] word not visible before reveal",
+      "name": "discover \"text\": part of speech shown after reveal",
       "pass": true,
-      "detail": "A key fits the lock perfectly. A raincoat is right for a rainy day. A picture book is right for a five-year-old."
+      "detail": ""
     },
     {
-      "name": "[suitable] picture is an inline SVG with a label",
+      "name": "discover \"text\": meaning screen = word + definition + example",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "[suitable] letter slots = word length",
+      "name": "discover \"text\": clue is not crammed onto the meaning screen",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "[suitable] H shows hint",
+      "name": "discover \"text\": separate talk screen with prompt",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "[suitable] hint does not spoil word",
+      "name": "last word Next -> Apply round",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "[suitable] one letter revealed",
+      "name": "← goes back, reveal state kept",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "[suitable] reveal panel still hidden after 1 letter",
+      "name": "Simple help adds a sentence starter on the talk screen",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "[suitable] all letters -> word revealed",
+      "name": "Simple help off removes it",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "[suitable] example hidden until requested",
+      "name": "discover: no network / console errors",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "[suitable] example + talk prompt shown",
+      "name": "typing team name with d/space/t does not trigger shortcuts",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "[suitable] challenge prompt shown",
+      "name": "team names are editable and shown on the tower",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "[text] progress shows 10 of 10",
+      "name": "twist card drawn between words (every word setting)",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "[text] word not visible before reveal",
+      "name": "twist card has a known title",
       "pass": true,
-      "detail": "Open a book. There are pictures, and there are words in lines. Point to the words, not the pictures."
+      "detail": "Double points"
     },
     {
-      "name": "[text] picture is an inline SVG with a label",
+      "name": "twist card flip animation ran (card shown)",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "[text] letter slots = word length",
+      "name": "countdown held while twist is open",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "[text] Space 1 = hint",
+      "name": "X redraws a different card",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "[text] Space 2 = first letter",
+      "name": "Esc skips the twist (no effect)",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "[text] Space 3 = whole word",
+      "name": "countdown runs after the twist closes",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "[text] example + talk prompt shown",
+      "name": "Double accepted -> badge shown",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "[text] challenge prompt shown",
+      "name": "Double points: next point is worth 2",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "simple help adds sentence starter",
+      "name": "after Double, points are worth 1 again",
       "pass": true,
       "detail": ""
+    },
+    {
+      "name": "scoring team's lantern climbs the tower",
+      "pass": true,
+      "detail": "h=153.6"
+    },
+    {
+      "name": "Steal: scorer +1 and steals 1 from the leader",
+      "pass": true,
+      "detail": "[{\"name\":\"Night Owls\",\"score\":2},{\"name\":\"dd tt\",\"score\":2},{\"name\":\"Eclipse\",\"score\":1},{\"name\":\"Riot\",\"score\":0}]"
     },
     {
-      "name": "simple help off removes starter",
+      "name": "Swap: top and bottom team swap points",
       "pass": true,
+      "detail": "[0,2,1,2]"
+    },
+    {
+      "name": "Undo reverses the swap",
+      "pass": true,
+      "detail": "[2,2,1,0]"
+    },
+    {
+      "name": "act card -> rule badge for this word",
+      "pass": true,
       "detail": ""
     },
     {
-      "name": "Prev disabled on first word only",
+      "name": "whisper card -> rule badge for this word",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "Next on last word goes to Apply",
+      "name": "Sentence card -> badge with 10 s button",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "apply has 15 questions for 10 words",
+      "name": "teacher can clear an active twist",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "[apply 1 add] question shown",
+      "name": "click lantern = +1, minus button = −1",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "[apply 1 add] no feedback before choice",
+      "name": "Shift+4 gives team 4 a point",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "[apply 1 add] wrong option marked + WHY shown",
+      "name": "Reset scores -> all 0",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "[apply 1 add] correct answer not spoiled after wrong pick",
+      "name": "Undo after reset restores scores",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "[apply 1 add] correct option marked + WHY shown",
+      "name": "Undo step by step back to empty (button disabled)",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "[apply 2 although] question shown",
+      "name": "twists: no network / console errors",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "[apply 2 although] no feedback before choice",
+      "name": "lantern countdown starts on the clue (45 s default)",
       "pass": true,
       "detail": ""
+    },
+    {
+      "name": "lantern burns down (≈35 s after 10 s)",
+      "pass": true,
+      "detail": "35.137"
+    },
+    {
+      "name": "flame shrinks with time",
+      "pass": true,
+      "detail": "0.781"
     },
     {
-      "name": "[apply 2 although] wrong option marked + WHY shown",
+      "name": "P pauses the lantern",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "[apply 2 although] correct answer not spoiled after wrong pick",
+      "name": "urgent state in the last 10 s",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "[apply 2 although] correct option marked + WHY shown",
+      "name": "lantern goes out at 0 (OUT)",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "[apply 3 although] question shown",
+      "name": "reveal stops the lantern",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "[apply 3 although] no feedback before choice",
+      "name": "K skips the countdown (hidden)",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "[apply 3 although] wrong option marked + WHY shown",
+      "name": "lesson timer: 18:00 -> 17:50 after 10 s",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "[apply 3 although] correct answer not spoiled after wrong pick",
+      "name": "lesson timer pause holds",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "[apply 3 although] correct option marked + WHY shown",
+      "name": "editable minutes reset the timer (1:00)",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "[apply 4 although] question shown",
+      "name": "expiry -> Time's up state (no sound by default)",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "[apply 4 although] no feedback before choice",
+      "name": "start after expiry restarts",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "[apply 4 although] Space shows answer + why",
+      "name": "lantern seconds are editable (20 s)",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "[apply 5 belief] question shown",
+      "name": "timers: no network / console errors",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "[apply 5 belief] no feedback before choice",
+      "name": "apply q1: no feedback before a choice",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "[apply 5 belief] wrong option marked + WHY shown",
+      "name": "apply q1: wrong pick -> its WHY, answer not spoiled",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "[apply 5 belief] correct answer not spoiled after wrong pick",
+      "name": "apply q1: correct -> marked right + WHY",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "[apply 5 belief] correct option marked + WHY shown",
+      "name": "apply q2: no feedback before a choice",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "[apply 6 belief] question shown",
+      "name": "apply q2: wrong pick -> its WHY, answer not spoiled",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "[apply 6 belief] no feedback before choice",
+      "name": "apply q2: correct -> marked right + WHY",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "[apply 6 belief] wrong option marked + WHY shown",
+      "name": "apply q3: no feedback before a choice",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "[apply 6 belief] correct answer not spoiled after wrong pick",
+      "name": "apply q3: wrong pick -> its WHY, answer not spoiled",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "[apply 6 belief] correct option marked + WHY shown",
+      "name": "apply q3: correct -> marked right + WHY",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "[apply 7 collect] question shown",
+      "name": "apply q4: no feedback before a choice",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "[apply 7 collect] no feedback before choice",
+      "name": "apply q4: wrong pick -> its WHY, answer not spoiled",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "[apply 7 collect] wrong option marked + WHY shown",
+      "name": "apply q4: correct -> marked right + WHY",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "[apply 7 collect] correct answer not spoiled after wrong pick",
+      "name": "apply ← previous keeps answer",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "[apply 7 collect] correct option marked + WHY shown",
+      "name": "apply q5: no feedback before a choice",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "[apply 8 magical] question shown",
+      "name": "apply q5: wrong pick -> its WHY, answer not spoiled",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "[apply 8 magical] no feedback before choice",
+      "name": "apply q5: correct -> marked right + WHY",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "[apply 8 magical] wrong option marked + WHY shown",
+      "name": "apply q6: no feedback before a choice",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "[apply 8 magical] correct answer not spoiled after wrong pick",
+      "name": "apply q6: wrong pick -> its WHY, answer not spoiled",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "[apply 8 magical] correct option marked + WHY shown",
+      "name": "apply q6: correct -> marked right + WHY",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "[apply 9 primarily] question shown",
+      "name": "apply q7: no feedback before a choice",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "[apply 9 primarily] no feedback before choice",
+      "name": "apply q7: wrong pick -> its WHY, answer not spoiled",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "[apply 9 primarily] wrong option marked + WHY shown",
+      "name": "apply q7: correct -> marked right + WHY",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "[apply 9 primarily] correct answer not spoiled after wrong pick",
+      "name": "apply q8: no feedback before a choice",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "[apply 9 primarily] correct option marked + WHY shown",
+      "name": "apply q8: wrong pick -> its WHY, answer not spoiled",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "[apply 10 publish] question shown",
+      "name": "apply q8: correct -> marked right + WHY",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "[apply 10 publish] no feedback before choice",
+      "name": "apply q9: no feedback before a choice",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "[apply 10 publish] wrong option marked + WHY shown",
+      "name": "apply q9: wrong pick -> its WHY, answer not spoiled",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "[apply 10 publish] correct answer not spoiled after wrong pick",
+      "name": "apply q9: correct -> marked right + WHY",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "[apply 10 publish] correct option marked + WHY shown",
+      "name": "apply q10: no feedback before a choice",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "[apply 11 scary] question shown",
+      "name": "apply q10: wrong pick -> its WHY, answer not spoiled",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "[apply 11 scary] no feedback before choice",
+      "name": "apply q10: correct -> marked right + WHY",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "[apply 11 scary] wrong option marked + WHY shown",
+      "name": "apply q11: no feedback before a choice",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "[apply 11 scary] correct answer not spoiled after wrong pick",
+      "name": "apply q11: wrong pick -> its WHY, answer not spoiled",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "[apply 11 scary] correct option marked + WHY shown",
+      "name": "apply q11: correct -> marked right + WHY",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "[apply 12 suitable] question shown",
+      "name": "apply q12: no feedback before a choice",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "[apply 12 suitable] no feedback before choice",
+      "name": "apply q12: wrong pick -> its WHY, answer not spoiled",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "[apply 12 suitable] wrong option marked + WHY shown",
+      "name": "apply q12: correct -> marked right + WHY",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "[apply 12 suitable] correct answer not spoiled after wrong pick",
+      "name": "apply q13: no feedback before a choice",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "[apply 12 suitable] correct option marked + WHY shown",
+      "name": "apply q13: wrong pick -> its WHY, answer not spoiled",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "[apply 13 suitable] question shown",
+      "name": "apply q13: correct -> marked right + WHY",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "[apply 13 suitable] no feedback before choice",
+      "name": "apply q14: no feedback before a choice",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "[apply 13 suitable] wrong option marked + WHY shown",
+      "name": "apply q14: wrong pick -> its WHY, answer not spoiled",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "[apply 13 suitable] correct answer not spoiled after wrong pick",
+      "name": "apply q14: correct -> marked right + WHY",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "[apply 13 suitable] correct option marked + WHY shown",
+      "name": "apply q15: no feedback before a choice",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "[apply 14 text] question shown",
+      "name": "apply q15: wrong pick -> its WHY, answer not spoiled",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "[apply 14 text] no feedback before choice",
+      "name": "apply q15: correct -> marked right + WHY",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "[apply 14 text] wrong option marked + WHY shown",
+      "name": "last Apply Next -> Create",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "[apply 14 text] correct answer not spoiled after wrong pick",
+      "name": "create: model hidden by default",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "[apply 14 text] correct option marked + WHY shown",
+      "name": "create: V shows the model story",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "[apply 15 text] question shown",
+      "name": "create: new set hides the model",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "[apply 15 text] no feedback before choice",
+      "name": "create: sets wrap forward",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "[apply 15 text] wrong option marked + WHY shown",
+      "name": "create: sets wrap backward",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "[apply 15 text] correct answer not spoiled after wrong pick",
+      "name": "create: model button works",
       "pass": true,
       "detail": ""
+    },
+    {
+      "name": "recap: only the 2 revealed words visible, rest locked",
+      "pass": true,
+      "detail": "add,although"
     },
     {
-      "name": "[apply 15 text] correct option marked + WHY shown",
+      "name": "recap: locked cards hold no word (not even length)",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "apply previous works",
+      "name": "retry with nothing ticked -> message",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "Next on last question goes to Create",
+      "name": "recap: 'Reveal the rest' shows all 10 words",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "model story hidden by default",
+      "name": "retry 2 words in Discover starts clean",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "create shows 4 words",
+      "name": "retry: word hidden again on its clue screen",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "model story shown on request",
+      "name": "retry ticks cleared afterwards",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "model story can be hidden again",
+      "name": "retry in Apply: only that word's questions, no old feedback",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "new word set hides model again",
+      "name": "Reset everything: start round, scores 0, reveals cleared, timer 18:00 stopped",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "word sets wrap around",
+      "name": "after reset, start screen again shows no words",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "key Q -> start",
+      "name": "rounds: no network / console errors",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "key R -> recap",
+      "name": "key D -> discover",
       "pass": true,
       "detail": ""
     },
@@ -1144,334 +1429,894 @@
       "detail": ""
     },
     {
-      "name": "key D -> discover",
-      "pass": true,
-      "detail": ""
-    },
-    {
       "name": "key R -> recap",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "nav button click -> apply",
+      "name": "key Q -> start",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "recap lists all ten words",
+      "name": "nav button -> discover",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "recap has every word + definition",
+      "name": "nav button -> apply",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "retry with none ticked warns",
+      "name": "nav button -> create",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "retry discover: 2 words",
+      "name": "nav button -> recap",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "retry discover: no old reveal state",
+      "name": "nav button -> start",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "retry discover second word is scary",
+      "name": "? opens help",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "retry ticks cleared after retry",
+      "name": "help open: other shortcuts paused",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "retry apply: only 'text' questions, fresh",
+      "name": "Esc closes help",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "B shows scores",
+      "name": "typing in a number box does not trigger shortcuts",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "scores after +1,+1,+1,-1",
+      "name": "typing in a team name box does not trigger shortcuts",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "undo reverts last change",
+      "name": "M toggles sound on (synth only)",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "undo all the way",
+      "name": "M toggles sound off again",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "team count 6 -> six teams, score kept",
+      "name": "Space on start screen starts the game",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "reset scores",
+      "name": "after a mouse click, Space still means 'next step'",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "B hides scores",
+      "name": "F -> fullscreen (or F11 hint if blocked)",
+      "pass": true,
+      "detail": "fullscreen=true"
+    },
+    {
+      "name": "keys: no network / console errors",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "timer minutes editable",
+      "name": "1366x768 start: no vertical/horizontal scroll, nothing clipped",
+      "pass": true,
+      "detail": "{\"vScroll\":false,\"hScroll\":false,\"clipped\":false,\"sh\":624,\"ch\":624,\"dw\":1366}"
+    },
+    {
+      "name": "1366x768 clue text is huge (>= 34px)",
+      "pass": true,
+      "detail": "{\"clue\":38.409,\"tile\":80.625}"
+    },
+    {
+      "name": "1366x768 letter tiles are huge (>= 64px)",
+      "pass": true,
+      "detail": "{\"clue\":38.409,\"tile\":80.625}"
+    },
+    {
+      "name": "1366x768 clue+hint \"add\": no vertical/horizontal scroll, nothing clipped",
+      "pass": true,
+      "detail": "{\"vScroll\":false,\"hScroll\":false,\"clipped\":false,\"sh\":624,\"ch\":624,\"dw\":1366}"
+    },
+    {
+      "name": "1366x768 revealed \"add\": no vertical/horizontal scroll, nothing clipped",
+      "pass": true,
+      "detail": "{\"vScroll\":false,\"hScroll\":false,\"clipped\":false,\"sh\":624,\"ch\":624,\"dw\":1366}"
+    },
+    {
+      "name": "1366x768 meaning \"add\": no vertical/horizontal scroll, nothing clipped",
+      "pass": true,
+      "detail": "{\"vScroll\":false,\"hScroll\":false,\"clipped\":false,\"sh\":624,\"ch\":624,\"dw\":1366}"
+    },
+    {
+      "name": "1366x768 talk \"add\": no vertical/horizontal scroll, nothing clipped",
+      "pass": true,
+      "detail": "{\"vScroll\":false,\"hScroll\":false,\"clipped\":false,\"sh\":624,\"ch\":624,\"dw\":1366}"
+    },
+    {
+      "name": "1366x768 clue+hint \"although\": no vertical/horizontal scroll, nothing clipped",
+      "pass": true,
+      "detail": "{\"vScroll\":false,\"hScroll\":false,\"clipped\":false,\"sh\":624,\"ch\":624,\"dw\":1366}"
+    },
+    {
+      "name": "1366x768 revealed \"although\": no vertical/horizontal scroll, nothing clipped",
+      "pass": true,
+      "detail": "{\"vScroll\":false,\"hScroll\":false,\"clipped\":false,\"sh\":624,\"ch\":624,\"dw\":1366}"
+    },
+    {
+      "name": "1366x768 meaning \"although\": no vertical/horizontal scroll, nothing clipped",
+      "pass": true,
+      "detail": "{\"vScroll\":false,\"hScroll\":false,\"clipped\":false,\"sh\":624,\"ch\":624,\"dw\":1366}"
+    },
+    {
+      "name": "1366x768 talk \"although\": no vertical/horizontal scroll, nothing clipped",
+      "pass": true,
+      "detail": "{\"vScroll\":false,\"hScroll\":false,\"clipped\":false,\"sh\":624,\"ch\":624,\"dw\":1366}"
+    },
+    {
+      "name": "1366x768 clue+hint \"belief\": no vertical/horizontal scroll, nothing clipped",
+      "pass": true,
+      "detail": "{\"vScroll\":false,\"hScroll\":false,\"clipped\":false,\"sh\":624,\"ch\":624,\"dw\":1366}"
+    },
+    {
+      "name": "1366x768 revealed \"belief\": no vertical/horizontal scroll, nothing clipped",
+      "pass": true,
+      "detail": "{\"vScroll\":false,\"hScroll\":false,\"clipped\":false,\"sh\":624,\"ch\":624,\"dw\":1366}"
+    },
+    {
+      "name": "1366x768 meaning \"belief\": no vertical/horizontal scroll, nothing clipped",
+      "pass": true,
+      "detail": "{\"vScroll\":false,\"hScroll\":false,\"clipped\":false,\"sh\":624,\"ch\":624,\"dw\":1366}"
+    },
+    {
+      "name": "1366x768 talk \"belief\": no vertical/horizontal scroll, nothing clipped",
+      "pass": true,
+      "detail": "{\"vScroll\":false,\"hScroll\":false,\"clipped\":false,\"sh\":624,\"ch\":624,\"dw\":1366}"
+    },
+    {
+      "name": "1366x768 clue+hint \"collect\": no vertical/horizontal scroll, nothing clipped",
+      "pass": true,
+      "detail": "{\"vScroll\":false,\"hScroll\":false,\"clipped\":false,\"sh\":624,\"ch\":624,\"dw\":1366}"
+    },
+    {
+      "name": "1366x768 revealed \"collect\": no vertical/horizontal scroll, nothing clipped",
+      "pass": true,
+      "detail": "{\"vScroll\":false,\"hScroll\":false,\"clipped\":false,\"sh\":624,\"ch\":624,\"dw\":1366}"
+    },
+    {
+      "name": "1366x768 meaning \"collect\": no vertical/horizontal scroll, nothing clipped",
+      "pass": true,
+      "detail": "{\"vScroll\":false,\"hScroll\":false,\"clipped\":false,\"sh\":624,\"ch\":624,\"dw\":1366}"
+    },
+    {
+      "name": "1366x768 talk \"collect\": no vertical/horizontal scroll, nothing clipped",
+      "pass": true,
+      "detail": "{\"vScroll\":false,\"hScroll\":false,\"clipped\":false,\"sh\":624,\"ch\":624,\"dw\":1366}"
+    },
+    {
+      "name": "1366x768 clue+hint \"magical\": no vertical/horizontal scroll, nothing clipped",
+      "pass": true,
+      "detail": "{\"vScroll\":false,\"hScroll\":false,\"clipped\":false,\"sh\":624,\"ch\":624,\"dw\":1366}"
+    },
+    {
+      "name": "1366x768 revealed \"magical\": no vertical/horizontal scroll, nothing clipped",
+      "pass": true,
+      "detail": "{\"vScroll\":false,\"hScroll\":false,\"clipped\":false,\"sh\":624,\"ch\":624,\"dw\":1366}"
+    },
+    {
+      "name": "1366x768 meaning \"magical\": no vertical/horizontal scroll, nothing clipped",
+      "pass": true,
+      "detail": "{\"vScroll\":false,\"hScroll\":false,\"clipped\":false,\"sh\":624,\"ch\":624,\"dw\":1366}"
+    },
+    {
+      "name": "1366x768 talk \"magical\": no vertical/horizontal scroll, nothing clipped",
+      "pass": true,
+      "detail": "{\"vScroll\":false,\"hScroll\":false,\"clipped\":false,\"sh\":624,\"ch\":624,\"dw\":1366}"
+    },
+    {
+      "name": "1366x768 clue+hint \"primarily\": no vertical/horizontal scroll, nothing clipped",
+      "pass": true,
+      "detail": "{\"vScroll\":false,\"hScroll\":false,\"clipped\":false,\"sh\":624,\"ch\":624,\"dw\":1366}"
+    },
+    {
+      "name": "1366x768 revealed \"primarily\": no vertical/horizontal scroll, nothing clipped",
+      "pass": true,
+      "detail": "{\"vScroll\":false,\"hScroll\":false,\"clipped\":false,\"sh\":624,\"ch\":624,\"dw\":1366}"
+    },
+    {
+      "name": "1366x768 meaning \"primarily\": no vertical/horizontal scroll, nothing clipped",
+      "pass": true,
+      "detail": "{\"vScroll\":false,\"hScroll\":false,\"clipped\":false,\"sh\":624,\"ch\":624,\"dw\":1366}"
+    },
+    {
+      "name": "1366x768 talk \"primarily\": no vertical/horizontal scroll, nothing clipped",
+      "pass": true,
+      "detail": "{\"vScroll\":false,\"hScroll\":false,\"clipped\":false,\"sh\":624,\"ch\":624,\"dw\":1366}"
+    },
+    {
+      "name": "1366x768 clue+hint \"publish\": no vertical/horizontal scroll, nothing clipped",
+      "pass": true,
+      "detail": "{\"vScroll\":false,\"hScroll\":false,\"clipped\":false,\"sh\":624,\"ch\":624,\"dw\":1366}"
+    },
+    {
+      "name": "1366x768 revealed \"publish\": no vertical/horizontal scroll, nothing clipped",
+      "pass": true,
+      "detail": "{\"vScroll\":false,\"hScroll\":false,\"clipped\":false,\"sh\":624,\"ch\":624,\"dw\":1366}"
+    },
+    {
+      "name": "1366x768 meaning \"publish\": no vertical/horizontal scroll, nothing clipped",
+      "pass": true,
+      "detail": "{\"vScroll\":false,\"hScroll\":false,\"clipped\":false,\"sh\":624,\"ch\":624,\"dw\":1366}"
+    },
+    {
+      "name": "1366x768 talk \"publish\": no vertical/horizontal scroll, nothing clipped",
+      "pass": true,
+      "detail": "{\"vScroll\":false,\"hScroll\":false,\"clipped\":false,\"sh\":624,\"ch\":624,\"dw\":1366}"
+    },
+    {
+      "name": "1366x768 clue+hint \"scary\": no vertical/horizontal scroll, nothing clipped",
+      "pass": true,
+      "detail": "{\"vScroll\":false,\"hScroll\":false,\"clipped\":false,\"sh\":624,\"ch\":624,\"dw\":1366}"
+    },
+    {
+      "name": "1366x768 revealed \"scary\": no vertical/horizontal scroll, nothing clipped",
+      "pass": true,
+      "detail": "{\"vScroll\":false,\"hScroll\":false,\"clipped\":false,\"sh\":624,\"ch\":624,\"dw\":1366}"
+    },
+    {
+      "name": "1366x768 meaning \"scary\": no vertical/horizontal scroll, nothing clipped",
+      "pass": true,
+      "detail": "{\"vScroll\":false,\"hScroll\":false,\"clipped\":false,\"sh\":624,\"ch\":624,\"dw\":1366}"
+    },
+    {
+      "name": "1366x768 talk \"scary\": no vertical/horizontal scroll, nothing clipped",
+      "pass": true,
+      "detail": "{\"vScroll\":false,\"hScroll\":false,\"clipped\":false,\"sh\":624,\"ch\":624,\"dw\":1366}"
+    },
+    {
+      "name": "1366x768 clue+hint \"suitable\": no vertical/horizontal scroll, nothing clipped",
+      "pass": true,
+      "detail": "{\"vScroll\":false,\"hScroll\":false,\"clipped\":false,\"sh\":624,\"ch\":624,\"dw\":1366}"
+    },
+    {
+      "name": "1366x768 revealed \"suitable\": no vertical/horizontal scroll, nothing clipped",
+      "pass": true,
+      "detail": "{\"vScroll\":false,\"hScroll\":false,\"clipped\":false,\"sh\":624,\"ch\":624,\"dw\":1366}"
+    },
+    {
+      "name": "1366x768 meaning \"suitable\": no vertical/horizontal scroll, nothing clipped",
+      "pass": true,
+      "detail": "{\"vScroll\":false,\"hScroll\":false,\"clipped\":false,\"sh\":624,\"ch\":624,\"dw\":1366}"
+    },
+    {
+      "name": "1366x768 talk \"suitable\": no vertical/horizontal scroll, nothing clipped",
+      "pass": true,
+      "detail": "{\"vScroll\":false,\"hScroll\":false,\"clipped\":false,\"sh\":624,\"ch\":624,\"dw\":1366}"
+    },
+    {
+      "name": "1366x768 clue+hint \"text\": no vertical/horizontal scroll, nothing clipped",
+      "pass": true,
+      "detail": "{\"vScroll\":false,\"hScroll\":false,\"clipped\":false,\"sh\":624,\"ch\":624,\"dw\":1366}"
+    },
+    {
+      "name": "1366x768 revealed \"text\": no vertical/horizontal scroll, nothing clipped",
+      "pass": true,
+      "detail": "{\"vScroll\":false,\"hScroll\":false,\"clipped\":false,\"sh\":624,\"ch\":624,\"dw\":1366}"
+    },
+    {
+      "name": "1366x768 meaning \"text\": no vertical/horizontal scroll, nothing clipped",
+      "pass": true,
+      "detail": "{\"vScroll\":false,\"hScroll\":false,\"clipped\":false,\"sh\":624,\"ch\":624,\"dw\":1366}"
+    },
+    {
+      "name": "1366x768 talk \"text\": no vertical/horizontal scroll, nothing clipped",
+      "pass": true,
+      "detail": "{\"vScroll\":false,\"hScroll\":false,\"clipped\":false,\"sh\":624,\"ch\":624,\"dw\":1366}"
+    },
+    {
+      "name": "1366x768 last talk Next -> Apply",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "timer counts down (0:50)",
+      "name": "1366x768 apply q1 with feedback: no vertical/horizontal scroll, nothing clipped",
+      "pass": true,
+      "detail": "{\"vScroll\":false,\"hScroll\":false,\"clipped\":false,\"sh\":624,\"ch\":624,\"dw\":1366}"
+    },
+    {
+      "name": "1366x768 apply q2 with feedback: no vertical/horizontal scroll, nothing clipped",
+      "pass": true,
+      "detail": "{\"vScroll\":false,\"hScroll\":false,\"clipped\":false,\"sh\":624,\"ch\":624,\"dw\":1366}"
+    },
+    {
+      "name": "1366x768 apply q3 with feedback: no vertical/horizontal scroll, nothing clipped",
+      "pass": true,
+      "detail": "{\"vScroll\":false,\"hScroll\":false,\"clipped\":false,\"sh\":624,\"ch\":624,\"dw\":1366}"
+    },
+    {
+      "name": "1366x768 apply q4 with feedback: no vertical/horizontal scroll, nothing clipped",
+      "pass": true,
+      "detail": "{\"vScroll\":false,\"hScroll\":false,\"clipped\":false,\"sh\":624,\"ch\":624,\"dw\":1366}"
+    },
+    {
+      "name": "1366x768 apply q5 with feedback: no vertical/horizontal scroll, nothing clipped",
+      "pass": true,
+      "detail": "{\"vScroll\":false,\"hScroll\":false,\"clipped\":false,\"sh\":624,\"ch\":624,\"dw\":1366}"
+    },
+    {
+      "name": "1366x768 apply q6 with feedback: no vertical/horizontal scroll, nothing clipped",
+      "pass": true,
+      "detail": "{\"vScroll\":false,\"hScroll\":false,\"clipped\":false,\"sh\":624,\"ch\":624,\"dw\":1366}"
+    },
+    {
+      "name": "1366x768 apply q7 with feedback: no vertical/horizontal scroll, nothing clipped",
+      "pass": true,
+      "detail": "{\"vScroll\":false,\"hScroll\":false,\"clipped\":false,\"sh\":624,\"ch\":624,\"dw\":1366}"
+    },
+    {
+      "name": "1366x768 apply q8 with feedback: no vertical/horizontal scroll, nothing clipped",
+      "pass": true,
+      "detail": "{\"vScroll\":false,\"hScroll\":false,\"clipped\":false,\"sh\":624,\"ch\":624,\"dw\":1366}"
+    },
+    {
+      "name": "1366x768 apply q9 with feedback: no vertical/horizontal scroll, nothing clipped",
+      "pass": true,
+      "detail": "{\"vScroll\":false,\"hScroll\":false,\"clipped\":false,\"sh\":624,\"ch\":624,\"dw\":1366}"
+    },
+    {
+      "name": "1366x768 apply q10 with feedback: no vertical/horizontal scroll, nothing clipped",
+      "pass": true,
+      "detail": "{\"vScroll\":false,\"hScroll\":false,\"clipped\":false,\"sh\":624,\"ch\":624,\"dw\":1366}"
+    },
+    {
+      "name": "1366x768 apply q11 with feedback: no vertical/horizontal scroll, nothing clipped",
+      "pass": true,
+      "detail": "{\"vScroll\":false,\"hScroll\":false,\"clipped\":false,\"sh\":624,\"ch\":624,\"dw\":1366}"
+    },
+    {
+      "name": "1366x768 apply q12 with feedback: no vertical/horizontal scroll, nothing clipped",
+      "pass": true,
+      "detail": "{\"vScroll\":false,\"hScroll\":false,\"clipped\":false,\"sh\":624,\"ch\":624,\"dw\":1366}"
+    },
+    {
+      "name": "1366x768 apply q13 with feedback: no vertical/horizontal scroll, nothing clipped",
+      "pass": true,
+      "detail": "{\"vScroll\":false,\"hScroll\":false,\"clipped\":false,\"sh\":624,\"ch\":624,\"dw\":1366}"
+    },
+    {
+      "name": "1366x768 apply q14 with feedback: no vertical/horizontal scroll, nothing clipped",
+      "pass": true,
+      "detail": "{\"vScroll\":false,\"hScroll\":false,\"clipped\":false,\"sh\":624,\"ch\":624,\"dw\":1366}"
+    },
+    {
+      "name": "1366x768 apply q15 with feedback: no vertical/horizontal scroll, nothing clipped",
+      "pass": true,
+      "detail": "{\"vScroll\":false,\"hScroll\":false,\"clipped\":false,\"sh\":624,\"ch\":624,\"dw\":1366}"
+    },
+    {
+      "name": "1366x768 create set 1: no vertical/horizontal scroll, nothing clipped",
+      "pass": true,
+      "detail": "{\"vScroll\":false,\"hScroll\":false,\"clipped\":false,\"sh\":624,\"ch\":624,\"dw\":1366}"
+    },
+    {
+      "name": "1366x768 create set 1 model: no vertical/horizontal scroll, nothing clipped",
+      "pass": true,
+      "detail": "{\"vScroll\":false,\"hScroll\":false,\"clipped\":false,\"sh\":624,\"ch\":624,\"dw\":1366}"
+    },
+    {
+      "name": "1366x768 create set 2: no vertical/horizontal scroll, nothing clipped",
+      "pass": true,
+      "detail": "{\"vScroll\":false,\"hScroll\":false,\"clipped\":false,\"sh\":624,\"ch\":624,\"dw\":1366}"
+    },
+    {
+      "name": "1366x768 create set 2 model: no vertical/horizontal scroll, nothing clipped",
+      "pass": true,
+      "detail": "{\"vScroll\":false,\"hScroll\":false,\"clipped\":false,\"sh\":624,\"ch\":624,\"dw\":1366}"
+    },
+    {
+      "name": "1366x768 create set 3: no vertical/horizontal scroll, nothing clipped",
+      "pass": true,
+      "detail": "{\"vScroll\":false,\"hScroll\":false,\"clipped\":false,\"sh\":624,\"ch\":624,\"dw\":1366}"
+    },
+    {
+      "name": "1366x768 create set 3 model: no vertical/horizontal scroll, nothing clipped",
+      "pass": true,
+      "detail": "{\"vScroll\":false,\"hScroll\":false,\"clipped\":false,\"sh\":624,\"ch\":624,\"dw\":1366}"
+    },
+    {
+      "name": "1366x768 create set 4: no vertical/horizontal scroll, nothing clipped",
+      "pass": true,
+      "detail": "{\"vScroll\":false,\"hScroll\":false,\"clipped\":false,\"sh\":624,\"ch\":624,\"dw\":1366}"
+    },
+    {
+      "name": "1366x768 create set 4 model: no vertical/horizontal scroll, nothing clipped",
+      "pass": true,
+      "detail": "{\"vScroll\":false,\"hScroll\":false,\"clipped\":false,\"sh\":624,\"ch\":624,\"dw\":1366}"
+    },
+    {
+      "name": "1366x768 recap (all words): no vertical/horizontal scroll, nothing clipped",
+      "pass": true,
+      "detail": "{\"vScroll\":false,\"hScroll\":false,\"clipped\":false,\"sh\":624,\"ch\":624,\"dw\":1366}"
+    },
+    {
+      "name": "1366x768 twist card fits on screen",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "pause holds time",
+      "name": "1366x768: no network / console errors",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "resume continues (0:45)",
+      "name": "1920x1080 start: no vertical/horizontal scroll, nothing clipped",
+      "pass": true,
+      "detail": "{\"vScroll\":false,\"hScroll\":false,\"clipped\":false,\"sh\":936,\"ch\":936,\"dw\":1920}"
+    },
+    {
+      "name": "1920x1080 clue text is huge (>= 48px)",
+      "pass": true,
+      "detail": "{\"clue\":54,\"tile\":96}"
+    },
+    {
+      "name": "1920x1080 letter tiles are huge (>= 64px)",
+      "pass": true,
+      "detail": "{\"clue\":54,\"tile\":96}"
+    },
+    {
+      "name": "1920x1080 clue+hint \"add\": no vertical/horizontal scroll, nothing clipped",
+      "pass": true,
+      "detail": "{\"vScroll\":false,\"hScroll\":false,\"clipped\":false,\"sh\":936,\"ch\":936,\"dw\":1920}"
+    },
+    {
+      "name": "1920x1080 revealed \"add\": no vertical/horizontal scroll, nothing clipped",
+      "pass": true,
+      "detail": "{\"vScroll\":false,\"hScroll\":false,\"clipped\":false,\"sh\":936,\"ch\":936,\"dw\":1920}"
+    },
+    {
+      "name": "1920x1080 meaning \"add\": no vertical/horizontal scroll, nothing clipped",
+      "pass": true,
+      "detail": "{\"vScroll\":false,\"hScroll\":false,\"clipped\":false,\"sh\":936,\"ch\":936,\"dw\":1920}"
+    },
+    {
+      "name": "1920x1080 talk \"add\": no vertical/horizontal scroll, nothing clipped",
+      "pass": true,
+      "detail": "{\"vScroll\":false,\"hScroll\":false,\"clipped\":false,\"sh\":936,\"ch\":936,\"dw\":1920}"
+    },
+    {
+      "name": "1920x1080 clue+hint \"although\": no vertical/horizontal scroll, nothing clipped",
+      "pass": true,
+      "detail": "{\"vScroll\":false,\"hScroll\":false,\"clipped\":false,\"sh\":936,\"ch\":936,\"dw\":1920}"
+    },
+    {
+      "name": "1920x1080 revealed \"although\": no vertical/horizontal scroll, nothing clipped",
+      "pass": true,
+      "detail": "{\"vScroll\":false,\"hScroll\":false,\"clipped\":false,\"sh\":936,\"ch\":936,\"dw\":1920}"
+    },
+    {
+      "name": "1920x1080 meaning \"although\": no vertical/horizontal scroll, nothing clipped",
+      "pass": true,
+      "detail": "{\"vScroll\":false,\"hScroll\":false,\"clipped\":false,\"sh\":936,\"ch\":936,\"dw\":1920}"
+    },
+    {
+      "name": "1920x1080 talk \"although\": no vertical/horizontal scroll, nothing clipped",
+      "pass": true,
+      "detail": "{\"vScroll\":false,\"hScroll\":false,\"clipped\":false,\"sh\":936,\"ch\":936,\"dw\":1920}"
+    },
+    {
+      "name": "1920x1080 clue+hint \"belief\": no vertical/horizontal scroll, nothing clipped",
+      "pass": true,
+      "detail": "{\"vScroll\":false,\"hScroll\":false,\"clipped\":false,\"sh\":936,\"ch\":936,\"dw\":1920}"
+    },
+    {
+      "name": "1920x1080 revealed \"belief\": no vertical/horizontal scroll, nothing clipped",
+      "pass": true,
+      "detail": "{\"vScroll\":false,\"hScroll\":false,\"clipped\":false,\"sh\":936,\"ch\":936,\"dw\":1920}"
+    },
+    {
+      "name": "1920x1080 meaning \"belief\": no vertical/horizontal scroll, nothing clipped",
+      "pass": true,
+      "detail": "{\"vScroll\":false,\"hScroll\":false,\"clipped\":false,\"sh\":936,\"ch\":936,\"dw\":1920}"
+    },
+    {
+      "name": "1920x1080 talk \"belief\": no vertical/horizontal scroll, nothing clipped",
+      "pass": true,
+      "detail": "{\"vScroll\":false,\"hScroll\":false,\"clipped\":false,\"sh\":936,\"ch\":936,\"dw\":1920}"
+    },
+    {
+      "name": "1920x1080 clue+hint \"collect\": no vertical/horizontal scroll, nothing clipped",
+      "pass": true,
+      "detail": "{\"vScroll\":false,\"hScroll\":false,\"clipped\":false,\"sh\":936,\"ch\":936,\"dw\":1920}"
+    },
+    {
+      "name": "1920x1080 revealed \"collect\": no vertical/horizontal scroll, nothing clipped",
+      "pass": true,
+      "detail": "{\"vScroll\":false,\"hScroll\":false,\"clipped\":false,\"sh\":936,\"ch\":936,\"dw\":1920}"
+    },
+    {
+      "name": "1920x1080 meaning \"collect\": no vertical/horizontal scroll, nothing clipped",
+      "pass": true,
+      "detail": "{\"vScroll\":false,\"hScroll\":false,\"clipped\":false,\"sh\":936,\"ch\":936,\"dw\":1920}"
+    },
+    {
+      "name": "1920x1080 talk \"collect\": no vertical/horizontal scroll, nothing clipped",
+      "pass": true,
+      "detail": "{\"vScroll\":false,\"hScroll\":false,\"clipped\":false,\"sh\":936,\"ch\":936,\"dw\":1920}"
+    },
+    {
+      "name": "1920x1080 clue+hint \"magical\": no vertical/horizontal scroll, nothing clipped",
+      "pass": true,
+      "detail": "{\"vScroll\":false,\"hScroll\":false,\"clipped\":false,\"sh\":936,\"ch\":936,\"dw\":1920}"
+    },
+    {
+      "name": "1920x1080 revealed \"magical\": no vertical/horizontal scroll, nothing clipped",
+      "pass": true,
+      "detail": "{\"vScroll\":false,\"hScroll\":false,\"clipped\":false,\"sh\":936,\"ch\":936,\"dw\":1920}"
+    },
+    {
+      "name": "1920x1080 meaning \"magical\": no vertical/horizontal scroll, nothing clipped",
+      "pass": true,
+      "detail": "{\"vScroll\":false,\"hScroll\":false,\"clipped\":false,\"sh\":936,\"ch\":936,\"dw\":1920}"
+    },
+    {
+      "name": "1920x1080 talk \"magical\": no vertical/horizontal scroll, nothing clipped",
+      "pass": true,
+      "detail": "{\"vScroll\":false,\"hScroll\":false,\"clipped\":false,\"sh\":936,\"ch\":936,\"dw\":1920}"
+    },
+    {
+      "name": "1920x1080 clue+hint \"primarily\": no vertical/horizontal scroll, nothing clipped",
+      "pass": true,
+      "detail": "{\"vScroll\":false,\"hScroll\":false,\"clipped\":false,\"sh\":936,\"ch\":936,\"dw\":1920}"
+    },
+    {
+      "name": "1920x1080 revealed \"primarily\": no vertical/horizontal scroll, nothing clipped",
+      "pass": true,
+      "detail": "{\"vScroll\":false,\"hScroll\":false,\"clipped\":false,\"sh\":936,\"ch\":936,\"dw\":1920}"
+    },
+    {
+      "name": "1920x1080 meaning \"primarily\": no vertical/horizontal scroll, nothing clipped",
+      "pass": true,
+      "detail": "{\"vScroll\":false,\"hScroll\":false,\"clipped\":false,\"sh\":936,\"ch\":936,\"dw\":1920}"
+    },
+    {
+      "name": "1920x1080 talk \"primarily\": no vertical/horizontal scroll, nothing clipped",
+      "pass": true,
+      "detail": "{\"vScroll\":false,\"hScroll\":false,\"clipped\":false,\"sh\":936,\"ch\":936,\"dw\":1920}"
+    },
+    {
+      "name": "1920x1080 clue+hint \"publish\": no vertical/horizontal scroll, nothing clipped",
+      "pass": true,
+      "detail": "{\"vScroll\":false,\"hScroll\":false,\"clipped\":false,\"sh\":936,\"ch\":936,\"dw\":1920}"
+    },
+    {
+      "name": "1920x1080 revealed \"publish\": no vertical/horizontal scroll, nothing clipped",
+      "pass": true,
+      "detail": "{\"vScroll\":false,\"hScroll\":false,\"clipped\":false,\"sh\":936,\"ch\":936,\"dw\":1920}"
+    },
+    {
+      "name": "1920x1080 meaning \"publish\": no vertical/horizontal scroll, nothing clipped",
+      "pass": true,
+      "detail": "{\"vScroll\":false,\"hScroll\":false,\"clipped\":false,\"sh\":936,\"ch\":936,\"dw\":1920}"
+    },
+    {
+      "name": "1920x1080 talk \"publish\": no vertical/horizontal scroll, nothing clipped",
+      "pass": true,
+      "detail": "{\"vScroll\":false,\"hScroll\":false,\"clipped\":false,\"sh\":936,\"ch\":936,\"dw\":1920}"
+    },
+    {
+      "name": "1920x1080 clue+hint \"scary\": no vertical/horizontal scroll, nothing clipped",
+      "pass": true,
+      "detail": "{\"vScroll\":false,\"hScroll\":false,\"clipped\":false,\"sh\":936,\"ch\":936,\"dw\":1920}"
+    },
+    {
+      "name": "1920x1080 revealed \"scary\": no vertical/horizontal scroll, nothing clipped",
+      "pass": true,
+      "detail": "{\"vScroll\":false,\"hScroll\":false,\"clipped\":false,\"sh\":936,\"ch\":936,\"dw\":1920}"
+    },
+    {
+      "name": "1920x1080 meaning \"scary\": no vertical/horizontal scroll, nothing clipped",
+      "pass": true,
+      "detail": "{\"vScroll\":false,\"hScroll\":false,\"clipped\":false,\"sh\":936,\"ch\":936,\"dw\":1920}"
+    },
+    {
+      "name": "1920x1080 talk \"scary\": no vertical/horizontal scroll, nothing clipped",
+      "pass": true,
+      "detail": "{\"vScroll\":false,\"hScroll\":false,\"clipped\":false,\"sh\":936,\"ch\":936,\"dw\":1920}"
+    },
+    {
+      "name": "1920x1080 clue+hint \"suitable\": no vertical/horizontal scroll, nothing clipped",
+      "pass": true,
+      "detail": "{\"vScroll\":false,\"hScroll\":false,\"clipped\":false,\"sh\":936,\"ch\":936,\"dw\":1920}"
+    },
+    {
+      "name": "1920x1080 revealed \"suitable\": no vertical/horizontal scroll, nothing clipped",
+      "pass": true,
+      "detail": "{\"vScroll\":false,\"hScroll\":false,\"clipped\":false,\"sh\":936,\"ch\":936,\"dw\":1920}"
+    },
+    {
+      "name": "1920x1080 meaning \"suitable\": no vertical/horizontal scroll, nothing clipped",
+      "pass": true,
+      "detail": "{\"vScroll\":false,\"hScroll\":false,\"clipped\":false,\"sh\":936,\"ch\":936,\"dw\":1920}"
+    },
+    {
+      "name": "1920x1080 talk \"suitable\": no vertical/horizontal scroll, nothing clipped",
+      "pass": true,
+      "detail": "{\"vScroll\":false,\"hScroll\":false,\"clipped\":false,\"sh\":936,\"ch\":936,\"dw\":1920}"
+    },
+    {
+      "name": "1920x1080 clue+hint \"text\": no vertical/horizontal scroll, nothing clipped",
+      "pass": true,
+      "detail": "{\"vScroll\":false,\"hScroll\":false,\"clipped\":false,\"sh\":936,\"ch\":936,\"dw\":1920}"
+    },
+    {
+      "name": "1920x1080 revealed \"text\": no vertical/horizontal scroll, nothing clipped",
+      "pass": true,
+      "detail": "{\"vScroll\":false,\"hScroll\":false,\"clipped\":false,\"sh\":936,\"ch\":936,\"dw\":1920}"
+    },
+    {
+      "name": "1920x1080 meaning \"text\": no vertical/horizontal scroll, nothing clipped",
+      "pass": true,
+      "detail": "{\"vScroll\":false,\"hScroll\":false,\"clipped\":false,\"sh\":936,\"ch\":936,\"dw\":1920}"
+    },
+    {
+      "name": "1920x1080 talk \"text\": no vertical/horizontal scroll, nothing clipped",
+      "pass": true,
+      "detail": "{\"vScroll\":false,\"hScroll\":false,\"clipped\":false,\"sh\":936,\"ch\":936,\"dw\":1920}"
+    },
+    {
+      "name": "1920x1080 last talk Next -> Apply",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "reset returns to 1:00 and stops",
+      "name": "1920x1080 apply q1 with feedback: no vertical/horizontal scroll, nothing clipped",
+      "pass": true,
+      "detail": "{\"vScroll\":false,\"hScroll\":false,\"clipped\":false,\"sh\":936,\"ch\":936,\"dw\":1920}"
+    },
+    {
+      "name": "1920x1080 apply q2 with feedback: no vertical/horizontal scroll, nothing clipped",
+      "pass": true,
+      "detail": "{\"vScroll\":false,\"hScroll\":false,\"clipped\":false,\"sh\":936,\"ch\":936,\"dw\":1920}"
+    },
+    {
+      "name": "1920x1080 apply q3 with feedback: no vertical/horizontal scroll, nothing clipped",
+      "pass": true,
+      "detail": "{\"vScroll\":false,\"hScroll\":false,\"clipped\":false,\"sh\":936,\"ch\":936,\"dw\":1920}"
+    },
+    {
+      "name": "1920x1080 apply q4 with feedback: no vertical/horizontal scroll, nothing clipped",
+      "pass": true,
+      "detail": "{\"vScroll\":false,\"hScroll\":false,\"clipped\":false,\"sh\":936,\"ch\":936,\"dw\":1920}"
+    },
+    {
+      "name": "1920x1080 apply q5 with feedback: no vertical/horizontal scroll, nothing clipped",
+      "pass": true,
+      "detail": "{\"vScroll\":false,\"hScroll\":false,\"clipped\":false,\"sh\":936,\"ch\":936,\"dw\":1920}"
+    },
+    {
+      "name": "1920x1080 apply q6 with feedback: no vertical/horizontal scroll, nothing clipped",
+      "pass": true,
+      "detail": "{\"vScroll\":false,\"hScroll\":false,\"clipped\":false,\"sh\":936,\"ch\":936,\"dw\":1920}"
+    },
+    {
+      "name": "1920x1080 apply q7 with feedback: no vertical/horizontal scroll, nothing clipped",
+      "pass": true,
+      "detail": "{\"vScroll\":false,\"hScroll\":false,\"clipped\":false,\"sh\":936,\"ch\":936,\"dw\":1920}"
+    },
+    {
+      "name": "1920x1080 apply q8 with feedback: no vertical/horizontal scroll, nothing clipped",
+      "pass": true,
+      "detail": "{\"vScroll\":false,\"hScroll\":false,\"clipped\":false,\"sh\":936,\"ch\":936,\"dw\":1920}"
+    },
+    {
+      "name": "1920x1080 apply q9 with feedback: no vertical/horizontal scroll, nothing clipped",
+      "pass": true,
+      "detail": "{\"vScroll\":false,\"hScroll\":false,\"clipped\":false,\"sh\":936,\"ch\":936,\"dw\":1920}"
+    },
+    {
+      "name": "1920x1080 apply q10 with feedback: no vertical/horizontal scroll, nothing clipped",
+      "pass": true,
+      "detail": "{\"vScroll\":false,\"hScroll\":false,\"clipped\":false,\"sh\":936,\"ch\":936,\"dw\":1920}"
+    },
+    {
+      "name": "1920x1080 apply q11 with feedback: no vertical/horizontal scroll, nothing clipped",
+      "pass": true,
+      "detail": "{\"vScroll\":false,\"hScroll\":false,\"clipped\":false,\"sh\":936,\"ch\":936,\"dw\":1920}"
+    },
+    {
+      "name": "1920x1080 apply q12 with feedback: no vertical/horizontal scroll, nothing clipped",
+      "pass": true,
+      "detail": "{\"vScroll\":false,\"hScroll\":false,\"clipped\":false,\"sh\":936,\"ch\":936,\"dw\":1920}"
+    },
+    {
+      "name": "1920x1080 apply q13 with feedback: no vertical/horizontal scroll, nothing clipped",
+      "pass": true,
+      "detail": "{\"vScroll\":false,\"hScroll\":false,\"clipped\":false,\"sh\":936,\"ch\":936,\"dw\":1920}"
+    },
+    {
+      "name": "1920x1080 apply q14 with feedback: no vertical/horizontal scroll, nothing clipped",
+      "pass": true,
+      "detail": "{\"vScroll\":false,\"hScroll\":false,\"clipped\":false,\"sh\":936,\"ch\":936,\"dw\":1920}"
+    },
+    {
+      "name": "1920x1080 apply q15 with feedback: no vertical/horizontal scroll, nothing clipped",
+      "pass": true,
+      "detail": "{\"vScroll\":false,\"hScroll\":false,\"clipped\":false,\"sh\":936,\"ch\":936,\"dw\":1920}"
+    },
+    {
+      "name": "1920x1080 create set 1: no vertical/horizontal scroll, nothing clipped",
+      "pass": true,
+      "detail": "{\"vScroll\":false,\"hScroll\":false,\"clipped\":false,\"sh\":936,\"ch\":936,\"dw\":1920}"
+    },
+    {
+      "name": "1920x1080 create set 1 model: no vertical/horizontal scroll, nothing clipped",
+      "pass": true,
+      "detail": "{\"vScroll\":false,\"hScroll\":false,\"clipped\":false,\"sh\":936,\"ch\":936,\"dw\":1920}"
+    },
+    {
+      "name": "1920x1080 create set 2: no vertical/horizontal scroll, nothing clipped",
+      "pass": true,
+      "detail": "{\"vScroll\":false,\"hScroll\":false,\"clipped\":false,\"sh\":936,\"ch\":936,\"dw\":1920}"
+    },
+    {
+      "name": "1920x1080 create set 2 model: no vertical/horizontal scroll, nothing clipped",
+      "pass": true,
+      "detail": "{\"vScroll\":false,\"hScroll\":false,\"clipped\":false,\"sh\":936,\"ch\":936,\"dw\":1920}"
+    },
+    {
+      "name": "1920x1080 create set 3: no vertical/horizontal scroll, nothing clipped",
+      "pass": true,
+      "detail": "{\"vScroll\":false,\"hScroll\":false,\"clipped\":false,\"sh\":936,\"ch\":936,\"dw\":1920}"
+    },
+    {
+      "name": "1920x1080 create set 3 model: no vertical/horizontal scroll, nothing clipped",
+      "pass": true,
+      "detail": "{\"vScroll\":false,\"hScroll\":false,\"clipped\":false,\"sh\":936,\"ch\":936,\"dw\":1920}"
+    },
+    {
+      "name": "1920x1080 create set 4: no vertical/horizontal scroll, nothing clipped",
+      "pass": true,
+      "detail": "{\"vScroll\":false,\"hScroll\":false,\"clipped\":false,\"sh\":936,\"ch\":936,\"dw\":1920}"
+    },
+    {
+      "name": "1920x1080 create set 4 model: no vertical/horizontal scroll, nothing clipped",
+      "pass": true,
+      "detail": "{\"vScroll\":false,\"hScroll\":false,\"clipped\":false,\"sh\":936,\"ch\":936,\"dw\":1920}"
+    },
+    {
+      "name": "1920x1080 recap (all words): no vertical/horizontal scroll, nothing clipped",
+      "pass": true,
+      "detail": "{\"vScroll\":false,\"hScroll\":false,\"clipped\":false,\"sh\":936,\"ch\":936,\"dw\":1920}"
+    },
+    {
+      "name": "1920x1080 twist card fits on screen",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "timer expiry shows time's up",
+      "name": "1920x1080: no network / console errors",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "start after expiry restarts from full time",
+      "name": "390 start: no horizontal overflow",
+      "pass": true,
+      "detail": "{\"vScroll\":true,\"hScroll\":false,\"clipped\":false,\"sh\":496,\"ch\":496,\"dw\":390}"
+    },
+    {
+      "name": "390 clue: no horizontal overflow",
+      "pass": true,
+      "detail": "{\"vScroll\":true,\"hScroll\":false,\"clipped\":false,\"sh\":749,\"ch\":749,\"dw\":390}"
+    },
+    {
+      "name": "390 reveal button works by tap",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "F: fullscreen entered or fallback message shown",
+      "name": "390 meaning: no horizontal overflow",
       "pass": true,
-      "detail": "fullscreen=true toast=Time's up!"
+      "detail": "{\"vScroll\":true,\"hScroll\":false,\"clipped\":false,\"sh\":419,\"ch\":419,\"dw\":390}"
     },
     {
-      "name": "reset everything -> start, fresh state",
+      "name": "390 apply: no horizontal overflow",
       "pass": true,
-      "detail": ""
+      "detail": "{\"vScroll\":true,\"hScroll\":false,\"clipped\":false,\"sh\":623,\"ch\":623,\"dw\":390}"
     },
     {
-      "name": "reset hides scores panel and resets timer display",
-      "pass": true,
-      "detail": ""
-    },
-    {
-      "name": "after reset Discover shows word 1 of 10 unrevealed",
+      "name": "390 apply option tap works",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "selection count shows 3 of 10",
+      "name": "390 create: no horizontal overflow",
+      "pass": true,
+      "detail": "{\"vScroll\":true,\"hScroll\":false,\"clipped\":false,\"sh\":424,\"ch\":424,\"dw\":390}"
+    },
+    {
+      "name": "390 create model tap works",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "subset: discover 3 words",
+      "name": "390 recap: no horizontal overflow",
+      "pass": true,
+      "detail": "{\"vScroll\":true,\"hScroll\":false,\"clipped\":false,\"sh\":615,\"ch\":615,\"dw\":390}"
+    },
+    {
+      "name": "390 team + button works",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "subset: apply filtered to those words",
+      "name": "phone: no network / console errors",
       "pass": true,
       "detail": ""
     },
     {
-      "name": "no network requests (main flow)",
-      "pass": true,
-      "detail": ""
-    },
-    {
-      "name": "no console errors/warnings (main flow)",
-      "pass": true,
-      "detail": ""
-    },
-    {
-      "name": "1366x768 start: no horizontal overflow",
-      "pass": true,
-      "detail": "overflow px=0"
-    },
-    {
-      "name": "1366x768 discover: newest revealed text is on screen above the controls",
-      "pass": true,
-      "detail": "gap px=42.203125"
-    },
-    {
-      "name": "1366x768 discover: no horizontal overflow",
-      "pass": true,
-      "detail": "overflow px=0"
-    },
-    {
-      "name": "1366x768 apply: newest revealed text is on screen above the controls",
-      "pass": true,
-      "detail": "gap px=88.796875"
-    },
-    {
-      "name": "1366x768 apply: no horizontal overflow",
-      "pass": true,
-      "detail": "overflow px=0"
-    },
-    {
-      "name": "1366x768 create: no horizontal overflow",
-      "pass": true,
-      "detail": "overflow px=0"
-    },
-    {
-      "name": "1366x768 recap: no horizontal overflow",
-      "pass": true,
-      "detail": "overflow px=0"
-    },
-    {
-      "name": "1366x768 discover controls visible without scrolling",
-      "pass": true,
-      "detail": "{\"x\":1076.625,\"y\":515.34375,\"width\":105.75,\"height\":49.078125}"
-    },
-    {
-      "name": "1366x768 clue text >= 24px for projector",
-      "pass": true,
-      "detail": "font-size=28.8438"
-    },
-    {
-      "name": "1366x768 apply controls visible without scrolling",
-      "pass": true,
-      "detail": "{\"x\":836.53125,\"y\":647.734375,\"width\":105.75,\"height\":49.078125}"
-    },
-    {
-      "name": "1366x768 no network / console errors",
-      "pass": true,
-      "detail": ""
-    },
-    {
-      "name": "1920x1080 start: no horizontal overflow",
-      "pass": true,
-      "detail": "overflow px=0"
-    },
-    {
-      "name": "1920x1080 discover: newest revealed text is on screen above the controls",
-      "pass": true,
-      "detail": "gap px=47.1875"
-    },
-    {
-      "name": "1920x1080 discover: no horizontal overflow",
-      "pass": true,
-      "detail": "overflow px=0"
-    },
-    {
-      "name": "1920x1080 apply: newest revealed text is on screen above the controls",
-      "pass": true,
-      "detail": "gap px=99.703125"
-    },
-    {
-      "name": "1920x1080 apply: no horizontal overflow",
-      "pass": true,
-      "detail": "overflow px=0"
-    },
-    {
-      "name": "1920x1080 create: no horizontal overflow",
-      "pass": true,
-      "detail": "overflow px=0"
-    },
-    {
-      "name": "1920x1080 recap: no horizontal overflow",
-      "pass": true,
-      "detail": "overflow px=0"
-    },
-    {
-      "name": "1920x1080 discover controls visible without scrolling",
-      "pass": true,
-      "detail": "{\"x\":1402.328125,\"y\":640.609375,\"width\":118.65625,\"height\":54.796875}"
-    },
-    {
-      "name": "1920x1080 clue text >= 24px for projector",
-      "pass": true,
-      "detail": "font-size=32.5"
-    },
-    {
-      "name": "1920x1080 apply controls visible without scrolling",
-      "pass": true,
-      "detail": "{\"x\":1132.765625,\"y\":818.828125,\"width\":118.65625,\"height\":54.796875}"
-    },
-    {
-      "name": "1920x1080 no network / console errors",
-      "pass": true,
-      "detail": ""
-    },
-    {
-      "name": "390x844 start: no horizontal overflow",
-      "pass": true,
-      "detail": "overflow px=0"
-    },
-    {
-      "name": "390x844 discover: newest revealed text is on screen above the controls",
-      "pass": true,
-      "detail": "gap px=30.1875"
-    },
-    {
-      "name": "390x844 discover: no horizontal overflow",
-      "pass": true,
-      "detail": "overflow px=0"
-    },
-    {
-      "name": "390x844 apply: newest revealed text is on screen above the controls",
-      "pass": true,
-      "detail": "gap px=80.40625"
-    },
-    {
-      "name": "390x844 apply: no horizontal overflow",
-      "pass": true,
-      "detail": "overflow px=0"
-    },
-    {
-      "name": "390x844 create: no horizontal overflow",
-      "pass": true,
-      "detail": "overflow px=0"
-    },
-    {
-      "name": "390x844 recap: no horizontal overflow",
-      "pass": true,
-      "detail": "overflow px=0"
-    },
-    {
-      "name": "390x844 no network / console errors",
-      "pass": true,
-      "detail": ""
-    },
-    {
-      "name": "reduced motion disables lantern animation",
+      "name": "reduced motion: host flame animation off",
       "pass": true,
       "detail": "none"
     },
     {
-      "name": "animation present when motion allowed",
+      "name": "reduced motion: picture appears complete (no draw-in)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "reduced motion: no burst particles, no flip animation",
+      "pass": true,
+      "detail": "0 0s"
+    },
+    {
+      "name": "reduced motion: twist card shown immediately",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "reduced motion: no network / console errors",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "motion allowed: host flame flickers",
       "pass": true,
       "detail": "flicker"
+    },
+    {
+      "name": "motion allowed: picture draws itself in (stroke animation)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "motion allowed: burst on full reveal",
+      "pass": true,
+      "detail": "28"
+    },
+    {
+      "name": "burst cleans up after itself (short animation)",
+      "pass": true,
+      "detail": ""
     },
     {
       "name": "worksheet has 3 sections (2 student + key)",
@@ -1494,12 +2339,27 @@
       "detail": "{\"id\":\"key\",\"h\":969,\"w\":688}"
     },
     {
-      "name": "worksheet.pdf has exactly 3 A4 pages",
+      "name": "worksheet re-printed by Chromium = exactly 3 A4 pages",
       "pass": true,
       "detail": "pages=3"
     },
     {
+      "name": "committed worksheet.pdf has exactly 3 pages",
+      "pass": true,
+      "detail": ""
+    },
+    {
       "name": "worksheet: no network / console errors",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "ALL runs: zero non-file:// network requests",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "ALL runs: zero console errors/warnings",
       "pass": true,
       "detail": ""
     }

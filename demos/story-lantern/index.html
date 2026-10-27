@@ -3,206 +3,126 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Story Lantern — Vocabulary</title>
-<meta name="description" content="Teacher-led vocabulary game: ten words about stories and storytellers.">
+<title>Story Lantern</title>
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
-<a class="skip" href="#main">Skip to activity</a>
-<header class="topbar">
-  <div class="brand">
-    <svg class="lantern" viewBox="0 0 64 64" aria-hidden="true"><path d="M24 10h16M32 4v6" stroke="currentColor" stroke-width="4" stroke-linecap="round"/><path d="M20 14h24l-4 6H24z" fill="currentColor"/><rect x="18" y="20" width="28" height="30" rx="6" fill="#ffd43b" stroke="currentColor" stroke-width="4"/><path class="flame" d="M32 26c5 6 5 10 0 14c-5-4-5-8 0-14z" fill="#e8590c"/><path d="M20 50h24l-3 6H23z" fill="currentColor"/></svg>
-    <span>Story Lantern</span>
-  </div>
-  <nav class="rounds" aria-label="Rounds">
-    <button data-round="start" aria-keyshortcuts="Q">1 Start</button>
-    <button data-round="discover" aria-keyshortcuts="D">2 Discover</button>
-    <button data-round="apply" aria-keyshortcuts="A">3 Apply</button>
-    <button data-round="create" aria-keyshortcuts="C">4 Create</button>
-    <button data-round="recap" aria-keyshortcuts="R">5 Recap</button>
+<header id="top">
+  <div class="brand"><span class="brand-mark" aria-hidden="true"></span>STORY <b>LANTERN</b></div>
+  <nav id="rounds" aria-label="Rounds">
+    <button data-round="start">Start</button>
+    <button data-round="discover">Discover</button>
+    <button data-round="apply">Apply</button>
+    <button data-round="create">Create</button>
+    <button data-round="recap">Recap</button>
   </nav>
   <div class="tools">
-    <div class="timer" id="timer" role="timer" aria-label="Lesson timer">
-      <span id="timerDisplay" aria-live="off">18:00</span>
-      <button id="timerToggle" aria-keyshortcuts="T">Start</button>
-      <button id="timerReset">Reset</button>
-    </div>
-    <button id="scoreToggle" aria-pressed="false" aria-keyshortcuts="B">Scores</button>
-    <button id="simpleToggle" aria-pressed="false">Simple help</button>
-    <button id="fsBtn" aria-keyshortcuts="F">Fullscreen</button>
-    <button id="helpBtn" aria-keyshortcuts="?">Keys ?</button>
+    <button id="lessonTimer" class="timer" title="Lesson timer (T)" aria-label="Lesson timer, press T to start or pause">18:00</button>
+    <button id="soundBtn" class="icon" title="Sound (M)" aria-pressed="false" aria-label="Sound off">🔇</button>
+    <button id="fsBtn" class="icon" title="Fullscreen (F)" aria-label="Fullscreen">⛶</button>
+    <button id="helpBtn" class="icon" title="Keys (?)" aria-label="Keyboard help">?</button>
+    <button id="gearBtn" class="icon" title="Teacher panel (S)" aria-label="Teacher panel">⚙</button>
   </div>
 </header>
 
-<div class="layout">
-<main id="main" tabindex="-1">
-
-  <!-- 1. START -->
-  <section class="round" id="round-start" aria-labelledby="h-start">
-    <h1 id="h-start">Welcome to Story Lantern</h1>
-    <p class="lead">Ten words about stories and storytellers. Work in pairs or teams. Say your answers out loud — no phones needed.</p>
-    <div class="grid2">
-      <div class="page">
-        <h2>Teacher setup (30 seconds)</h2>
-        <ol class="steps">
-          <li>Press <kbd>F</kbd> for fullscreen (or F11 if blocked).</li>
-          <li>Tick the words for today. Press <b>Shuffle</b> if you like.</li>
-          <li>Set the timer minutes. Start it with <kbd>T</kbd> (optional).</li>
-          <li>Put students in pairs. Turn on <b>Scores</b> for team points (optional).</li>
-          <li>Press <b>Start Discover</b>. Use <kbd>Space</kbd> to reveal and <kbd>→</kbd> for the next word.</li>
-        </ol>
-        <label class="inline">Timer minutes
-          <input id="timerMinutes" type="number" min="1" max="60" step="1" value="18">
-        </label>
-      </div>
-      <div class="page">
-        <h2>Today's words <span class="muted" id="selCount"></span></h2>
-        <ul class="wordpick" id="wordPick"></ul>
-        <div class="row">
-          <button id="selAll">Select all</button>
-          <button id="selNone">Select none</button>
-          <button id="shuffleBtn">Shuffle order</button>
-          <button id="orderReset">A–Z order</button>
-        </div>
-        <p class="muted small" id="orderText"></p>
-      </div>
+<main id="app">
+  <section id="stage" aria-live="polite"></section>
+  <aside id="tower" aria-label="Team race">
+    <div id="twistBadge" hidden></div>
+    <div id="lanes"></div>
+    <div class="tower-tools">
+      <button id="undoBtn" title="Undo last score change (U)">Undo</button>
+      <button id="resetScoresBtn" title="Reset all scores">Reset</button>
     </div>
-    <div class="row center">
-      <button class="big primary" id="startBtn">Start Discover →</button>
-    </div>
-    <p class="warn" id="startWarn" hidden>Choose at least one word first.</p>
-  </section>
-
-  <!-- 2. DISCOVER -->
-  <section class="round" id="round-discover" aria-labelledby="h-discover" hidden>
-    <div class="roundhead">
-      <h1 id="h-discover">Discover the word</h1>
-      <span class="progress" id="dProgress"></span>
-    </div>
-    <div class="dcard page">
-      <div class="pic" id="dPic"></div>
-      <div class="dbody">
-        <p class="clue" id="dClue"></p>
-        <p class="hint" id="dHint" hidden></p>
-        <div class="letters" id="dLetters" aria-label="Letters"></div>
-        <div class="reveal" id="dReveal" hidden></div>
-      </div>
-    </div>
-    <div class="row controls">
-      <button id="dPrev" aria-keyshortcuts="ArrowLeft">← Previous</button>
-      <button id="dHintBtn" aria-keyshortcuts="H">Hint (H)</button>
-      <button id="dLetterBtn" aria-keyshortcuts="L">Letter (L)</button>
-      <button id="dWordBtn" aria-keyshortcuts="W">Word (W)</button>
-      <button id="dExBtn" aria-keyshortcuts="E">Example + talk (E)</button>
-      <button id="dHide">Hide all</button>
-      <button id="dNext" class="primary" aria-keyshortcuts="ArrowRight">Next →</button>
-    </div>
-  </section>
-
-  <!-- 3. APPLY -->
-  <section class="round" id="round-apply" aria-labelledby="h-apply" hidden>
-    <div class="roundhead">
-      <h1 id="h-apply">Apply: choose the best answer</h1>
-      <span class="progress" id="aProgress"></span>
-    </div>
-    <div class="page acard">
-      <p class="tag" id="aTag"></p>
-      <p class="question" id="aQ"></p>
-      <div class="opts" id="aOpts"></div>
-      <div class="feedback" id="aFb" aria-live="polite"></div>
-    </div>
-    <p class="muted small">Teams discuss, then say A, B or C. Teacher clicks (or presses 1, 2, 3). Space shows the answer.</p>
-    <div class="row controls">
-      <button id="aPrev">← Previous</button>
-      <button id="aShow">Show answer (Space)</button>
-      <button id="aNext" class="primary">Next →</button>
-    </div>
-  </section>
-
-  <!-- 4. CREATE -->
-  <section class="round" id="round-create" aria-labelledby="h-create" hidden>
-    <div class="roundhead">
-      <h1 id="h-create">Create: a short funny story</h1>
-      <span class="progress" id="cProgress"></span>
-    </div>
-    <div class="grid2">
-      <div class="page">
-        <h2>Use these words</h2>
-        <ul class="chips" id="cWords"></ul>
-        <h2>Story frame (pairs)</h2>
-        <ol class="frame">
-          <li>Once upon a time, there was ...</li>
-          <li>One day, ...</li>
-          <li>Although ..., ...</li>
-          <li>In the end, ...</li>
-        </ol>
-        <p class="simple-only starter"><b>Simple help:</b> Write only 3 sentences. Use 3 words. Make the ending silly!</p>
-      </div>
-      <div class="page">
-        <h2>Challenge</h2>
-        <p>Use <b>all four</b> words. Add one line of speech ("...") and a surprise ending. Tell it to another pair in 30 seconds.</p>
-        <h2>Share</h2>
-        <p>Pairs tell their story. The class listens for the four words.</p>
-        <div class="model" id="cModel" hidden></div>
-      </div>
-    </div>
-    <div class="row controls">
-      <button id="cPrev">← Other words</button>
-      <button id="cModelBtn">Show model story</button>
-      <button id="cNext" class="primary">New word set →</button>
-    </div>
-  </section>
-
-  <!-- 5. RECAP -->
-  <section class="round" id="round-recap" aria-labelledby="h-recap" hidden>
-    <h1 id="h-recap">Recap: all ten words</h1>
-    <p class="muted">Tick any word the class found hard, then retry it.</p>
-    <table class="recap page">
-      <thead><tr><th scope="col">Retry</th><th scope="col">Word</th><th scope="col">Meaning</th></tr></thead>
-      <tbody id="recapBody"></tbody>
-    </table>
-    <div class="row center">
-      <button id="retryDiscover" class="primary">Retry ticked in Discover</button>
-      <button id="retryApply">Retry ticked in Apply</button>
-      <button id="resetAll" class="danger">Reset everything</button>
-    </div>
-    <p class="warn" id="retryWarn" hidden>Tick at least one word to retry.</p>
-  </section>
+  </aside>
+  <div id="host" class="mood-idle">
+    <svg class="spirit" viewBox="0 0 120 150" aria-hidden="true">
+      <defs>
+        <radialGradient id="hostGlow" cx="50%" cy="60%" r="60%"><stop offset="0" stop-color="#ffe9a8"/><stop offset=".45" stop-color="#ffb02e"/><stop offset="1" stop-color="#ff5a1f"/></radialGradient>
+      </defs>
+      <path class="metal" d="M60 4 v10"/><circle class="metal" cx="60" cy="18" r="6"/>
+      <path class="cap" d="M30 32 h60 l-10 -10 h-40 z"/>
+      <rect class="glass" x="30" y="32" width="60" height="86" rx="12"/>
+      <g class="flame-wrap"><path class="hflame" d="M60 44 C78 68 86 88 76 104 C70 114 50 114 44 104 C34 88 42 68 60 44 Z" fill="url(#hostGlow)"/></g>
+      <g class="eyes">
+        <g class="eye"><ellipse cx="51" cy="88" rx="6" ry="7" fill="#1a0f05"/><circle class="pupil" cx="51" cy="88" r="2.6" fill="#fff6d6"/></g>
+        <g class="eye"><ellipse cx="69" cy="88" rx="6" ry="7" fill="#1a0f05"/><circle class="pupil" cx="69" cy="88" r="2.6" fill="#fff6d6"/></g>
+        <path class="brow b1" d="M44 78 L57 80"/><path class="brow b2" d="M76 78 L63 80"/>
+      </g>
+      <line class="bar" x1="45" y1="32" x2="45" y2="118"/><line class="bar" x1="75" y1="32" x2="75" y2="118"/>
+      <path class="cap" d="M28 118 h64 l-7 12 h-50 z"/>
+    </svg>
+    <p id="hostLine">Ten mystery words. Zero mercy.</p>
+  </div>
 </main>
 
-<aside class="scores" id="scores" hidden aria-label="Team scores">
-  <h2>Team scores</h2>
-  <label class="inline">Teams <input id="teamCount" type="number" min="2" max="8" value="4"></label>
-  <ol id="teamList"></ol>
-  <div class="row">
-    <button id="scoreUndo">Undo</button>
-    <button id="scoreReset">Reset scores</button>
+<!-- Plot twist overlay -->
+<div id="twist" class="overlay" hidden role="dialog" aria-modal="true" aria-labelledby="twistTitle">
+  <div class="twist-card" id="twistCard">
+    <div class="tc-back" aria-hidden="true"><span>PLOT</span><span>TWIST</span></div>
+    <div class="tc-front">
+      <div class="tc-kicker">Plot twist</div>
+      <div class="tc-icon" id="twistIcon"></div>
+      <h2 id="twistTitle"></h2>
+      <p id="twistBody"></p>
+      <div class="tc-actions">
+        <button id="twistGo" class="primary">Accept (Space)</button>
+        <button id="twistRedraw">Redraw (X)</button>
+        <button id="twistSkip">Skip (Esc)</button>
+      </div>
+    </div>
   </div>
-  <p class="muted small">Points are for teams only. Nothing is saved.</p>
-</aside>
 </div>
 
-<div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+<!-- Teacher panel (hidden by default; contains the word list) -->
+<div id="panel" class="overlay" hidden role="dialog" aria-modal="true" aria-labelledby="panelTitle">
+  <div class="sheet">
+    <div class="sheet-head"><h2 id="panelTitle">Teacher panel</h2><span class="warn">Contains answers — close before projecting.</span><button id="panelClose" aria-label="Close teacher panel">✕</button></div>
+    <div class="sheet-grid">
+      <fieldset>
+        <legend>Words for today</legend>
+        <div id="wordTicks" class="ticks"></div>
+        <div class="row">
+          <button id="selAll">All</button><button id="selNone">None</button><button id="shuffleBtn">Shuffle order</button><button id="azBtn">A–Z</button>
+        </div>
+        <p id="selMsg" class="msg" role="status"></p>
+      </fieldset>
+      <fieldset>
+        <legend>Timing &amp; twists</legend>
+        <label>Lesson timer (minutes) <input id="lessonMin" type="number" min="1" max="90" value="18"></label>
+        <label>Lantern per word (seconds) <input id="lanternSec" type="number" min="10" max="300" value="45"></label>
+        <label><input id="lanternOn" type="checkbox" checked> Burning lantern countdown</label>
+        <label>Plot twists <select id="twistEvery"><option value="0">Off</option><option value="1">After every word</option><option value="2" selected>After every 2nd word</option><option value="3">After every 3rd word</option></select></label>
+        <label><input id="simpleOn" type="checkbox"> Simple English help (meanings + starters)</label>
+        <label><input id="soundOn" type="checkbox"> Synth sound effects (M)</label>
+        <div class="row"><button id="resetAll" class="danger">Reset everything</button></div>
+      </fieldset>
+    </div>
+  </div>
+</div>
 
-<div class="overlay" id="help" hidden>
-  <div class="dialog page" role="dialog" aria-modal="true" aria-labelledby="h-help">
-    <h2 id="h-help">Keyboard controls</h2>
+<!-- Help -->
+<div id="help" class="overlay" hidden role="dialog" aria-modal="true" aria-labelledby="helpTitle">
+  <div class="sheet small">
+    <div class="sheet-head"><h2 id="helpTitle">Keys</h2><button id="helpClose" aria-label="Close help">✕</button></div>
     <table class="keys">
-      <tr><td><kbd>→</kbd> / <kbd>PageDown</kbd></td><td>Next word / question / word set</td></tr>
-      <tr><td><kbd>←</kbd> / <kbd>PageUp</kbd></td><td>Previous</td></tr>
-      <tr><td><kbd>Space</kbd></td><td>Discover: next reveal step · Apply: show answer</td></tr>
-      <tr><td><kbd>H</kbd> <kbd>L</kbd> <kbd>W</kbd> <kbd>E</kbd></td><td>Discover: hint, one letter, whole word, example + talk</td></tr>
-      <tr><td><kbd>1</kbd> <kbd>2</kbd> <kbd>3</kbd></td><td>Apply: choose option A, B, C</td></tr>
-      <tr><td><kbd>Q</kbd> <kbd>D</kbd> <kbd>A</kbd> <kbd>C</kbd> <kbd>R</kbd></td><td>Go to Start, Discover, Apply, Create, Recap</td></tr>
-      <tr><td><kbd>T</kbd></td><td>Start / pause timer</td></tr>
-      <tr><td><kbd>B</kbd></td><td>Show / hide team scores</td></tr>
-      <tr><td><kbd>F</kbd></td><td>Fullscreen (fallback: F11)</td></tr>
-      <tr><td><kbd>?</kbd> / <kbd>Esc</kbd></td><td>Open / close this help</td></tr>
+      <tr><th>Space</th><td>Next step (clue → hint → word → meaning → talk). Apply: show answer</td></tr>
+      <tr><th>→ / ←</th><td>Next / previous word, question or story set</td></tr>
+      <tr><th>H · L · W</th><td>Hint · flip one letter · reveal whole word</td></tr>
+      <tr><th>1 2 3 4</th><td>Discover/Create: point to team 1–4. Apply: choose A/B/C</td></tr>
+      <tr><th>Shift + 1–4</th><td>Point to team 1–4 (any round) · <b>U</b> undo</td></tr>
+      <tr><th>P · K</th><td>Pause/resume lantern countdown · skip it</td></tr>
+      <tr><th>V</th><td>Create: show/hide model story</td></tr>
+      <tr><th>Q D A C R</th><td>Jump: Start, Discover, Apply, Create, Recap</td></tr>
+      <tr><th>T · M · F · S</th><td>Lesson timer · sound · fullscreen · teacher panel</td></tr>
+      <tr><th>X · Esc</th><td>Redraw twist · close / skip</td></tr>
     </table>
-    <p class="muted small">Shortcuts are switched off while you type in a box.</p>
-    <div class="row center"><button id="helpClose" class="primary">Close</button></div>
+    <p class="msg">Keys are ignored while typing in a box.</p>
   </div>
 </div>
+
+<div id="toast" role="status" aria-live="polite"></div>
+<div id="fx" aria-hidden="true"></div>
 
 <script src="data.js"></script>
 <script src="app.js"></script>
