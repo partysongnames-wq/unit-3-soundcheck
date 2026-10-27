@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Story Lantern — Worksheet</title>
+<style>
+  @page { size: A4; margin: 12mm 14mm; }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: "Trebuchet MS", Verdana, sans-serif; font-size: 12.5pt; line-height: 1.4; color: #000; background: #ddd; }
+  .bar { text-align: center; padding: 10px; font-family: sans-serif; }
+  .bar button { font: inherit; font-size: 16px; padding: 8px 18px; border: 2px solid #000; border-radius: 8px; background: #fff; cursor: pointer; }
+  .sheet { background: #fff; width: 210mm; min-height: 297mm; margin: 0 auto 10mm; padding: 12mm 14mm; }
+  h1 { font-family: Georgia, serif; font-size: 18pt; margin: 0 0 1mm; }
+  h2 { font-family: Georgia, serif; font-size: 14pt; margin: 6mm 0 2mm; border-bottom: 1.5pt solid #000; padding-bottom: 1mm; }
+  .head { display: flex; justify-content: space-between; align-items: flex-end; gap: 6mm; border-bottom: 2.5pt double #000; padding-bottom: 2mm; }
+  .head .who { font-size: 11pt; white-space: nowrap; }
+  .who span { display: inline-block; border-bottom: 1pt solid #000; width: 42mm; }
+  .who span.short { width: 18mm; }
+  .sub { margin: 0; font-size: 10pt; }
+  .inst { margin: 1mm 0 2mm; font-style: italic; }
+  .match { display: grid; grid-template-columns: 38% minmax(0, 1fr); gap: 0 4mm; }
+  .match ol { margin: 0; padding-left: 7mm; }
+  .match li { height: 11mm; display: flex; align-items: center; break-inside: avoid; }
+  .match .defs { list-style: lower-alpha; }
+  .box { display: inline-block; width: 9mm; height: 7mm; border: 1.2pt solid #000; margin-right: 3mm; vertical-align: middle; }
+  .q { break-inside: avoid; page-break-inside: avoid; margin: 0 0 3.8mm; }
+  .blank { display: inline-block; border-bottom: 1pt solid #000; width: 32mm; height: 1em; }
+  .choice { font-weight: 700; }
+  .bank { border: 1.5pt solid #000; padding: 2mm 3mm; font-weight: 700; letter-spacing: .02em; text-align: center; word-spacing: 1.5mm; margin-bottom: 3mm; }
+  .frame { margin: 0 0 2mm; padding-left: 6mm; }
+  .lines div { border-bottom: 1pt solid #000; height: 10.5mm; break-inside: avoid; }
+  .ticks span { display: inline-block; margin: 0 4mm 1.5mm 0; }
+  .ticks span::before { content: ""; display: inline-block; width: 3.5mm; height: 3.5mm; border: 1pt solid #000; margin-right: 1.5mm; vertical-align: -.5mm; }
+  .pic { float: right; width: 34mm; margin: -2mm 0 2mm 4mm; }
+  .key h1::after { content: " — ANSWER KEY (teacher only)"; font-size: 12pt; }
+  .key table { border-collapse: collapse; width: 100%; }
+  .key td, .key th { border: 1pt solid #000; padding: 1.2mm 2mm; text-align: left; vertical-align: top; }
+  .foot { font-size: 8.5pt; margin-top: 4mm; color: #222; }
+  @media print {
+    body { background: #fff; }
+    .bar { display: none; }
+    .sheet { width: auto; min-height: 0; margin: 0; padding: 0; break-after: page; page-break-after: always; }
+    .sheet:last-child { break-after: auto; page-break-after: auto; }
+  }
+  @media screen and (max-width: 800px) {
+    .sheet { width: auto; min-height: 0; padding: 6mm; }
+    .match { grid-template-columns: 1fr; }
+    .match li { height: auto; min-height: 9mm; }
+  }
+</style>
+</head>
+<body>
+<div class="bar"><button onclick="window.print()">Print / Save as PDF (A4)</button></div>
+
+<!-- STUDENT PAGE 1 -->
+<section class="sheet" id="p1">
+  <div class="head">
+    <div><h1>Story Lantern: Word Work</h1><p class="sub">Stories and storytellers · 10 words · Pairs may help each other</p></div>
+    <div class="who">Name <span></span> &nbsp;Class <span class="short"></span></div>
+  </div>
+
+  <h2>A. Match the word to its meaning</h2>
+  <p class="inst">Write the letter (a–j) in the box.</p>
+  <div class="match">
+    <ol>
+      <li><span class="box"></span>add</li>
+      <li><span class="box"></span>although</li>
+      <li><span class="box"></span>belief</li>
+      <li><span class="box"></span>collect</li>
+      <li><span class="box"></span>magical</li>
+      <li><span class="box"></span>primarily</li>
+      <li><span class="box"></span>publish</li>
+      <li><span class="box"></span>scary</li>
+      <li><span class="box"></span>suitable</li>
+      <li><span class="box"></span>text</li>
+    </ol>
+    <ol class="defs">
+      <li>making you feel afraid</li>
+      <li>mainly; mostly</li>
+      <li>to put something with something else, so there is more</li>
+      <li>the written words in a book, message or on a screen</li>
+      <li>having magic or special powers</li>
+      <li>an idea that people think is true (it may not be proven)</li>
+      <li>right or appropriate for a person or situation</li>
+      <li>to bring things together from different places</li>
+      <li>shows a contrast; it means “even though”</li>
+      <li>to print a book or story so people can buy or read it</li>
+    </ol>
+  </div>
+
+  <h2>B. <i>Although</i> or <i>because</i>?</h2>
+  <svg class="pic" viewBox="0 0 120 90" aria-hidden="true"><path d="M10 40 a12 12 0 0 1 20 -12 a15 15 0 0 1 27 4 a10 10 0 0 1 1 20 h-44 a10 10 0 0 1 -4 -12z" fill="none" stroke="#000" stroke-width="3"/><g stroke="#000" stroke-width="3"><line x1="20" y1="60" x2="16" y2="72"/><line x1="34" y1="60" x2="30" y2="72"/><line x1="48" y1="60" x2="44" y2="72"/></g><polygon points="96,8 112,24 96,40 80,24" fill="none" stroke="#000" stroke-width="3"/><path d="M96 40 C90 56 84 60 80 72" stroke="#000" stroke-width="2" fill="none"/><circle cx="78" cy="78" r="7" fill="none" stroke="#000" stroke-width="3"/></svg>
+  <p class="inst">Circle the correct word. Then explain number 3 in a few words.</p>
+  <p class="q">1. <span class="choice">(Although / Because)</span> the dragon looked scary, it was very kind to the children.</p>
+  <p class="q">2. We stayed inside <span class="choice">(although / because)</span> the storm was too strong.</p>
+  <p class="q">3. Lin finished the whole book <span class="choice">(although / because)</span> the text was very small.</p>
+  <p class="q">Why? <span class="blank" style="width:150mm"></span></p>
+</section>
+
+<!-- STUDENT PAGE 2 -->
+<section class="sheet" id="p2">
+  <div class="head">
+    <div><h1>Story Lantern: Word Work</h1><p class="sub">Page 2</p></div>
+    <div class="who">Name <span></span></div>
+  </div>
+
+  <h2>C. Complete the sentences</h2>
+  <p class="inst">Use each word from the box once.</p>
+  <div class="bank">add · belief · collect · magical · primarily · publish · suitable · text</div>
+  <p class="q">1. My sister likes to <span class="blank"></span> old postcards from different countries.</p>
+  <p class="q">2. This story is <span class="blank"></span> for children, but adults enjoy it too.</p>
+  <p class="q">3. Please <span class="blank"></span> two more sentences to the end of your story.</p>
+  <p class="q">4. The library will <span class="blank"></span> the best student stories in a small book.</p>
+  <p class="q">5. Is this horror film <span class="blank"></span> for a ten-year-old? I don't think so.</p>
+  <p class="q">6. In the story, the girl finds a <span class="blank"></span> key that can open any door in the world.</p>
+  <p class="q">7. There is a <span class="blank"></span> in my town that a white cat brings good luck.</p>
+  <p class="q">8. Read the <span class="blank"></span> carefully before you answer the questions.</p>
+
+  <h2>D. Write a short funny story (with a partner)</h2>
+  <p class="inst">Use 3 or 4 of the ten words. Tick the words you use. Challenge: use 4 words and add a surprise ending.</p>
+  <p class="ticks"><span>add</span><span>although</span><span>belief</span><span>collect</span><span>magical</span><span>primarily</span><span>publish</span><span>scary</span><span>suitable</span><span>text</span></p>
+  <p class="frame"><b>Story frame:</b> Once upon a time, there was … → One day, … → Although …, … → In the end, …</p>
+  <div class="lines"><div></div><div></div><div></div><div></div><div></div><div></div></div>
+</section>
+
+<!-- ANSWER KEY -->
+<section class="sheet key" id="key">
+  <div class="head">
+    <div><h1>Story Lantern</h1><p class="sub">Keep separate from student copies.</p></div>
+  </div>
+  <h2>A. Matching</h2>
+  <table>
+    <tr><th>1 add</th><th>2 although</th><th>3 belief</th><th>4 collect</th><th>5 magical</th></tr>
+    <tr><td>c</td><td>i</td><td>f</td><td>h</td><td>e</td></tr>
+    <tr><th>6 primarily</th><th>7 publish</th><th>8 scary</th><th>9 suitable</th><th>10 text</th></tr>
+    <tr><td>b</td><td>j</td><td>a</td><td>g</td><td>d</td></tr>
+  </table>
+  <h2>B. Although or because</h2>
+  <ol>
+    <li><b>Although</b> — scary look vs. kind behaviour is a contrast.</li>
+    <li><b>because</b> — the strong storm is the reason we stayed inside.</li>
+    <li><b>although</b> — small text usually makes reading hard, but she still finished (contrast). Accept any answer that shows contrast / surprise.</li>
+  </ol>
+  <h2>C. Sentences</h2>
+  <ol>
+    <li>collect</li><li>primarily</li><li>add</li><li>publish</li>
+    <li>suitable</li><li>magical</li><li>belief</li><li>text</li>
+  </ol>
+  <h2>D. Story — what to look for</h2>
+  <ul>
+    <li>3–4 target words used with the right meaning and form (e.g. <i>a belief</i> as a noun; <i>magical</i> = has magic, not just “pretty”).</li>
+    <li><i>although</i> joins two contrasting ideas.</li>
+    <li>Clear beginning and ending; a funny or surprising idea.</li>
+  </ul>
+  <p><b>Model:</b> Although the forest was scary at night, Nok went in to collect mushrooms for dinner. She found a magical mushroom that sang loudly whenever she tried to eat it. Now Nok never eats dinner — she just has very loud concerts.</p>
+  <p class="foot">Original material for classroom use. Inspired by the theme “Stories and Storytellers”; no textbook text or images reproduced.</p>
+</section>
+</body>
+</html>

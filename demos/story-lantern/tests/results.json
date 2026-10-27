@@ -1,0 +1,1507 @@
+{
+  "when": "2026-10-27T15:16:46.269Z",
+  "passed": 300,
+  "failed": 0,
+  "results": [
+    {
+      "name": "exactly the ten target words",
+      "pass": true,
+      "detail": "add,although,belief,collect,magical,primarily,publish,scary,suitable,text"
+    },
+    {
+      "name": "apply has >=1 challenge for \"add\"",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "apply has >=1 challenge for \"although\"",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "apply has >=1 challenge for \"belief\"",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "apply has >=1 challenge for \"collect\"",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "apply has >=1 challenge for \"magical\"",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "apply has >=1 challenge for \"primarily\"",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "apply has >=1 challenge for \"publish\"",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "apply has >=1 challenge for \"scary\"",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "apply has >=1 challenge for \"suitable\"",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "apply has >=1 challenge for \"text\"",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "apply covers although vs because",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "apply covers primarily = mainly",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "apply covers suitable = appropriate",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "apply covers belief as noun",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "apply covers magical = having magic, not merely beautiful",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "apply covers text = written words",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "every challenge has a WHY for each option",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "start round shown on load",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "10 word checkboxes",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "start with no words shows warning",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "shuffle changes order",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "shuffle is a permutation of 0..9",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "order text reflects shuffle",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "A-Z resets order",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "typing in an input does not trigger shortcuts",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "? opens keyboard help",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "shortcuts paused while help open",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "Esc closes keyboard help",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "Start Discover goes to discover",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "[add] progress shows 1 of 10",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "[add] word not visible before reveal",
+      "pass": true,
+      "detail": "A storyteller has a story. She puts one more surprise into it. Now the story is bigger."
+    },
+    {
+      "name": "[add] picture is an inline SVG with a label",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "[add] letter slots = word length",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "[add] H shows hint",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "[add] hint does not spoil word",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "[add] one letter revealed",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "[add] reveal panel still hidden after 1 letter",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "[add] all letters -> word revealed",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "[add] example hidden until requested",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "[add] example + talk prompt shown",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "[add] challenge prompt shown",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "[add] Hide all resets reveals",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "[add] W button reveals whole word",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "[add] ArrowRight then ArrowLeft returns, state kept",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "[although] progress shows 2 of 10",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "[although] word not visible before reveal",
+      "pass": true,
+      "detail": "≠\n\nIt is raining hard. The children still go outside and fly their kite. Two ideas that do not usually go together."
+    },
+    {
+      "name": "[although] picture is an inline SVG with a label",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "[although] letter slots = word length",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "[although] Space 1 = hint",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "[although] Space 2 = first letter",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "[although] Space 3 = whole word",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "[although] example + talk prompt shown",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "[although] challenge prompt shown",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "[belief] progress shows 3 of 10",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "[belief] word not visible before reveal",
+      "pass": true,
+      "detail": "?\n\nIn one village, people think a white owl brings good luck. Nobody has proved it. It is an idea they hold."
+    },
+    {
+      "name": "[belief] picture is an inline SVG with a label",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "[belief] letter slots = word length",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "[belief] H shows hint",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "[belief] hint does not spoil word",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "[belief] one letter revealed",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "[belief] reveal panel still hidden after 1 letter",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "[belief] all letters -> word revealed",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "[belief] example hidden until requested",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "[belief] example + talk prompt shown",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "[belief] challenge prompt shown",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "[collect] progress shows 4 of 10",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "[collect] word not visible before reveal",
+      "pass": true,
+      "detail": "A girl walks from house to house. At each house she writes down one old story. Soon she has a whole basket of stories."
+    },
+    {
+      "name": "[collect] picture is an inline SVG with a label",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "[collect] letter slots = word length",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "[collect] Space 1 = hint",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "[collect] Space 2 = first letter",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "[collect] Space 3 = whole word",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "[collect] example + talk prompt shown",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "[collect] challenge prompt shown",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "[magical] progress shows 5 of 10",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "[magical] word not visible before reveal",
+      "pass": true,
+      "detail": "An old woman touches a pumpkin with a stick. Sparkles fly. The pumpkin can now talk and grant one wish."
+    },
+    {
+      "name": "[magical] picture is an inline SVG with a label",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "[magical] letter slots = word length",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "[magical] H shows hint",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "[magical] hint does not spoil word",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "[magical] one letter revealed",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "[magical] reveal panel still hidden after 1 letter",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "[magical] all letters -> word revealed",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "[magical] example hidden until requested",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "[magical] example + talk prompt shown",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "[magical] challenge prompt shown",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "[primarily] progress shows 6 of 10",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "[primarily] word not visible before reveal",
+      "pass": true,
+      "detail": "80%\n20%\nkids\nadults\n\nA library has 100 books. 80 are for children. Only 20 are for adults. The library is mostly for chi"
+    },
+    {
+      "name": "[primarily] picture is an inline SVG with a label",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "[primarily] letter slots = word length",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "[primarily] Space 1 = hint",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "[primarily] Space 2 = first letter",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "[primarily] Space 3 = whole word",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "[primarily] example + talk prompt shown",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "[primarily] challenge prompt shown",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "[publish] progress shows 7 of 10",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "[publish] word not visible before reveal",
+      "pass": true,
+      "detail": "A writer finishes her story. A company prints 5,000 copies. Now people in many cities can buy it."
+    },
+    {
+      "name": "[publish] picture is an inline SVG with a label",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "[publish] letter slots = word length",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "[publish] H shows hint",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "[publish] hint does not spoil word",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "[publish] one letter revealed",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "[publish] reveal panel still hidden after 1 letter",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "[publish] all letters -> word revealed",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "[publish] example hidden until requested",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "[publish] example + talk prompt shown",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "[publish] challenge prompt shown",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "[scary] progress shows 8 of 10",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "[scary] word not visible before reveal",
+      "pass": true,
+      "detail": "It is midnight in a dark forest. Two yellow eyes look at you from behind a tree. Your heart beats fast."
+    },
+    {
+      "name": "[scary] picture is an inline SVG with a label",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "[scary] letter slots = word length",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "[scary] Space 1 = hint",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "[scary] Space 2 = first letter",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "[scary] Space 3 = whole word",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "[scary] example + talk prompt shown",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "[scary] challenge prompt shown",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "[suitable] progress shows 9 of 10",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "[suitable] word not visible before reveal",
+      "pass": true,
+      "detail": "A key fits the lock perfectly. A raincoat is right for a rainy day. A picture book is right for a five-year-old."
+    },
+    {
+      "name": "[suitable] picture is an inline SVG with a label",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "[suitable] letter slots = word length",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "[suitable] H shows hint",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "[suitable] hint does not spoil word",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "[suitable] one letter revealed",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "[suitable] reveal panel still hidden after 1 letter",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "[suitable] all letters -> word revealed",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "[suitable] example hidden until requested",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "[suitable] example + talk prompt shown",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "[suitable] challenge prompt shown",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "[text] progress shows 10 of 10",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "[text] word not visible before reveal",
+      "pass": true,
+      "detail": "Open a book. There are pictures, and there are words in lines. Point to the words, not the pictures."
+    },
+    {
+      "name": "[text] picture is an inline SVG with a label",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "[text] letter slots = word length",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "[text] Space 1 = hint",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "[text] Space 2 = first letter",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "[text] Space 3 = whole word",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "[text] example + talk prompt shown",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "[text] challenge prompt shown",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "simple help adds sentence starter",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "simple help off removes starter",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "Prev disabled on first word only",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "Next on last word goes to Apply",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "apply has 15 questions for 10 words",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "[apply 1 add] question shown",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "[apply 1 add] no feedback before choice",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "[apply 1 add] wrong option marked + WHY shown",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "[apply 1 add] correct answer not spoiled after wrong pick",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "[apply 1 add] correct option marked + WHY shown",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "[apply 2 although] question shown",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "[apply 2 although] no feedback before choice",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "[apply 2 although] wrong option marked + WHY shown",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "[apply 2 although] correct answer not spoiled after wrong pick",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "[apply 2 although] correct option marked + WHY shown",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "[apply 3 although] question shown",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "[apply 3 although] no feedback before choice",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "[apply 3 although] wrong option marked + WHY shown",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "[apply 3 although] correct answer not spoiled after wrong pick",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "[apply 3 although] correct option marked + WHY shown",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "[apply 4 although] question shown",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "[apply 4 although] no feedback before choice",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "[apply 4 although] Space shows answer + why",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "[apply 5 belief] question shown",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "[apply 5 belief] no feedback before choice",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "[apply 5 belief] wrong option marked + WHY shown",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "[apply 5 belief] correct answer not spoiled after wrong pick",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "[apply 5 belief] correct option marked + WHY shown",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "[apply 6 belief] question shown",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "[apply 6 belief] no feedback before choice",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "[apply 6 belief] wrong option marked + WHY shown",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "[apply 6 belief] correct answer not spoiled after wrong pick",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "[apply 6 belief] correct option marked + WHY shown",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "[apply 7 collect] question shown",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "[apply 7 collect] no feedback before choice",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "[apply 7 collect] wrong option marked + WHY shown",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "[apply 7 collect] correct answer not spoiled after wrong pick",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "[apply 7 collect] correct option marked + WHY shown",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "[apply 8 magical] question shown",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "[apply 8 magical] no feedback before choice",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "[apply 8 magical] wrong option marked + WHY shown",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "[apply 8 magical] correct answer not spoiled after wrong pick",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "[apply 8 magical] correct option marked + WHY shown",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "[apply 9 primarily] question shown",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "[apply 9 primarily] no feedback before choice",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "[apply 9 primarily] wrong option marked + WHY shown",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "[apply 9 primarily] correct answer not spoiled after wrong pick",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "[apply 9 primarily] correct option marked + WHY shown",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "[apply 10 publish] question shown",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "[apply 10 publish] no feedback before choice",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "[apply 10 publish] wrong option marked + WHY shown",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "[apply 10 publish] correct answer not spoiled after wrong pick",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "[apply 10 publish] correct option marked + WHY shown",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "[apply 11 scary] question shown",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "[apply 11 scary] no feedback before choice",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "[apply 11 scary] wrong option marked + WHY shown",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "[apply 11 scary] correct answer not spoiled after wrong pick",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "[apply 11 scary] correct option marked + WHY shown",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "[apply 12 suitable] question shown",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "[apply 12 suitable] no feedback before choice",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "[apply 12 suitable] wrong option marked + WHY shown",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "[apply 12 suitable] correct answer not spoiled after wrong pick",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "[apply 12 suitable] correct option marked + WHY shown",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "[apply 13 suitable] question shown",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "[apply 13 suitable] no feedback before choice",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "[apply 13 suitable] wrong option marked + WHY shown",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "[apply 13 suitable] correct answer not spoiled after wrong pick",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "[apply 13 suitable] correct option marked + WHY shown",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "[apply 14 text] question shown",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "[apply 14 text] no feedback before choice",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "[apply 14 text] wrong option marked + WHY shown",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "[apply 14 text] correct answer not spoiled after wrong pick",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "[apply 14 text] correct option marked + WHY shown",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "[apply 15 text] question shown",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "[apply 15 text] no feedback before choice",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "[apply 15 text] wrong option marked + WHY shown",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "[apply 15 text] correct answer not spoiled after wrong pick",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "[apply 15 text] correct option marked + WHY shown",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "apply previous works",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "Next on last question goes to Create",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "model story hidden by default",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "create shows 4 words",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "model story shown on request",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "model story can be hidden again",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "new word set hides model again",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "word sets wrap around",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "key Q -> start",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "key R -> recap",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "key A -> apply",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "key C -> create",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "key D -> discover",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "key R -> recap",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "nav button click -> apply",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "recap lists all ten words",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "recap has every word + definition",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "retry with none ticked warns",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "retry discover: 2 words",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "retry discover: no old reveal state",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "retry discover second word is scary",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "retry ticks cleared after retry",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "retry apply: only 'text' questions, fresh",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "B shows scores",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "scores after +1,+1,+1,-1",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "undo reverts last change",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "undo all the way",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "team count 6 -> six teams, score kept",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "reset scores",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "B hides scores",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "timer minutes editable",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "timer counts down (0:50)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "pause holds time",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "resume continues (0:45)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "reset returns to 1:00 and stops",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "timer expiry shows time's up",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "start after expiry restarts from full time",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "F: fullscreen entered or fallback message shown",
+      "pass": true,
+      "detail": "fullscreen=true toast=Time's up!"
+    },
+    {
+      "name": "reset everything -> start, fresh state",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "reset hides scores panel and resets timer display",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "after reset Discover shows word 1 of 10 unrevealed",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "selection count shows 3 of 10",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "subset: discover 3 words",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "subset: apply filtered to those words",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "no network requests (main flow)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "no console errors/warnings (main flow)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "1366x768 start: no horizontal overflow",
+      "pass": true,
+      "detail": "overflow px=0"
+    },
+    {
+      "name": "1366x768 discover: newest revealed text is on screen above the controls",
+      "pass": true,
+      "detail": "gap px=42.203125"
+    },
+    {
+      "name": "1366x768 discover: no horizontal overflow",
+      "pass": true,
+      "detail": "overflow px=0"
+    },
+    {
+      "name": "1366x768 apply: newest revealed text is on screen above the controls",
+      "pass": true,
+      "detail": "gap px=88.796875"
+    },
+    {
+      "name": "1366x768 apply: no horizontal overflow",
+      "pass": true,
+      "detail": "overflow px=0"
+    },
+    {
+      "name": "1366x768 create: no horizontal overflow",
+      "pass": true,
+      "detail": "overflow px=0"
+    },
+    {
+      "name": "1366x768 recap: no horizontal overflow",
+      "pass": true,
+      "detail": "overflow px=0"
+    },
+    {
+      "name": "1366x768 discover controls visible without scrolling",
+      "pass": true,
+      "detail": "{\"x\":1076.625,\"y\":515.34375,\"width\":105.75,\"height\":49.078125}"
+    },
+    {
+      "name": "1366x768 clue text >= 24px for projector",
+      "pass": true,
+      "detail": "font-size=28.8438"
+    },
+    {
+      "name": "1366x768 apply controls visible without scrolling",
+      "pass": true,
+      "detail": "{\"x\":836.53125,\"y\":647.734375,\"width\":105.75,\"height\":49.078125}"
+    },
+    {
+      "name": "1366x768 no network / console errors",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "1920x1080 start: no horizontal overflow",
+      "pass": true,
+      "detail": "overflow px=0"
+    },
+    {
+      "name": "1920x1080 discover: newest revealed text is on screen above the controls",
+      "pass": true,
+      "detail": "gap px=47.1875"
+    },
+    {
+      "name": "1920x1080 discover: no horizontal overflow",
+      "pass": true,
+      "detail": "overflow px=0"
+    },
+    {
+      "name": "1920x1080 apply: newest revealed text is on screen above the controls",
+      "pass": true,
+      "detail": "gap px=99.703125"
+    },
+    {
+      "name": "1920x1080 apply: no horizontal overflow",
+      "pass": true,
+      "detail": "overflow px=0"
+    },
+    {
+      "name": "1920x1080 create: no horizontal overflow",
+      "pass": true,
+      "detail": "overflow px=0"
+    },
+    {
+      "name": "1920x1080 recap: no horizontal overflow",
+      "pass": true,
+      "detail": "overflow px=0"
+    },
+    {
+      "name": "1920x1080 discover controls visible without scrolling",
+      "pass": true,
+      "detail": "{\"x\":1402.328125,\"y\":640.609375,\"width\":118.65625,\"height\":54.796875}"
+    },
+    {
+      "name": "1920x1080 clue text >= 24px for projector",
+      "pass": true,
+      "detail": "font-size=32.5"
+    },
+    {
+      "name": "1920x1080 apply controls visible without scrolling",
+      "pass": true,
+      "detail": "{\"x\":1132.765625,\"y\":818.828125,\"width\":118.65625,\"height\":54.796875}"
+    },
+    {
+      "name": "1920x1080 no network / console errors",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "390x844 start: no horizontal overflow",
+      "pass": true,
+      "detail": "overflow px=0"
+    },
+    {
+      "name": "390x844 discover: newest revealed text is on screen above the controls",
+      "pass": true,
+      "detail": "gap px=30.1875"
+    },
+    {
+      "name": "390x844 discover: no horizontal overflow",
+      "pass": true,
+      "detail": "overflow px=0"
+    },
+    {
+      "name": "390x844 apply: newest revealed text is on screen above the controls",
+      "pass": true,
+      "detail": "gap px=80.40625"
+    },
+    {
+      "name": "390x844 apply: no horizontal overflow",
+      "pass": true,
+      "detail": "overflow px=0"
+    },
+    {
+      "name": "390x844 create: no horizontal overflow",
+      "pass": true,
+      "detail": "overflow px=0"
+    },
+    {
+      "name": "390x844 recap: no horizontal overflow",
+      "pass": true,
+      "detail": "overflow px=0"
+    },
+    {
+      "name": "390x844 no network / console errors",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "reduced motion disables lantern animation",
+      "pass": true,
+      "detail": "none"
+    },
+    {
+      "name": "animation present when motion allowed",
+      "pass": true,
+      "detail": "flicker"
+    },
+    {
+      "name": "worksheet has 3 sections (2 student + key)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "worksheet p1 fits one A4 page (h=847px <= 1032)",
+      "pass": true,
+      "detail": "{\"id\":\"p1\",\"h\":847,\"w\":688}"
+    },
+    {
+      "name": "worksheet p2 fits one A4 page (h=993px <= 1032)",
+      "pass": true,
+      "detail": "{\"id\":\"p2\",\"h\":993,\"w\":688}"
+    },
+    {
+      "name": "worksheet key fits one A4 page (h=969px <= 1032)",
+      "pass": true,
+      "detail": "{\"id\":\"key\",\"h\":969,\"w\":688}"
+    },
+    {
+      "name": "worksheet.pdf has exactly 3 A4 pages",
+      "pass": true,
+      "detail": "pages=3"
+    },
+    {
+      "name": "worksheet: no network / console errors",
+      "pass": true,
+      "detail": ""
+    }
+  ]
+}
