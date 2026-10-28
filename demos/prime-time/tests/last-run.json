@@ -1,0 +1,205 @@
+{
+ "date": "2026-10-28T09:46:55.013Z",
+ "results": [
+  {
+   "name": "Start screen: no answer text in DOM",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "Start screen: title, \"Episode 1: Screen Time\" and Start only",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "Teacher panel hidden by default",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "Cold open: \"A TV\" absent before reveal",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "Cold open: TV revealed after steps",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "E1: no genre word or example in DOM before each reveal (15 cards)",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "E2 word bank: hidden before reveal",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "E2 word bank: all 10 revealed by \"Reveal all\"",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "E2: correct team vote auto-scores +1",
+   "ok": true,
+   "detail": "CH 2 = 1"
+  },
+  {
+   "name": "E2: undo removes the auto-score",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "E2: no gap word / verdict / fact before reveal (10 cards)",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "E3: adjectives hidden before reveal",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "E3: reveal + move (keys 1/2/3) + check marks 12/12 correct",
+   "ok": true,
+   "detail": "12 ok"
+  },
+  {
+   "name": "E3: number keys moved words instead of switching episode",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "E4: adjectives-game link present, new tab, not clicked",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "E4: team +1, undo, two-press reset",
+   "ok": true,
+   "detail": "after +1s 2,1 undo 0 reset 0,0,0,0"
+  },
+  {
+   "name": "E4: clue + answer hidden under static until revealed (18 rounds)",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "E4: plot-twist cards appear (~every 4 rounds)",
+   "ok": true,
+   "detail": "3 twists"
+  },
+  {
+   "name": "E5: pair picker shows two different numbers 1–40, no names",
+   "ok": true,
+   "detail": "3&27"
+  },
+  {
+   "name": "Every episode reachable by number keys and chips",
+   "ok": true,
+   "detail": "0,1,2,3,4,5,6,0,1,2,3,4,5,6"
+  },
+  {
+   "name": "Typing in timer input does not trigger S/3 shortcuts; timer editable",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "T starts/pauses the timer",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "S opens teacher panel; Escape closes",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "Nothing stored (localStorage/sessionStorage/cookies empty)",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "No console errors (1366 run)",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "No network requests (1366 run)",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "No scroll / clipping at 1366x768 on all 59 screens",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "No console errors / network at 1366x768",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "No scroll / clipping at 1920x1080 on all 58 screens",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "No console errors / network at 1920x1080",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "Phone 390x844: no sideways scroll, Next always on screen (40 screens)",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "Phone: no console errors",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "prefers-reduced-motion: static off, animations ~0",
+   "ok": true,
+   "detail": "{\"cb\":true,\"st\":\"none\",\"anim\":\"1e-05s\"}"
+  },
+  {
+   "name": "All controls are real buttons/links/inputs with accessible names",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "Keyboard focus shows a visible outline",
+   "ok": true,
+   "detail": "solid"
+  },
+  {
+   "name": "Contrast >= 4.5:1 for all text colour pairs",
+   "ok": true,
+   "detail": "ink 17.5, muted 8.4, signal 6.4, amber 12.5, true 11.7, false 7.1, dark on ink btn 17.5, dark on amber btn 12.5, active chip key 5.8"
+  },
+  {
+   "name": "worksheet.pdf has 3 pages",
+   "ok": true,
+   "detail": "3 pages"
+  },
+  {
+   "name": "worksheet.html: 3 pages, nothing overflows a page",
+   "ok": true,
+   "detail": "[0,0,0]"
+  },
+  {
+   "name": "Student pages contain no answer facts",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "Worksheet: no network",
+   "ok": true,
+   "detail": ""
+  }
+ ]
+}
