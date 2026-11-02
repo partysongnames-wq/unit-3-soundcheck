@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#070b18">
+  <title>After Hours — Join</title>
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/play.css">
+</head>
+<body class="play">
+  <div id="conn" class="conn-banner hidden" role="status" aria-live="polite"></div>
+  <header class="ptop">
+    <div class="logo">After <span class="k">Hours</span></div>
+    <div id="crewChip" class="crew-chip hidden"></div>
+  </header>
+
+  <main id="joinView" class="view">
+    <div class="hero">
+      <svg viewBox="0 0 200 90" class="hero-art" aria-hidden="true">
+        <defs><radialGradient id="g1" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#ffc86b" stop-opacity=".9"/><stop offset="1" stop-color="#ffc86b" stop-opacity="0"/></radialGradient></defs>
+        <rect width="200" height="90" fill="#0b1230"/>
+        <circle cx="168" cy="18" r="9" fill="#e8eeff"/><circle cx="172" cy="16" r="8" fill="#0b1230"/>
+        <polygon points="20,80 20,40 70,30 120,40 120,80" fill="#1e2944"/><polygon points="120,80 120,40 160,48 160,80" fill="#28355a"/>
+        <g fill="#ffc86b"><rect x="30" y="48" width="8" height="8"/><rect x="58" y="48" width="8" height="8" opacity=".25"/><rect x="86" y="48" width="8" height="8"/><rect x="44" y="64" width="8" height="8" opacity=".25"/><rect x="100" y="64" width="8" height="8"/><rect x="132" y="56" width="7" height="8"/></g>
+        <circle cx="100" cy="68" r="22" fill="url(#g1)" opacity=".35"/>
+        <g fill="#121a1c" stroke="#8cbea9" stroke-width=".6"><path d="M172 82 q-2-12 4-15 q6 3 4 15z"/><circle cx="177" cy="63" r="3"/><path d="M186 82 q-2-10 3-13 q5 3 3 13z"/><circle cx="190" cy="66" r="2.6"/></g>
+      </svg>
+    </div>
+    <h1 class="h1">Join the mission</h1>
+    <form id="joinForm" class="form" autocomplete="off">
+      <label>Room code<input id="roomIn" maxlength="5" inputmode="text" autocapitalize="characters" required pattern="[A-Za-z0-9]{5}"></label>
+      <label>Callsign <span class="muted">(nickname — not your real name)</span>
+        <span class="inrow"><input id="nameIn" maxlength="16" required><button type="button" id="diceBtn" class="btn" aria-label="Random callsign">🎲</button></span>
+      </label>
+      <button class="btn primary big" type="submit">Join</button>
+      <p id="joinErr" class="err" role="alert"></p>
+    </form>
+  </main>
+
+  <main id="gameView" class="view hidden">
+    <section id="statusCard" class="status-card"></section>
+    <section id="mainCard" class="main-card"></section>
+    <section id="arcade" class="arcade hidden" aria-label="Waiting mini-game">
+      <div class="arcade-head"><b>SIGNAL RUNNER</b><span class="muted">just for fun · no game points</span></div>
+      <div class="arcade-stage"><canvas id="runner" width="360" height="300"></canvas></div>
+      <div class="arcade-ctrls">
+        <button id="rLeft" class="btn" aria-label="Move left">◀</button>
+        <button id="rStart" class="btn primary">Play</button>
+        <button id="rRight" class="btn" aria-label="Move right">▶</button>
+      </div>
+    </section>
+  </main>
+  <script type="module" src="js/play.js"></script>
+</body>
+</html>

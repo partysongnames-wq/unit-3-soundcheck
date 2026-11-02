@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>After Hours — Teacher Screen</title>
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/host.css">
+</head>
+<body class="host">
+  <div id="conn" class="conn-banner hidden" role="status" aria-live="polite"></div>
+
+  <!-- SETUP -->
+  <main id="setup" class="setup">
+    <canvas id="setupMap" class="bg-map" aria-hidden="true"></canvas>
+    <section class="setup-card panel">
+      <div class="logo big">Suksanari: <span class="k">After Hours</span></div>
+      <p class="sub">A crew-based English review mission. Teacher screen.</p>
+      <div id="resumeBox" class="resume hidden"></div>
+      <label class="field">Question pack
+        <select id="packSelect"></select>
+      </label>
+      <p id="packInfo" class="muted small"></p>
+      <div class="row">
+        <label class="field">Answer time (s)<input id="qSecs" type="number" min="15" max="120" value="40"></label>
+        <label class="field">Vote time (s)<input id="vSecs" type="number" min="10" max="60" value="20"></label>
+      </div>
+      <label class="check"><input id="autoAdv" type="checkbox"> Auto-advance after reveal and map results</label>
+      <label class="field">Join address phones will use (QR code)
+        <input id="joinBase" type="url" placeholder="http://192.168.x.x:8787" autocomplete="off">
+      </label>
+      <p id="lanHint" class="muted small"></p>
+      <div class="row">
+        <button id="createBtn" class="btn primary">Create classroom room</button>
+        <button id="demoBtn" class="btn">DEMO room (simulated crew)</button>
+      </div>
+      <p class="muted small">Edit questions in the <a href="editor.html">pack editor</a>. A running room keeps its own copy of the pack.</p>
+      <p id="setupErr" class="err" role="alert"></p>
+    </section>
+  </main>
+
+  <!-- GAME -->
+  <main id="game" class="game hidden">
+    <header class="topbar">
+      <div class="logo">Suksanari: <span class="k">After Hours</span></div>
+      <span id="demoTag" class="tag demo hidden">DEMO</span>
+      <div id="phaseLabel" class="phase-label"></div>
+      <div id="roundLabel" class="round-label"></div>
+      <div id="timer" class="timer" aria-live="off"><svg viewBox="0 0 40 40"><circle cx="20" cy="20" r="17" class="trk"/><circle id="timerArc" cx="20" cy="20" r="17" class="arc"/></svg><span id="timerTxt"></span></div>
+      <div class="join-mini"><span class="muted">Join</span> <b id="codeMini"></b></div>
+      <button id="soundBtn" class="btn small ghost" aria-pressed="false" title="Sound on/off">🔇 Sound</button>
+    </header>
+    <div class="stage">
+      <div class="map-wrap">
+        <canvas id="map" aria-label="School map at night"></canvas>
+        <div id="caption" class="caption hidden" aria-live="polite"></div>
+        <div id="banner" class="banner hidden"></div>
+        <section id="overlay" class="overlay hidden"></section>
+        <div id="pauseVeil" class="pause-veil hidden"><div>PAUSED</div></div>
+      </div>
+      <aside id="rail" class="rail"></aside>
+    </div>
+    <footer class="controls" aria-label="Teacher controls">
+      <button id="cStart" class="btn primary small">Start mission</button>
+      <button id="cReveal" class="btn small">Reveal (R)</button>
+      <button id="cNext" class="btn primary small">Next (N)</button>
+      <button id="cPause" class="btn small">Pause (P)</button>
+      <button id="cEnd" class="btn small">End mission</button>
+      <button id="cReset" class="btn small danger">Reset</button>
+      <span id="ctrlMsg" class="ctrl-msg" role="status"></span>
+    </footer>
+  </main>
+  <script type="module" src="js/host.js"></script>
+</body>
+</html>

@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Suksanari: After Hours</title>
+  <link rel="stylesheet" href="css/base.css">
+  <style>
+    body { min-height: 100vh; overflow: hidden; }
+    #title-map { position: fixed; inset: 0; width: 100vw; height: 100vh; display: block; }
+    .title-wrap { background: linear-gradient(90deg, rgba(5,8,20,.88) 0%, rgba(5,8,20,.6) 38%, rgba(5,8,20,0) 62%); position: relative; min-height: 100vh; display: flex; flex-direction: column; justify-content: flex-start; padding: 6vh 6vw 16px; pointer-events: none; }
+    .title-wrap > * { pointer-events: auto; }
+    .kicker { letter-spacing: .4em; font-weight: 800; color: var(--cool); font-size: .9rem; text-transform: uppercase; }
+    h1.logo { font-size: clamp(2.2rem, 6vw, 4.6rem); margin: .1em 0 .1em; line-height: .95; text-shadow: 0 6px 40px rgba(0,0,0,.6); }
+    .tagline { max-width: 34em; font-size: 1.15rem; color: #d8def5; text-shadow: 0 2px 12px #000; }
+    .menu { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 18px; }
+    .menu .btn { min-height: 56px; font-size: 1.05rem; }
+    .foot { margin-top: auto; color: var(--muted); font-size: .85rem; max-width: 46em; text-shadow: 0 2px 8px #000; }
+    @media (max-width: 600px) { body { overflow: auto; } .title-wrap { padding: 28px 16px; background: linear-gradient(180deg, rgba(5,8,20,.85), rgba(5,8,20,.55)); } .menu .btn { flex: 1 1 100%; } }
+  </style>
+</head>
+<body>
+  <canvas id="title-map" aria-hidden="true"></canvas>
+  <main class="title-wrap">
+    <div class="kicker">A crew mission for English class</div>
+    <h1 class="logo">Suksanari:<br><span class="k">After Hours</span></h1>
+    <p class="tagline">The power is out. The school is dark. Something is shuffling between the buildings. Answer well, power up your crew, restore the lights and reach the front gate by dawn.</p>
+    <nav class="menu">
+      <a class="btn primary" href="host.html">Teacher: run a mission</a>
+      <a class="btn" href="play.html">Student: join on phone</a>
+      <a class="btn ghost" href="editor.html">Edit question packs</a>
+    </nav>
+    <p class="foot">Fictional school map. Original artwork drawn in code. Runs on your classroom network only — no accounts, no student records.</p>
+  </main>
+  <script type="module" src="js/title.js"></script>
+</body>
+</html>
