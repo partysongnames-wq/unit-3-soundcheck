@@ -17,8 +17,9 @@ export function think(brain, me, world, rng = Math.random) {
   const near = (x, y, d) => dist(me.x, me.y, x, y) < d;
   // choose goal
   const wantGen = me.fuses >= 2 || (me.fuses >= 1 && rng() < 0.01);
-  if (!brain.goal || now > brain.repathAt || (wantGen && brain.goal.kind !== 'gen')) {
+  if (!brain.goal || now > brain.repathAt || (wantGen && brain.goal.kind !== 'gen') || (world.eventGoal && brain.goal.kind !== 'event' && !wantGen)) {
     if (wantGen && !me.zombified) brain.goal = { kind: 'gen', x: GENERATOR.x + 0.0, y: GENERATOR.y + 1.4 };
+    else if (world.eventGoal) brain.goal = { kind: 'event', x: world.eventGoal[0], y: world.eventGoal[1] };
     else {
       const options = LOCKERS.filter((l) => world.lockerReady(l.id) && (brain.lockerCooldown.get(l.id) || 0) < now);
       options.sort((a, b) => dist(me.x, me.y, a.x, a.y) - dist(me.x, me.y, b.x, b.y));

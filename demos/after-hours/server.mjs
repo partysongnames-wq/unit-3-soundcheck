@@ -1,4 +1,4 @@
-// Suksanari: AFTER HOURS — Night Crew. Authoritative LAN game server (Node ESM, zero dependencies).
+// SnR Daywalkers (Suksanari). Authoritative LAN game server (Node ESM, zero dependencies).
 // Usage: node server.mjs   (env: PORT=8787 HOST=0.0.0.0 JOIN_BASE_URL=http://192.168.1.20:8787)
 import http from 'node:http';
 import { readFile, stat } from 'node:fs/promises';
@@ -17,7 +17,7 @@ const SMALL_BODY = 4 * 1024;
 const PACK_BODY = 3.2 * 1024 * 1024;
 const MIME = {
   '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.mjs': 'text/javascript; charset=utf-8',
-  '.css': 'text/css; charset=utf-8', '.json': 'application/json; charset=utf-8', '.svg': 'image/svg+xml', '.png': 'image/png', '.ico': 'image/x-icon'
+  '.css': 'text/css; charset=utf-8', '.json': 'application/json; charset=utf-8', '.svg': 'image/svg+xml', '.png': 'image/png', '.ico': 'image/x-icon', '.mp3': 'audio/mpeg'
 };
 
 export function lanAddresses() {
@@ -90,7 +90,9 @@ export function createServer({ port = 8787, joinBaseUrl = '', now = Date.now, lo
     const parts = url.pathname.split('/').filter(Boolean);
     if (parts[1] === 'info' && req.method === 'GET') {
       const p = server.address()?.port || port; const lan = lanAddresses();
-      return send(res, 200, { joinBaseUrl: joinBaseUrl || (lan[0] ? `http://${lan[0]}:${p}` : ''), lanAddresses: lan.map((a) => `http://${a}:${p}`), port: p });
+      const audio = [];
+      for (const k of ['day', 'night']) { try { if ((await stat(path.join(PUBLIC, 'audio', `${k}.mp3`))).isFile()) audio.push(k); } catch { /* not provided */ } }
+      return send(res, 200, { joinBaseUrl: joinBaseUrl || (lan[0] ? `http://${lan[0]}:${p}` : ''), lanAddresses: lan.map((a) => `http://${a}:${p}`), port: p, audio });
     }
     if (parts[1] !== 'rooms') throw new GameError(404, 'not_found', 'Unknown API route.');
     if (parts.length === 2 && req.method === 'POST') {
@@ -143,7 +145,7 @@ export function createServer({ port = 8787, joinBaseUrl = '', now = Date.now, lo
       const st = await stat(file); if (!st.isFile()) return send(res, 404, { error: 'not_found' });
       const data = await readFile(file);
       res.writeHead(200, {
-        'Content-Type': MIME[ext], 'Cache-Control': 'no-cache', 'X-Content-Type-Options': 'nosniff', 'Referrer-Policy': 'no-referrer',
+        'Content-Type': MIME[ext], 'Cache-Control': ext === '.mp3' ? 'max-age=3600' : 'no-cache', 'X-Content-Type-Options': 'nosniff', 'Referrer-Policy': 'no-referrer',
         'Content-Security-Policy': "default-src 'self'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; connect-src 'self' ws: wss:; object-src 'none'; base-uri 'none'; frame-ancestors 'none'"
       });
       res.end(req.method === 'HEAD' ? undefined : data);
@@ -229,7 +231,7 @@ if (isMain) {
   const port = Number(process.env.PORT || 8787); const host = process.env.HOST || '0.0.0.0';
   const server = createServer({ port, joinBaseUrl: process.env.JOIN_BASE_URL || '' });
   server.listen(port, host, () => {
-    console.log(`\nSuksanari: AFTER HOURS — Night Crew. Server on ${host}:${port}`);
+    console.log(`\nSnR Daywalkers server on ${host}:${port}`);
     console.log(`  Teacher (this computer): http://localhost:${port}/host.html`);
     console.log(`  Question pack editor:   http://localhost:${port}/editor.html`);
     const lan = lanAddresses();

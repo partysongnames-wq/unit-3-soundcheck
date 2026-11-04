@@ -14,7 +14,7 @@ const sound = new Sound();
 let me = null; let link = null; let view = null; let snap = null; let roster = new Map();
 let avatar = cleanAvatar(store(AV_KEY) || randomAvatar());
 let local = null; let input = { x: 0, y: 0 }; let keys = new Set(); let lastSent = 0; let lastSentPos = null;
-let question = null; let phase = 'lobby'; let paused = false; let myFlags = 0; let myFuses = 0; let nearLocker = null; let myScore = 0; let myEnergy = 100;
+let question = null; let phase = 'lobby'; let paused = false; let myFlags = 0; let myFuses = 0; let nearLocker = null; let myScore = 0; let myEnergy = 100; let myHappy = 40;
 let settings = { teams: 4, goal: 0 }; let auto = null; let tickStarted = false;
 const cooldown = new Map();
 let userTapped = false; // browsers only allow vibration after the user has touched the page
@@ -142,7 +142,7 @@ function onMessage(m) {
       snap = m; view.push(m);
       if (m.ph !== phase || !!m.pa !== paused) setPhase(m.ph, !!m.pa);
       const mp = m.p.find((p) => p[0] === me.num);
-      if (mp) { myFlags = mp[3]; myFuses = mp[4]; myScore = mp[6] || 0; myEnergy = mp[7] ?? 100; if (!local) local = { x: mp[1] / 100, y: mp[2] / 100, dir: 1, moving: false }; }
+      if (mp) { myFlags = mp[3]; myFuses = mp[4]; myScore = mp[6] || 0; myEnergy = mp[7] ?? 100; myHappy = mp[8] ?? 40; if (!local) local = { x: mp[1] / 100, y: mp[2] / 100, dir: 1, moving: false }; }
       if (m.md !== undefined) { settings.teams = m.md; settings.goal = m.gl; }
       updateHud();
       break;
@@ -153,11 +153,11 @@ function onMessage(m) {
     case 'qclose': closeQuestion(); toast('Locker timed out — try again!'); break;
     case 'fx':
       view.fx(m);
-      if (m.n === me.num) { if (m.k === 'tag') { sound.play('tag'); if (userTapped && navigator.vibrate) navigator.vibrate(180); toast('You got tagged! Tag someone from another crew to turn back!'); } if (m.k === 'cure') sound.play('cure'); if (m.k === 'pickup') sound.play('loot'); if (m.k === 'deliver') { sound.play('deliver'); toast(`+${m.pts} for your crew!`); } if (m.k === 'block') toast('Your shield blocked a tag!'); }
+      if (m.n === me.num) { if (m.k === 'tag') { sound.play('tag'); if (userTapped && navigator.vibrate) navigator.vibrate(180); toast('You got tagged! Tag someone from another crew to turn back!'); } if (m.k === 'cure') sound.play('cure'); if (m.k === 'pickup') sound.play('loot'); if (m.k === 'deliver') { sound.play('deliver'); toast(`+${m.pts} for your crew!`); } if (m.k === 'block') toast('Your shield blocked a tag!'); if (m.k === 'snack') { sound.play('loot'); toast('🍜 Yum! Full power + a speed boost!'); } if (m.k === 'pe') { sound.play('loot'); toast('🏃 PE done! Speed boots for 10 seconds!'); } if (m.k === 'sing') sound.play('sing'); }
       if (m.k === 'overtime') banner('FINAL MINUTE! DOUBLE POINTS!');
       break;
     case 'event':
-      if (m.kind) { sound.play('event'); banner({ lights: 'LIGHTS OUT! 🔦', party: 'ZOMBIE DANCE PARTY! 🪩', golden: 'GOLDEN LOCKERS! ✨', rain: 'FUSE RAIN! ⚡' }[m.kind]); }
+      if (m.kind) { sound.play('bell'); banner({ lunch: '🍜 LUNCH TIME!', karaoke: '🎤 KARAOKE HOUR!', garden: '🌸 QUIET TIME IN THE GARDEN', pe: '🏃 PE LESSON!', quiz: '📚 POP QUIZ!', lights: 'LIGHTS OUT! 🔦', party: 'ZOMBIE DANCE PARTY! 🪩', golden: 'GOLDEN LOCKERS! ✨', rain: 'FUSE RAIN! ⚡' }[m.kind] || 'SURPRISE!'); const hint = { lunch: 'Run to the CANTEEN for a snack: full power + speed!', karaoke: 'Stand on the STAGE in the Karaoke room to sing points for your crew!', garden: 'Zombies can\'t enter the GARDEN. Relax and recharge there!', pe: 'Run into the GYM for free speed boots!', quiz: 'Lockers in the English and Thai rooms give DOUBLE fuses!' }[m.kind]; if (hint) setTimeout(() => toast(hint + ' Follow the yellow arrow!'), 700); }
       break;
     case 'feed': if (m.kind === 'event' || m.kind === 'big') break; if (m.crew === me.crew) toast(m.text); break;
     case 'night':
@@ -209,7 +209,7 @@ function updateHud() {
   const hc = $('hudCrew'); hc.replaceChildren(h('span', { class: 'dot', style: { background: crew.color } }), h('span', { text: solo ? 'You' : crew.name }), h('span', { class: 'place', text: phase === 'play' ? `#${place}` : '' }), h('span', { class: 'score', text: `⚡${mine}${goal}` }));
   const en = $('energy'); const pct = Math.max(0, Math.min(100, myEnergy));
   en.classList.toggle('hidden', phase !== 'play'); en.classList.toggle('low', pct < 25);
-  $('energyFill').style.width = `${pct}%`; $('energyTxt').textContent = pct <= 0 ? '💤 Answer to wake up!' : pct < 25 ? '⚡ Power low — answer a question!' : '⚡ Power';
+  $('energyFill').style.width = `${pct}%`; const hp = Math.round(myHappy); $('happyTxt').textContent = `${hp >= 70 ? '😄' : hp >= 35 ? '🙂' : '😐'} ${hp}`; $('happyTxt').classList.toggle('glow', hp >= 70); $('energyTxt').textContent = pct <= 0 ? '💤 Answer to wake up!' : pct < 25 ? '⚡ Power low — answer a question!' : '⚡ Power';
   const tm = $('hudTimer'); tm.textContent = snap.ph === 'play' ? (snap.nt ? '🌙 ' : '') + fmt(snap.tl) : snap.ph === 'lobby' ? 'LOBBY' : snap.ph === 'results' ? 'DONE' : '…'; tm.classList.toggle('ot', !!snap.ot);
   const items = [];
   if (myFuses) items.push(`⚡×${myFuses}${myFlags & 128 ? ' ✨' : ''} → Generator`);

@@ -1,5 +1,5 @@
 // World view: camera, cached static map chunks, interpolated players/zombies, effects and event overlays.
-import { W, H, LOCKERS, GENERATOR, CREWS, LAMPS, ROOM_OF } from './shared/world.js';
+import { W, H, LOCKERS, GENERATOR, CREWS, LAMPS, ROOM_OF, ZONES } from './shared/world.js';
 import { EMOTE_ICON } from './shared/avatar.js';
 import { renderStatic, drawLocker, drawGenerator, drawFuse, drawAvatar, drawZombie, outlinedText, star, rr, INK, TAU } from './art.js';
 
@@ -53,6 +53,9 @@ export class WorldView {
     if (m.k === 'block' && pos) { this.rings.push({ x: pos[0], y: pos[1] - 0.5, life: 1, col: '#7fe0ff', max: 1.4 }); this.text(pos[0], pos[1] - 1.7, 'BLOCKED!', '#7fe0ff'); }
     if (m.k === 'zap') { this.rings.push({ x: m.x, y: m.y - 0.4, life: 1, col: '#ffe14d', max: 6 }); }
     if (m.k === 'pickup' && pos) { this.text(pos[0], pos[1] - 1.6, '+FUSE', '#ffd23f'); }
+    if (m.k === 'snack' && pos) { this.burst(pos[0], pos[1] - 0.8, 12, ['#ffd23f', '#ff9f1c', '#ffffff'], 'spark'); this.text(pos[0], pos[1] - 1.7, 'YUM! 🍜', '#ff9f1c'); }
+    if (m.k === 'pe' && pos) { this.burst(pos[0], pos[1] - 0.6, 12, ['#7fe0ff', '#ffffff'], 'spark'); this.text(pos[0], pos[1] - 1.7, 'PE BOOTS! 👟', '#7fe0ff'); }
+    if (m.k === 'sing' && pos) { this.burst(pos[0], pos[1] - 1, 8, ['#ff5fa2', '#ffd23f', '#2ec4ff'], 'spark'); this.text(pos[0], pos[1] - 1.8, `♪ +${m.pts}`, crewCol); }
   }
   burst(x, y, n, cols, kind) {
     if (this.reduced) n = Math.ceil(n / 3);
@@ -74,7 +77,7 @@ export class WorldView {
     const am = new Map(a.p.map((p) => [p[0], p]));
     for (const p of b.p) {
       const q = am.get(p[0]) || p;
-      out.players.set(p[0], { n: p[0], x: lerp(q[1], p[1], k) / 100, y: lerp(q[2], p[2], k) / 100, f: p[3], fuses: p[4], em: p[5], score: p[6] || 0, energy: p[7] ?? 100 });
+      out.players.set(p[0], { n: p[0], x: lerp(q[1], p[1], k) / 100, y: lerp(q[2], p[2], k) / 100, f: p[3], fuses: p[4], em: p[5], score: p[6] || 0, energy: p[7] ?? 100, happy: p[8] ?? 40 });
     }
     out.zombies = b.z.map((z, i) => { const q = a.z[i] || z; return { x: lerp(q[0], z[0], k) / 100, y: lerp(q[1], z[1], k) / 100, f: z[2], i }; });
     out.fuses = b.f.map((f) => ({ id: f[0], x: f[1] / 100, y: f[2] / 100, v: f[3] }));
@@ -168,7 +171,9 @@ export class WorldView {
     this.rings = this.rings.filter((r) => r.life > 0);
     for (const tx of this.texts) { tx.life -= dt * 0.7; tx.y -= dt * 0.8; c.globalAlpha = Math.min(1, tx.life * 2); const pop = 1 + Math.max(0, tx.life - 0.85) * 3; outlinedText(c, tx.s, tx.x * S, tx.y * S, S * 0.42 * tx.big * pop * (this.mode === 'phone' ? 1 : 1.4), tx.col); c.globalAlpha = 1; }
     this.texts = this.texts.filter((tx) => tx.life > 0);
+    this.zoneHighlight(c, S);
     c.restore();
+    this.zoneArrow(ox, oy);
     // event overlays
     // night: fade in/out over ~2.5 s
     const NIGHT = 30000; const nl = this.nightLeft || 0;
@@ -208,6 +213,40 @@ export class WorldView {
       outlinedText(c, ph < 0.5 ? '♪' : '♫', p.x * S + Math.sin(ph * 6 + p.n) * S * 0.3, (p.y - 1.4 - ph * 0.8) * S, S * 0.4, ['#ff5fa2', '#ffd23f', '#2ec4ff'][p.n % 3]);
       c.globalAlpha = 1;
     }
+  }
+
+  // Timetable event: make the room glow with a big bouncing icon so everyone can find it
+  zoneHighlight(c, S) {
+    const z = this.event && ZONES[this.event]; if (!z) return;
+    const t = this.reduced ? 0 : this.t; const pulse = 0.5 + 0.5 * Math.sin(t * 5);
+    for (const r of z.rects) {
+      c.save();
+      c.fillStyle = `rgba(255,230,120,${0.10 + 0.08 * pulse})`; c.fillRect(r.x0 * S, r.y0 * S, (r.x1 - r.x0) * S, (r.y1 - r.y0) * S);
+      c.strokeStyle = `rgba(255,210,63,${0.7 + 0.3 * pulse})`; c.lineWidth = Math.max(3, S * 0.12); c.setLineDash([S * 0.4, S * 0.25]); c.lineDashOffset = -t * S;
+      c.beginPath(); c.roundRect(r.x0 * S, r.y0 * S, (r.x1 - r.x0) * S, (r.y1 - r.y0) * S, S * 0.3); c.stroke(); c.setLineDash([]);
+      const cx = (r.x0 + r.x1) / 2 * S, cy = r.y0 * S + S * 0.9 + Math.sin(t * 3) * S * 0.15;
+      c.beginPath(); c.arc(cx, cy, S * (this.mode === 'phone' ? 0.5 : 0.75), 0, TAU); c.fillStyle = '#ffffff'; c.fill(); c.strokeStyle = INK; c.lineWidth = Math.max(2, S * 0.06); c.stroke();
+      c.font = `${S * (this.mode === 'phone' ? 0.55 : 0.85)}px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif`; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText(z.icon, cx, cy + S * 0.04);
+      c.restore();
+    }
+  }
+  // Phone: arrow at the screen edge pointing to the event room when it's off-screen
+  zoneArrow(ox, oy) {
+    if (this.mode !== 'phone') return;
+    const z = this.event && ZONES[this.event]; if (!z) return;
+    const S = this.S; const me = this.local; if (!me) return;
+    let best = null; for (const r of z.rects) { const cx = (r.x0 + r.x1) / 2, cy = (r.y0 + r.y1) / 2; const d = Math.hypot(cx - me.x, cy - me.y); if (!best || d < best.d) best = { cx, cy, d, r }; }
+    const sx = ox + best.cx * S, sy = oy + best.cy * S; const m = 46;
+    if (sx > m && sx < this.w - m && sy > 120 && sy < this.h - 120) return;
+    const c = this.c; c.setTransform(this.dpr, 0, 0, this.dpr, 0, 0);
+    const cx = this.w / 2, cy = this.h / 2; const ang = Math.atan2(sy - cy, sx - cx);
+    const ex = Math.max(m, Math.min(this.w - m, cx + Math.cos(ang) * this.w)), ey = Math.max(215, Math.min(this.h - 170, cy + Math.sin(ang) * this.h));
+    const bob = this.reduced ? 0 : Math.sin(this.t * 6) * 4;
+    c.save(); c.translate(ex + Math.cos(ang) * bob, ey + Math.sin(ang) * bob);
+    c.beginPath(); c.arc(0, 0, 26, 0, TAU); c.fillStyle = '#ffd23f'; c.fill(); c.strokeStyle = INK; c.lineWidth = 3; c.stroke();
+    c.font = '24px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText(z.icon, 0, 1);
+    c.rotate(ang); c.beginPath(); c.moveTo(30, -10); c.lineTo(44, 0); c.lineTo(30, 10); c.closePath(); c.fillStyle = '#ffd23f'; c.fill(); c.stroke();
+    c.restore();
   }
 
   lamp(c, x, y, S) {

@@ -12,8 +12,8 @@ body.play { margin: 0; min-height: 100dvh; font-family: "Trebuchet MS", "Arial R
 .brand { text-align: center; line-height: .95; }
 .brand span { display: block; font-weight: 900; letter-spacing: .04em; }
 .brand .b1 { font-size: 2.1em; color: #6a4cff; }
-.brand .b2 { font-size: 2.8em; color: #ff5fa2; -webkit-text-stroke: 2px #2b2340; }
-.brand .b3 { font-size: 1em; color: #2b2340; letter-spacing: .3em; text-transform: uppercase; margin-top: 4px; }
+.brand .b2 { font-size: 2.2em; color: #ff5fa2; -webkit-text-stroke: 2px #2b2340; }
+.brand .b3 { font-size: .95em; color: #2b2340; letter-spacing: .08em; text-transform: uppercase; margin-top: 4px; }
 .join-art { width: 100%; height: auto; display: block; margin: 8px 0; }
 #joinForm { display: flex; flex-direction: column; gap: 12px; }
 #joinForm label { display: flex; flex-direction: column; gap: 6px; font-weight: 900; font-size: 1em; }
@@ -115,3 +115,5 @@ body.play { margin: 0; min-height: 100dvh; font-family: "Trebuchet MS", "Arial R
 .auto-btn { position: absolute; left: 12px; bottom: calc(84px + env(safe-area-inset-bottom)); font-family: inherit; font-weight: 900; font-size: 1em; min-height: 52px; padding: 0 14px; border-radius: 18px; border: 3px solid #2b2340; background: #fff; color: #2b2340; box-shadow: 0 4px 0 #2b2340; z-index: 3; }
 .acc-big { background: #ecfff4; border: 3px solid #2fbf71; border-radius: 16px; padding: 8px; font-weight: 900; margin: 8px 0; }
 .acc-big b { font-size: 2em; color: #148a4c; display: block; }
+.energy .happy { background: #fff; }
+.energy .happy.glow { background: #ffe680; box-shadow: 0 0 10px #ffd23f; }

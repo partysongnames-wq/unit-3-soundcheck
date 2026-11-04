@@ -165,7 +165,15 @@ if (await openLockerHere(pb)) {
   await sleep(1900); await pb.click('.qcard .btn.primary');
 } else check('phone B opened a locker with the E key', false);
 await sleep(1500);
-await shot(host, '05-teacher-live-map-1366x768.png'); await noOverflow(host, 'teacher live');
+await shot(host, '05-teacher-live-map-1366x768.png');
+// music: the teacher's song is served and decodes in the browser
+const music = await host.evaluate(async () => { const r = await fetch('audio/day.mp3'); const ct = r.headers.get('content-type'); const ac = new AudioContext(); const b = await ac.decodeAudioData(await r.arrayBuffer()); return { ct, sec: Math.round(b.duration) }; });
+check('day music track is served and decodes', music.ct === 'audio/mpeg' && music.sec > 60, JSON.stringify(music));
+// timetable event (started directly on the in-process server): room glows, phone shows a direction arrow + hint
+{ const room = server.rooms.get(code).room; room.startEvent('lunch'); room.emitAll({ t: 'event', kind: 'lunch', ms: 25000 }); }
+await sleep(1500);
+check('event banner shows on the phone', (await pa.textContent('#banner')).includes('LUNCH'));
+await shot(host, '05b-teacher-lunch-event-1366x768.png'); await shot(pa, 'p09b-lunch-event-arrow-390x844.png'); await noOverflow(host, 'teacher live');
 await shot(pa, 'p09-playing-390x844.png'); await noOverflow(pa, 'phone playing');
 // pause / resume
 await host.click('#cPause'); await sleep(700);

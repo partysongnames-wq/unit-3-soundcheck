@@ -3,7 +3,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { Room, GameError, MAX_PLAYERS } from '../src/game.mjs';
 import { STARTER_PACK, GENERIC_PACK, validatePack, importSpreadsheet, validateImage } from '../public/js/shared/packs.js';
-import { LOCKERS, GENERATOR, SPAWNS, ZOMBIE_SPAWNS, walkableTiles, path, collides, lockerStand, isWalkableTile } from '../public/js/shared/world.js';
+import { LOCKERS, GENERATOR, SPAWNS, ZOMBIE_SPAWNS, walkableTiles, path, collides, lockerStand, isWalkableTile, zoneCenter, inZone, ROOM_OF } from '../public/js/shared/world.js';
 import { cleanAvatar } from '../public/js/shared/avatar.js';
 
 function clock(t = 1_000_000) { const f = () => t; f.add = (ms) => { t += ms; }; return f; }
@@ -294,4 +294,43 @@ test('short games get one night; nights never run back-to-back', () => {
   const until = r2.nights[0] - r2.gt + 31_000;
   for (let t = 0; t < until; t += 100) { n2.add(100); r2.tick(); online(r2); }
   assert.equal(r2.night, null, 'morning'); assert.equal(r2.nights.length, 0, 'back-to-back night dropped');
+});
+
+test('timetable events: lunch in the canteen, PE in the gym, karaoke on the stage, garden keeps zombies out, pop-quiz lockers', () => {
+  const { r, now, msgs } = mk({ settings: { night: false } }); const ps = joinN(r, 4); online(r); startPlay(r, now);
+  const step = (ms) => { for (let t = 0; t < ms; t += 100) { now.add(100); r.tick(); online(r); } };
+  for (const z of r.zombies) z.stunUntil = 1e12;
+  const [a, b, c2, d] = ps;
+  // lunch
+  r.startEvent('lunch'); a.energy = 10; [a.x, a.y] = zoneCenter('lunch'); a.y += 0.5; step(200);
+  assert.equal(Math.round(a.energy), 100); assert.ok(a.bootsUntil > r.gt); assert.ok(msgs.some((m) => m.m.k === 'snack'));
+  const e1 = a.energy; step(200); assert.ok(r.event.claimed.has(a.id) && a.energy <= e1, 'only once per lunch');
+  // PE: 2 s in the gym
+  r.startEvent('pe'); [b.x, b.y] = zoneCenter('pe'); b.bootsUntil = 0; step(1000); assert.equal(b.bootsUntil > r.gt, false);
+  step(1300); assert.ok(b.bootsUntil > r.gt + 5000, 'boots after a lap');
+  // karaoke: stage points, max 4 per player
+  r.startEvent('karaoke'); const before = r.scores[c2.crew]; c2.x = 37.5; c2.y = 15.2; step(14_000);
+  assert.equal(r.scores[c2.crew] - before, 4, 'sang 4 points max'); assert.ok(msgs.some((m) => m.m.k === 'sing'));
+  // garden: zombies kept out, zombified players recover faster
+  r.startEvent('garden'); for (const z of r.zombies) z.stunUntil = 0;
+  [d.x, d.y] = zoneCenter('garden'); d.zombieUntil = r.gt + 8000; d.invulnUntil = 1e12;
+  const z0 = r.zombies[0]; z0.x = 13.5; z0.y = 19.0; step(2600);
+  assert.ok(r.zombies.every((z) => !inZone('garden', z.x, z.y)), 'no zombie inside the garden');
+  assert.ok(d.zombieUntil - r.gt < 8000 - 2600 - 2000, 'recovers faster in the garden');
+  // pop quiz: English/Thai lockers double fuses
+  r.startEvent('quiz'); for (const z of r.zombies) z.stunUntil = 1e12;
+  const L = LOCKERS.find((l) => ROOM_OF[l.ty][l.tx] === 'ENG'); standAt(a, L); a.lockerCd.clear(); a.zombieUntil = 0; a.fuses = [];
+  r.rng = () => 0.01; // first loot-table entry = fuse
+  r.openLocker(a, L.id); const q = r.qById.get(a.pending.qid); const res = r.answer(a, { nonce: a.pending.nonce, choice: q.correct });
+  assert.equal(res.loot.item, 'fuse'); assert.equal(res.loot.golden, true); assert.equal(a.fuses[0], 2, 'double fuse in pop quiz room');
+});
+
+test('happiness: rises with answers/rooms, decays, and 70+ gives a bonus point at the generator', () => {
+  const { r, now } = mk({ settings: { night: false } }); const [p] = joinN(r, 1); online(r); startPlay(r, now);
+  for (const z of r.zombies) z.stunUntil = 1e12;
+  p.happy = 80; p.fuses = [1]; p.x = GENERATOR.x; p.y = GENERATOR.y + 1.4; r.tickItems();
+  assert.equal(r.scores[p.crew], 2, '1 fuse + 1 happy bonus');
+  p.happy = 30; p.fuses = [1]; r.tickItems(); assert.equal(r.scores[p.crew], 3, 'no bonus when not happy');
+  const h0 = p.happy; for (let t = 0; t < 10_000; t += 100) { now.add(100); r.tick(); online(r); } assert.ok(p.happy < h0, 'decays');
+  assert.equal(r.snapshot().p[0][8], Math.round(p.happy), 'happiness in snapshot');
 });

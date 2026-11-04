@@ -1,4 +1,4 @@
-# Suksanari: AFTER HOURS — Night Crew
+# SnR Daywalkers
 
 A real-time, Roblox-style classroom game for English review. Every student makes her own character, runs around a bright cartoon school on her phone, answers questions at glowing lockers for loot, and dodges silly zombies while her crew races to power up the school generator. The projector shows the whole school live, with every player on it.
 
@@ -10,6 +10,18 @@ A real-time, Roblox-style classroom game for English review. Every student makes
 - **Solo or teams:** play solo (everyone for herself) or in 2, 3 or 4 crews. The projector shows a live leaderboard, a feed, surprise events and a double-points final minute. The game ends with a podium and a review of the toughest questions.
 - **Timer or goal:** the game runs on a timer (5–12 minutes), or ends early when someone reaches a goal score (20, 30, 50 or 80).
 - **Answering keeps you going:** a ⚡ power meter drains while you explore and refills when you answer. If it runs out, your character gets sleepy and slow.
+- **School-bell timetable:** a 🔔 bell rings every 40–55 seconds and something happens in one room for 20–30 seconds. Getting there in time pays off. The room glows on every screen, and phones show a yellow arrow pointing to it.
+
+  | Bell | Room | Reward |
+  |---|---|---|
+  | 🍜 Lunch time | Canteen | A snack: full ⚡ power, a short speed boost and happiness (once per lunch) |
+  | 🎤 Karaoke hour | Karaoke & AV stage | Every 3 seconds on the stage sings +1 point for your crew (up to 4 per player); the karaoke screen scrolls the pack's vocabulary |
+  | 🌸 Quiet time | Garden | Zombies can't enter. Players recharge, and tagged players turn back 3× faster |
+  | 🏃 PE lesson | Gym | Stay in the gym for 2 seconds for 10 seconds of speed boots |
+  | 📚 Pop quiz | English and Thai rooms | Those rooms' lockers give double fuses |
+
+  The zombie dance party and fuse rain still happen sometimes too.
+- **😊 Happiness:** correct answers, room rewards and deliveries make you happier, and happiness slowly fades. At 70 or more (😄), every delivery to the generator gets **+1 bonus point**.
 - **Helpers:** 🧭 auto-walk takes a student to the nearest locker (or the generator), and a private 📋 teacher phone view shows who is and isn't answering.
 - **Our school's layout:** the map follows the real Suksanari campus in a cartoon way (see [The map](#the-map)).
 - **Night time:** twice per game (about 1/3 and 2/3 of the way through), night falls for 30 seconds after a 5-second warning.
@@ -21,6 +33,14 @@ A real-time, Roblox-style classroom game for English review. Every student makes
 - Runs on one laptop on the classroom Wi-Fi. There are no accounts, no real names, no chat and no internet services. All artwork is original and drawn in code; there are no image files and no emblems.
 
 > **Status:** tested with automated clients and headless Chromium only, not yet with a real class on real phones. See [Limitations](#limitations-and-open-issues).
+
+## Music
+
+- The day music is the teacher's own Suno track **"After-School Shuffle"**, saved as `public/audio/day.mp3`.
+- To use a separate night song, add `public/audio/night.mp3` and the game switches to it at night. Without one, the day song plays slower, softer and muffled during the night.
+- If no track is there at all, a small built-in loop plays instead.
+- Music plays only on the projector. Phones play sound effects only, and students can mute them.
+- Suno's free plan allows non-commercial use only; check Suno's current terms if you share the game beyond class.
 
 ## Install and start
 
@@ -222,14 +242,12 @@ Movement is predicted on the phone so it feels instant, and the server validates
 
 ## Latest results
 
-All results are from 2026-11-04, after adding night time, on a Linux container with Node 22.23 and headless Chromium. These are automated runs only.
+All results are from 2026-11-04, after the rename to SnR Daywalkers, the school-bell room events, happiness and music. They were run on a Linux container with Node 22.23 and headless Chromium, and are automated runs only.
 
 | Suite | Result |
 |---|---|
-| `npm test` | **27 / 27 passed.** New tests cover night time: the warning before night; two 30-second nights at about 35% and 70% of the game; no other events during a night; the night bonus fuse; morning coming back; the teacher on/off switch; short games getting only one night; nights never running back-to-back |
-| `node tests/sim.mjs 20` | **PASS.** 20 simulated clients, a 2-minute game including two nights. 125 answers, 0 server errors, 20/20 got their private stats |
-| `node tests/browser.mjs` | **56 / 56 checks passed, 0 console or page errors.** New checks: night time is on by default; the 🌙 appears on the teacher and phone timers when night falls; morning returns after 30 seconds. Screenshots `09-teacher-night` and `p13-night`. An earlier run failed on a real edge case: in a very short game the second night started right as the first ended. That's fixed, with at least 15 seconds of daylight between nights and one night in games under 3 minutes |
+| `npm test` | **29 / 29 passed.** New tests cover: lunch in the canteen (full power and speed, once per lunch); PE in the gym (boots after 2 seconds inside); karaoke on the stage (+1 every 3 seconds, at most 4 per player); the garden keeping zombies out and tagged players recovering faster; pop-quiz lockers giving double fuses; happiness rising, decaying, appearing in snapshots, and giving +1 at the generator at 70 or more. The earlier tests for night time, modes, the power meter, the teacher view, security and the map also still pass |
+| `node tests/sim.mjs 20` | **PASS.** 20 simulated clients in a 2-minute game with room events and nights. 138 answers, 0 server errors, 20/20 got their private stats |
+| `node tests/browser.mjs` | **58 / 58 checks passed, 0 console or page errors.** New checks: the day music file is served as `audio/mpeg` and decodes in the browser (about 120 s); a lunch event shows the banner and hint on the phone, with the canteen glowing (screenshots `05b-teacher-lunch-event`, `p09b-lunch-event-arrow`). An earlier run failed because the game asked for the optional `night.mp3` and got a 404 error. The server now lists which music files exist, so the game only asks for those |
 
-The 40-client simulation was not re-run after the night-time change. The last 40-client run (after the map change) passed with 0 server errors.
-
-Simulated players are scripts, **not real students or phones**. Classroom readiness is still unproven until a real-phone trial on the school Wi-Fi.
+The 40-client simulation was not re-run after these changes; the last 40-client run passed. Simulated players are scripts, **not real students or phones**.

@@ -23,6 +23,7 @@ $('packSelect').value = packStore.selectedId;
 const showPackInfo = () => { const p = packStore.packs.find((x) => x.id === $('packSelect').value); const v = p ? validatePack(p) : { ok: false, errors: [] }; $('packInfo').textContent = v.ok ? (p.description || '') : `This pack has problems: ${v.errors.slice(0, 2).join(' ')} Fix it in the editor.`; };
 $('packSelect').onchange = showPackInfo; showPackInfo();
 api('/api/info').then((info) => {
+  sound.available = info.audio || [];
   if (!$('joinBase').value) $('joinBase').value = info.joinBaseUrl || location.origin;
   $('lanHint').textContent = info.lanAddresses.length ? `This computer: ${info.lanAddresses.join(', ')}. Phones must be on the same Wi-Fi ("localhost" won't work on phones).` : 'No network address found — phones can\'t reach "localhost". Join the classroom Wi-Fi or set JOIN_BASE_URL.';
 }).catch(() => { $('joinBase').value = location.origin; });
@@ -34,6 +35,7 @@ if (saved && saved.code) {
   }).catch(() => store(HOST_KEY, null));
 }
 async function create(demo) {
+  if (!sound.available) { try { sound.available = (await api('/api/info')).audio || []; } catch { sound.available = []; } }
   $('setupErr').textContent = '';
   const p = packStore.packs.find((x) => x.id === $('packSelect').value); const v = validatePack(p);
   if (!v.ok) { $('setupErr').textContent = `Pack problems: ${v.errors.slice(0, 3).join(' ')}`; return; }
@@ -71,8 +73,8 @@ function onMessage(m) {
     case 's': snap = m; view.push(m); if (m.ph !== phase || !!m.pa !== paused) setPhase(m.ph, !!m.pa); renderTop(); renderBoard(); break;
     case 'stats': stats = m; settings = m.settings; renderStats(); if (phase === 'lobby') renderLobby(); break;
     case 'mode': settings = m.settings; renderLobby(); break;
-    case 'fx': view.fx(m); if (m.k === 'deliver') sound.play('deliver'); if (m.k === 'tag') sound.play('tag'); if (m.k === 'overtime') { banner('FINAL MINUTE — DOUBLE POINTS!'); sound.play('event'); } break;
-    case 'event': if (m.kind) { sound.play('event'); banner({ lights: 'LIGHTS OUT! 🔦', party: 'ZOMBIE DANCE PARTY! 🪩', golden: 'GOLDEN LOCKERS! ✨', rain: 'FUSE RAIN! ⚡' }[m.kind]); } break;
+    case 'fx': view.fx(m); if (m.k === 'deliver') sound.play('deliver'); if (m.k === 'sing') sound.play('sing'); if (m.k === 'tag') sound.play('tag'); if (m.k === 'overtime') { banner('FINAL MINUTE — DOUBLE POINTS!'); sound.play('event'); } break;
+    case 'event': if (m.kind) { sound.play('bell'); banner({ lunch: '🍜 LUNCH TIME!', karaoke: '🎤 KARAOKE HOUR!', garden: '🌸 QUIET TIME IN THE GARDEN', pe: '🏃 PE LESSON!', quiz: '📚 POP QUIZ!', lights: 'LIGHTS OUT! 🔦', party: 'ZOMBIE DANCE PARTY! 🪩', golden: 'GOLDEN LOCKERS! ✨', rain: 'FUSE RAIN! ⚡' }[m.kind] || 'SURPRISE!'); } break;
     case 'night':
       if (m.stage === 'start') { banner('NIGHT FALLS 🌙'); sound.play('owl'); sound.setNight(true); }
       if (m.stage === 'warn') { sound.play('owl'); }
@@ -123,6 +125,8 @@ $('cHow').onclick = () => modal(h('div', {},
     h('li', { text: 'Your ⚡ power meter drains. Answer questions to keep it full, or you get sleepy and slow.' }),
     h('li', { text: settings.teams === 0 ? 'Tagged by a zombie? You drop your fuses. Tag another player to turn back!' : 'Tagged by a zombie? You drop your fuses. Tag someone from another crew to turn back!' }),
     h('li', { text: 'Night falls twice for 30 seconds: it gets dark and zombies are faster, but correct answers give a bonus fuse.' }),
+    h('li', { text: 'School bell 🔔 = something is happening in a room: lunch in the Canteen, karaoke on the stage, quiet time in the Garden, PE in the Gym, pop quiz in English/Thai. Get there in time!' }),
+    h('li', { text: 'Stay happy 😄 (answers, rooms, deliveries): 70+ happiness gives a bonus point at the generator.' }),
     h('li', { text: 'Last minute: every fuse counts DOUBLE!' }))));
 $('cTeacher').onclick = () => {
   if (!room.view) { modal(h('p', { text: 'This game was resumed from an older version — create a new game to get a teacher phone link.' })); return; }

@@ -2,7 +2,7 @@
   "name": "suksanari-after-hours",
   "version": "2.0.0",
   "private": true,
-  "description": "Suksanari: AFTER HOURS — Night Crew. Real-time LAN multiplayer English review game (avatars, lockers, zombie tag, crew race).",
+  "description": "SnR Daywalkers (Suksanari). Real-time LAN multiplayer English review game (avatars, lockers, zombie tag, crew race).",
   "type": "module",
   "engines": { "node": ">=18" },
   "scripts": {

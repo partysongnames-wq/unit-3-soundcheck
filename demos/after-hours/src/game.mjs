@@ -1,9 +1,9 @@
-// Real-time game engine for Suksanari: AFTER HOURS — Night Crew.
+// Real-time game engine for SnR Daywalkers (Suksanari).
 // Pure logic, no sockets. The server calls tick() ~20×/s and forwards messages produced via `this.out`.
 import { randomBytes, timingSafeEqual } from 'node:crypto';
 import {
   LOCKERS, GENERATOR, SPAWNS, ZOMBIE_SPAWNS, SPEED, CREWS, INTERACT_DIST,
-  collides, move, path, dist, walkableTiles, isWalkableTile
+  collides, move, path, dist, walkableTiles, isWalkableTile, ROOM_OF, ZONES, inZone, zoneCenter, isStage
 } from '../public/js/shared/world.js';
 import { validatePack, publicQuestion } from '../public/js/shared/packs.js';
 import { cleanAvatar, randomAvatar, EMOTES } from '../public/js/shared/avatar.js';
@@ -23,7 +23,19 @@ const QUESTION_TIMEOUT_MS = 45_000;
 const LOCKER_PLAYER_COOLDOWN_MS = 9000;
 const LOOSE_FUSE_MS = 35_000;
 const MAX_CARRY = 3;
-const EVENTS = { lights: 15_000, party: 10_000, golden: 20_000, rain: 3000 };
+const EVENTS = { lunch: 25_000, karaoke: 30_000, garden: 25_000, pe: 25_000, quiz: 25_000, party: 10_000, rain: 3000, lights: 15_000, golden: 20_000 };
+const EVENT_POOL = ['lunch', 'karaoke', 'garden', 'pe', 'quiz', 'party', 'rain'];
+const EVENT_TEXT = {
+  lunch: '🍜 LUNCH TIME! Get to the CANTEEN for a snack: full power + speed!',
+  karaoke: '🎤 KARAOKE HOUR! Stand on the stage in the Karaoke room to sing points for your crew!',
+  garden: '🌸 QUIET TIME! Zombies can\'t enter the GARDEN — relax and recharge there.',
+  pe: '🏃 PE LESSON! Run into the GYM for free speed boots!',
+  quiz: '📚 POP QUIZ! Lockers in the English and Thai rooms give DOUBLE fuses!',
+  party: 'ZOMBIE DANCE PARTY! They can\'t chase you — go go go!',
+  rain: 'FUSE RAIN! Fuses are falling all over school!',
+  lights: 'LIGHTS OUT! Stay close to your crew…', golden: 'GOLDEN LOCKERS! Correct answers give DOUBLE fuses!'
+};
+const HAPPY_DECAY_PER_S = 100 / 150;
 
 export class GameError extends Error { constructor(status, code, message) { super(message); this.status = status; this.code = code; } }
 const tok = (n) => randomBytes(n).toString('hex');
@@ -89,7 +101,7 @@ export class Room {
     p.fuses = []; p.shieldUntil = 0; p.bootsUntil = 0; p.zombieUntil = 0; p.invulnUntil = 0;
     p.pending = null; p.lockerCd = new Map(); p.emote = null; p.streak = 0;
     p.stats = { answered: 0, correct: 0, delivered: 0, golden: 0, cures: 0, bestStreak: 0 };
-    p.score = 0; p.energy = 100; p.lastAnswerAt = this.gt || 0;
+    p.score = 0; p.energy = 100; p.happy = 40; p.lastAnswerAt = this.gt || 0;
     p.queue = this.shuffle(this.pack.questions.map((q) => q.id));
     if (respawn) { const [x, y] = this.spawnPoint(); p.x = x; p.y = y; }
   }
@@ -214,12 +226,13 @@ export class Room {
     const st = this.qstats.get(q.id) || { n: 0, c: 0 }; st.n++; if (correct) st.c++; this.qstats.set(q.id, st);
     p.stats.answered++; p.lastAnswerAt = this.gt;
     p.energy = Math.min(100, p.energy + (correct ? 45 : 25));
+    if (correct) p.happy = Math.min(100, p.happy + 8);
     p.lockerCd.set(lockerId, this.gt + LOCKER_PLAYER_COOLDOWN_MS);
     p.invulnUntil = Math.max(p.invulnUntil, this.gt + 1500);
     let loot = null;
     if (correct) {
       p.stats.correct++; p.streak++; p.stats.bestStreak = Math.max(p.stats.bestStreak, p.streak);
-      loot = this.rollLoot(p);
+      this.lastLocker = lockerId; loot = this.rollLoot(p); this.lastLocker = undefined;
       if (p.streak > 0 && p.streak % 3 === 0 && p.fuses.length < MAX_CARRY) { p.fuses.push(1); loot.combo = true; }
     } else {
       p.streak = 0;
@@ -232,7 +245,9 @@ export class Room {
   }
 
   rollLoot(p) {
-    const golden = this.event && this.event.kind === 'golden';
+    const lr = this.lastLocker !== undefined ? LOCKERS[this.lastLocker] : null;
+    const quizRoom = lr && this.event && this.event.kind === 'quiz' && ['ENG', 'THAI'].includes(ROOM_OF[lr.ty][lr.tx]);
+    const golden = !!((this.event && this.event.kind === 'golden') || quizRoom);
     const room = MAX_CARRY - p.fuses.length;
     const table = [];
     if (room > 0) table.push(['fuse', 50], ['gold', 9]);
@@ -283,8 +298,8 @@ export class Room {
   startPlay() {
     this.phase = 'play';
     this.endsAt = this.gt + this.settings.minutes * 60_000;
-    this.nextEventAt = this.gt + 60_000;
-    this.eventOrder = this.shuffle(['lights', 'party', 'golden', 'rain']);
+    this.nextEventAt = this.gt + 35_000;
+    this.eventOrder = this.shuffle([...EVENT_POOL]);
     const n = Math.min(12, 4 + Math.ceil(this.players.size / 5));
     this.zombies = [];
     for (let i = 0; i < n; i++) {
@@ -345,6 +360,8 @@ export class Room {
     this.tickTags();
     this.tickItems();
     this.tickEvents();
+    this.tickRooms(dt);
+    for (const p of this.players.values()) p.happy = Math.max(0, (p.happy ?? 40) - HAPPY_DECAY_PER_S * dt);
     if (!this.overtime && this.endsAt - this.gt <= OVERTIME_MS) { this.overtime = true; this.pushFeed('FINAL MINUTE — every fuse counts DOUBLE!', 'big'); this.emitAll({ t: 'fx', k: 'overtime' }); }
     if (this.gt >= this.endsAt) this.finish();
   }
@@ -374,6 +391,7 @@ export class Room {
       const d = dist(z.x, z.y, tx, ty) || 1; const step = Math.min(d, speed * dt);
       const [nx, ny] = move(z.x, z.y, (tx - z.x) / d * step, (ty - z.y) / d * step, 0.28);
       if (Math.abs(nx - z.x) > 0.001) z.dir = nx > z.x ? 1 : -1;
+      if (this.event && this.event.kind === 'garden' && inZone('garden', nx, ny)) { z.route = []; z.repathAt = 0; continue; }
       z.x = nx; z.y = ny;
     }
   }
@@ -434,12 +452,49 @@ export class Room {
     this.loose = this.loose.filter((f) => !f.taken);
     for (const p of ps) {
       if (!p.fuses.length || this.isZombie(p) || dist(p.x, p.y, GENERATOR.x, GENERATOR.y) > GENERATOR.r) continue;
-      const pts = p.fuses.reduce((s, v) => s + v, 0) * (this.overtime ? 2 : 1);
+      const happyBonus = p.happy >= 70 ? 1 : 0;
+      const pts = p.fuses.reduce((s, v) => s + v, 0) * (this.overtime ? 2 : 1) + happyBonus;
+      p.happy = Math.min(100, p.happy + 5);
       if (this.solo) p.score += pts; else this.scores[p.crew] += pts;
       p.stats.delivered += pts; p.fuses = [];
       this.emitAll({ t: 'fx', k: 'deliver', n: p.num, crew: p.crew, pts });
       this.pushFeed(this.solo ? `${p.callsign} powered up +${pts}!` : `${p.callsign} powered up +${pts} for Crew ${CREWS[p.crew].name}!`, 'good', p.crew);
       if (this.settings.goal && this.scoreOf(p) >= this.settings.goal && this.phase === 'play') { this.pushFeed(this.solo ? `${p.callsign} reached ${this.settings.goal}!` : `Crew ${CREWS[p.crew].name} reached ${this.settings.goal}!`, 'big', p.crew); this.finish(); return; }
+    }
+  }
+
+  startEvent(kind) {
+    this.event = { kind, endsAt: this.gt + EVENTS[kind], claimed: new Set(), timers: new Map(), sung: new Map() };
+    if (kind === 'garden') for (const z of this.zombies) if (inZone('garden', z.x, z.y)) { const [x, y] = ZOMBIE_SPAWNS[z.id % ZOMBIE_SPAWNS.length]; z.x = x; z.y = y; z.route = []; }
+  }
+
+  // Timetable room rewards — "be in the right place at the right time"
+  tickRooms(dt) {
+    const ev = this.event; if (!ev) return;
+    for (const p of this.playersInWorld()) {
+      const zom = this.isZombie(p);
+      if (ev.kind === 'lunch' && !zom && !ev.claimed.has(p.id) && inZone('lunch', p.x, p.y)) {
+        ev.claimed.add(p.id); p.energy = 100; p.bootsUntil = Math.max(p.bootsUntil, this.gt + 5000); p.happy = Math.min(100, p.happy + 30);
+        this.emitAll({ t: 'fx', k: 'snack', n: p.num });
+      }
+      if (ev.kind === 'pe' && !zom && !ev.claimed.has(p.id) && inZone('pe', p.x, p.y)) {
+        const t = (ev.timers.get(p.id) || 0) + dt * 1000; ev.timers.set(p.id, t);
+        if (t >= 2000) { ev.claimed.add(p.id); p.bootsUntil = Math.max(p.bootsUntil, this.gt + 10_000); p.happy = Math.min(100, p.happy + 25); this.emitAll({ t: 'fx', k: 'pe', n: p.num }); }
+      }
+      if (ev.kind === 'karaoke' && !zom && isStage(p.x, p.y)) {
+        const t = (ev.timers.get(p.id) || 0) + dt * 1000; ev.timers.set(p.id, t);
+        const sung = ev.sung.get(p.id) || 0;
+        if (t >= 3000 && sung < 4) {
+          ev.timers.set(p.id, 0); ev.sung.set(p.id, sung + 1);
+          if (this.solo) p.score += 1; else this.scores[p.crew] += 1;
+          p.stats.delivered += 1; p.happy = Math.min(100, p.happy + 10); p.emote = { e: 'sing', at: this.now() };
+          this.emitAll({ t: 'fx', k: 'sing', n: p.num, crew: p.crew, pts: 1 });
+        }
+      }
+      if (ev.kind === 'garden' && inZone('garden', p.x, p.y)) {
+        p.happy = Math.min(100, p.happy + 6 * dt); p.energy = Math.min(100, p.energy + 4 * dt);
+        if (zom) p.zombieUntil = Math.max(this.gt, p.zombieUntil - dt * 2000); // turn back 3× faster in the garden
+      }
     }
   }
 
@@ -466,10 +521,10 @@ export class Room {
     if (this.event && this.gt >= this.event.endsAt) { this.event = null; this.emitAll({ t: 'event', kind: null }); }
     const nightSoon = this.night || (this.nights[0] !== undefined && this.nights[0] - this.gt < 20_000);
     if (!this.event && !nightSoon && this.gt >= this.nextEventAt && this.endsAt - this.gt > OVERTIME_MS + 15_000) {
-      const kind = this.eventOrder.shift() || 'rain'; if (!this.eventOrder.length) this.eventOrder = this.shuffle(['lights', 'party', 'golden', 'rain']);
-      this.event = { kind, endsAt: this.gt + EVENTS[kind] };
-      this.nextEventAt = this.gt + 55_000 + this.rng() * 25_000;
-      const label = { lights: 'LIGHTS OUT! Stay close to your crew…', party: 'ZOMBIE DANCE PARTY! They can\'t chase you — go go go!', golden: 'GOLDEN LOCKERS! Correct answers give DOUBLE fuses!', rain: 'FUSE RAIN! Fuses are falling all over school!' }[kind];
+      const kind = this.eventOrder.shift() || 'rain'; if (!this.eventOrder.length) this.eventOrder = this.shuffle([...EVENT_POOL]);
+      this.startEvent(kind);
+      this.nextEventAt = this.gt + 38_000 + this.rng() * 17_000;
+      const label = EVENT_TEXT[kind];
       this.pushFeed(label, 'event');
       this.emitAll({ t: 'event', kind, ms: EVENTS[kind] });
       if (kind === 'rain') {
@@ -488,7 +543,7 @@ export class Room {
         continue;
       }
       const lockerReady = (id) => (p.lockerCd.get(id) || 0) <= this.gt;
-      const d = think(p.brain, { x: p.x, y: p.y, fuses: lobby ? 0 : p.fuses.length, zombified: this.isZombie(p) }, { now: this.now(), zombies: this.zombies, lockerReady }, this.rng);
+      const d = think(p.brain, { x: p.x, y: p.y, fuses: lobby ? 0 : p.fuses.length, zombified: this.isZombie(p) }, { now: this.now(), zombies: this.zombies, lockerReady, eventGoal: !lobby && this.event && ZONES[this.event.kind] && p.num % 2 === 0 ? (this.event.kind === 'karaoke' ? [37.5, 15] : zoneCenter(this.event.kind)) : null }, this.rng);
       const sp = this.speedOf(p) * dt * (lobby ? 0.5 : 0.9);
       const [nx, ny] = move(p.x, p.y, d.dx * sp, d.dy * sp);
       p.moving = Math.hypot(nx - p.x, ny - p.y) > 0.001; if (Math.abs(nx - p.x) > 0.001) p.dir = nx > p.x ? 1 : -1;
@@ -515,7 +570,7 @@ export class Room {
       if (p.moving) f |= 1; if (p.dir < 0) f |= 2; if (this.isZombie(p)) f |= 4; if (p.shieldUntil > g) f |= 8;
       if (p.bootsUntil > g) f |= 16; if (p.pending) f |= 32; if (p.invulnUntil > g) f |= 64; if (p.fuses.some((v) => v >= 2)) f |= 128; if (p.energy <= 0) f |= 256;
       const em = p.emote && now - p.emote.at < 2500 ? p.emote.e : 0;
-      ps.push([p.num, Math.round(p.x * 100), Math.round(p.y * 100), f, p.fuses.length, em, p.score, Math.round(p.energy)]);
+      ps.push([p.num, Math.round(p.x * 100), Math.round(p.y * 100), f, p.fuses.length, em, p.score, Math.round(p.energy), Math.round(p.happy)]);
     }
     return {
       t: 's', ph: this.phase, pa: this.paused ? 1 : 0, rv: this.rosterVersion, md: this.settings.teams, gl: this.settings.goal,

@@ -102,3 +102,5 @@ a { color: #6a4cff; font-weight: 800; }
 .codebox { padding: 3px 10px; }
 .check-row { display: flex; gap: 10px; align-items: center; font-weight: 800; margin: 6px 0; }
 .check-row input { width: 22px; height: 22px; flex: none; }
+.setup-card .brand .b2 { font-size: 1.9em; }
+.topbar .brand.mini .b1, .topbar .brand.mini .b2 { font-size: 1.15em; }

@@ -157,4 +157,21 @@ export const CREWS = [
 ];
 
 export const INTERACT_DIST = 1.15;
+
+// ---- timetable event zones (which room each school-bell event happens in) ----
+function roomRect(id) {
+  let x0 = W, y0 = H, x1 = 0, y1 = 0;
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (ROOM_OF[y][x] === id) { x0 = Math.min(x0, x); y0 = Math.min(y0, y); x1 = Math.max(x1, x); y1 = Math.max(y1, y); }
+  return { x0: x0 + 1, y0: y0 + 1, x1: x1, y1: y1 }; // interior, half-open [x0, x1) in tile units
+}
+export const ZONES = {
+  lunch: { rects: [roomRect('CAN')], icon: '🍜', name: 'Canteen' },
+  karaoke: { rects: [roomRect('AV')], icon: '🎤', name: 'Karaoke room' },
+  garden: { rects: [{ x0: 12, y0: 20, x1: 17, y1: 27 }], icon: '🌸', name: 'Garden' },
+  pe: { rects: [roomRect('GYM')], icon: '🏃', name: 'Gym' },
+  quiz: { rects: [roomRect('ENG'), roomRect('THAI')], icon: '📚', name: 'English & Thai rooms' }
+};
+export function inZone(kind, x, y) { const z = ZONES[kind]; return !!z && z.rects.some((r) => x >= r.x0 && x < r.x1 && y >= r.y0 && y < r.y1); }
+export function zoneCenter(kind) { const r = ZONES[kind].rects[0]; return [(r.x0 + r.x1) / 2, (r.y0 + r.y1) / 2]; }
+export const isStage = (x, y) => tileAt(Math.floor(x), Math.floor(y)) === 'm';
 export const dist = (ax, ay, bx, by) => Math.hypot(ax - bx, ay - by);
