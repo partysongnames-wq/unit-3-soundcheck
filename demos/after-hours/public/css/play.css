@@ -117,3 +117,15 @@ body.play { margin: 0; min-height: 100dvh; font-family: "Trebuchet MS", "Arial R
 .acc-big b { font-size: 2em; color: #148a4c; display: block; }
 .energy .happy { background: #fff; }
 .energy .happy.glow { background: #ffe680; box-shadow: 0 0 10px #ffd23f; }
+.wb-time { height: 10px; border-radius: 6px; background: #eee8ff; border: 2px solid #2b2340; overflow: hidden; }
+.wb-time i { display: block; height: 100%; width: 100%; background: linear-gradient(90deg, #6a4cff, #ff5fa2); transition: width .2s linear; }
+.wb-slots { display: flex; gap: 6px; justify-content: center; flex-wrap: wrap; margin: 4px 0; }
+.wb-slot { width: 34px; height: 42px; border-radius: 10px; border: 3px solid #2b2340; background: #f6f2ff; display: grid; place-items: center; font-weight: 900; font-size: 1.3em; }
+.wb-slot.good { background: #c9f7dc; border-color: #2fbf71; }
+.wb-slot.bad { background: #ffd6de; border-color: #ff5d7a; }
+.wb-tiles { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin: 6px 0; }
+.wb-tile { font-family: inherit; width: 48px; height: 52px; border-radius: 12px; border: 3px solid #2b2340; background: #ffd23f; font-weight: 900; font-size: 1.35em; color: #2b2340; box-shadow: 0 4px 0 #2b2340; }
+.wb-tile:active { transform: translateY(3px); box-shadow: 0 1px 0 #2b2340; }
+.wb-tile:disabled { opacity: .25; }
+.wb-row { justify-content: center; }
+.muted { color: #6b6488; }

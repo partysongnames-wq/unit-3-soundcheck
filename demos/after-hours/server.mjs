@@ -184,6 +184,10 @@ export function createServer({ port = 8787, joinBaseUrl = '', now = Date.now, lo
           else if (m.t === 'answer') room.answer(p, { nonce: m.nonce, choice: m.c });
           else if (m.t === 'cancel') room.cancelQuestion(p);
           else if (m.t === 'emote') room.emote(p, m.e);
+          else if (m.t === 'feed') room.feedKitten(p, m.k);
+          else if (m.t === 'wb_open') room.openWordGame(p);
+          else if (m.t === 'wb_word') room.wordAnswer(p, { nonce: m.nonce, i: m.i, word: m.w });
+          else if (m.t === 'wb_close') room.endWordGame(p, 'closed');
           else if (m.t === 'avatar') room.setAvatar(p, m.a);
         }
       } catch (e) {
@@ -195,7 +199,7 @@ export function createServer({ port = 8787, joinBaseUrl = '', now = Date.now, lo
       clearTimeout(hello);
       if (c.entry) {
         c.entry.conns.delete(c);
-        if (c.role === 'player') { const p = c.entry.room.players.get(c.playerId); if (p && ![...c.entry.conns].some((o) => o.playerId === p.id)) { p.connected = false; if (p.pending) c.entry.room.cancelQuestion(p); } }
+        if (c.role === 'player') { const p = c.entry.room.players.get(c.playerId); if (p && ![...c.entry.conns].some((o) => o.playerId === p.id)) { p.connected = false; if (p.pending) c.entry.room.cancelQuestion(p); if (p.wb) c.entry.room.endWordGame(p, 'left'); } }
       }
     });
   });
@@ -218,6 +222,7 @@ export function createServer({ port = 8787, joinBaseUrl = '', now = Date.now, lo
     const p = c.playerId ? room.players.get(c.playerId) : null;
     reply({ t: 'welcome', role: c.role, code: room.code, you: p ? { n: p.num, name: p.callsign, crew: p.crew, x: p.x, y: p.y, avatar: p.avatar } : null, phase: room.phase, paused: room.paused, results: room.phase === 'results' ? (c.role === 'host' ? room.hostResults() : room.publicResults()) : null, demo: room.demo, settings: room.settings, vocab: room.pack.vocab || [] });
     if (p && p.pending) room.cancelQuestion(p);
+    if (p && p.wb) room.endWordGame(p, 'reconnect');
     if (c.role === 'host') reply(room.hostStats());
   }
 

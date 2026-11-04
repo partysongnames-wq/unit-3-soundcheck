@@ -3,8 +3,10 @@
 import { randomBytes, timingSafeEqual } from 'node:crypto';
 import {
   LOCKERS, GENERATOR, SPAWNS, ZOMBIE_SPAWNS, SPEED, CREWS, INTERACT_DIST,
-  collides, move, path, dist, walkableTiles, isWalkableTile, ROOM_OF, ZONES, inZone, zoneCenter, isStage
+  collides, move, path, dist, walkableTiles, isWalkableTile, ROOM_OF, ZONES, inZone, zoneCenter, isStage,
+  WORD_DESK, KITTEN_SPAWNS, KITTENS
 } from '../public/js/shared/world.js';
+import { STARTER_VOCAB } from '../public/js/shared/packs.js';
 import { validatePack, publicQuestion } from '../public/js/shared/packs.js';
 import { cleanAvatar, randomAvatar, EMOTES } from '../public/js/shared/avatar.js';
 import { createBrain, think } from '../public/js/shared/botbrain.js';
@@ -36,6 +38,13 @@ const EVENT_TEXT = {
   lights: 'LIGHTS OUT! Stay close to your crew…', golden: 'GOLDEN LOCKERS! Correct answers give DOUBLE fuses!'
 };
 const HAPPY_DECAY_PER_S = 100 / 150;
+const MAX_CATFOOD = 3;
+const KITTEN_NAP_MS = 30_000;
+const KITTEN_FOLLOW_MS = 25_000;
+const FEED_POINTS = 2;
+const WB_MS = 25_000;
+const WB_COOLDOWN_MS = 45_000;
+const WB_WORDS = 3;
 
 export class GameError extends Error { constructor(status, code, message) { super(message); this.status = status; this.code = code; } }
 const tok = (n) => randomBytes(n).toString('hex');
@@ -89,6 +98,7 @@ export class Room {
     this.zombies = []; this.loose = []; this.nextLooseId = 1;
     this.scores = [0, 0, 0, 0];
     this.event = null; this.nextEventAt = 0; this.eventOrder = []; this.night = null; this.nights = []; this.nightWarned = false;
+    this.kittens = KITTENS.map((k, i) => ({ id: i, ...k, x: KITTEN_SPAWNS[i][0], y: KITTEN_SPAWNS[i][1], route: [], repathAt: 0, sleepUntil: 0, follow: null, dir: 1 }));
     this.qstats = new Map(); this.feed = []; this.results = null; this.epoch = (this.epoch || 0) + 1;
     if (!initial) {
       for (const p of this.players.values()) this.resetPlayer(p, true);
@@ -101,7 +111,8 @@ export class Room {
     p.fuses = []; p.shieldUntil = 0; p.bootsUntil = 0; p.zombieUntil = 0; p.invulnUntil = 0;
     p.pending = null; p.lockerCd = new Map(); p.emote = null; p.streak = 0;
     p.stats = { answered: 0, correct: 0, delivered: 0, golden: 0, cures: 0, bestStreak: 0 };
-    p.score = 0; p.energy = 100; p.happy = 40; p.lastAnswerAt = this.gt || 0;
+    p.score = 0; p.energy = 100; p.happy = 40; p.lastAnswerAt = this.gt || 0; p.catFood = 0; p.wb = null; p.wbCd = 0;
+    p.stats.fed = 0; p.stats.words = 0;
     p.queue = this.shuffle(this.pack.questions.map((q) => q.id));
     if (respawn) { const [x, y] = this.spawnPoint(); p.x = x; p.y = y; }
   }
@@ -166,12 +177,13 @@ export class Room {
 
   speedOf(p) { if (this.isZombie(p)) return SPEED.zombified; if (p.bootsUntil > this.gt) return SPEED.boots; if (p.energy <= 0) return SPEED.sleepy; return SPEED.player; }
   isZombie(p) { return p.zombieUntil > this.gt; }
+  busy(p) { return !!(p.pending || p.wb); }
 
   /** Client-reported movement, validated against speed and walls. Returns a correction or null. */
   updatePos(p, { x, y, dir, moving }) {
     p.lastSeen = this.now();
     if (!Number.isFinite(x) || !Number.isFinite(y)) return { x: p.x, y: p.y };
-    if (p.pending || this.paused || this.phase === 'countdown' || this.phase === 'results') {
+    if (this.busy(p) || this.paused || this.phase === 'countdown' || this.phase === 'results') {
       if (dist(x, y, p.x, p.y) > 0.05) return { x: p.x, y: p.y }; return null;
     }
     const t = this.now(); const dt = Math.min(0.6, Math.max(0.03, (t - p.lastPosAt) / 1000));
@@ -194,7 +206,7 @@ export class Room {
     if (this.phase !== 'play') throw new GameError(409, 'wrong_phase', this.phase === 'lobby' ? 'Lockers open when the game starts!' : 'Lockers are closed right now.');
     if (this.paused) throw new GameError(409, 'paused', 'The game is paused.');
     if (this.isZombie(p)) throw new GameError(409, 'zombified', 'Zombies can\'t open lockers — tag someone or wait it out!');
-    if (p.pending) throw new GameError(409, 'already_open', 'You already have a locker open.');
+    if (this.busy(p)) throw new GameError(409, 'already_open', 'You already have a locker open.');
     const l = LOCKERS[lockerId];
     if (!l) throw new GameError(400, 'bad_locker', 'No such locker.');
     if (dist(p.x, p.y, l.x, l.y) > INTERACT_DIST + 0.25) throw new GameError(409, 'too_far', 'Walk up to the locker first.');
@@ -252,6 +264,7 @@ export class Room {
     const table = [];
     if (room > 0) table.push(['fuse', 50], ['gold', 9]);
     table.push(['boots', 14], ['shield', 14], ['zap', 13]);
+    if (p.catFood < MAX_CATFOOD) table.push(['catfood', 14]);
     let r = this.rng() * table.reduce((s, x) => s + x[1], 0); let item = table[0][0];
     for (const [k, w] of table) { if ((r -= w) <= 0) { item = k; break; } }
     const loot = { item, golden };
@@ -259,6 +272,7 @@ export class Room {
     if (item === 'fuse') { p.fuses.push(golden ? 2 : 1); }
     else if (item === 'gold') { p.fuses.push(golden ? 4 : 2); p.stats.golden++; }
     else if (item === 'boots') p.bootsUntil = this.gt + BOOTS_MS;
+    else if (item === 'catfood') p.catFood = Math.min(MAX_CATFOOD, p.catFood + 1);
     else if (item === 'shield') p.shieldUntil = this.gt + SHIELD_MS;
     else if (item === 'zap') {
       let hit = 0; for (const z of this.zombies) if (dist(z.x, z.y, p.x, p.y) < 6) { z.stunUntil = this.gt + 5000; hit++; }
@@ -316,7 +330,7 @@ export class Room {
 
   finish() {
     this.phase = 'results'; this.paused = false;
-    for (const p of this.players.values()) if (p.pending) p.pending = null;
+    for (const p of this.players.values()) { if (p.pending) p.pending = null; p.wb = null; }
     const rank = (arr) => { let place = 0, last = null; arr.forEach((c, i) => { if (c.score !== last) { place = i + 1; last = c.score; } c.place = place; }); return arr; };
     const order = this.solo ? [] : rank(this.crewPool().map((c) => ({ crew: c.id, score: this.scores[c.id], members: this.crewSize(c.id) })).filter((c) => c.members > 0).sort((a, b) => b.score - a.score));
     const solo = this.solo ? rank([...this.players.values()].map((p) => ({ n: p.num, name: p.callsign, score: p.score, crew: p.crew })).sort((a, b) => b.score - a.score)) : [];
@@ -341,6 +355,8 @@ export class Room {
     if (s.delivered >= 5) b.push({ id: 'power', name: 'Power Runner', icon: '⚡' });
     if (s.golden >= 1) b.push({ id: 'gold', name: 'Golden Find', icon: '🌟' });
     if (s.cures >= 1) b.push({ id: 'tag', name: 'Tag Master', icon: '🧟' });
+    if (s.fed >= 1) b.push({ id: 'cat', name: 'Cat Friend', icon: '🐱' });
+    if (s.words >= 3) b.push({ id: 'words', name: 'Word Wizard', icon: '📝' });
     if (!b.length && s.answered >= 1) b.push({ id: 'brave', name: 'Brave Explorer', icon: '🔦' });
     return b;
   }
@@ -355,12 +371,14 @@ export class Room {
     // questions timing out
     for (const p of this.players.values()) if (p.pending && this.gt - p.pending.openedAt > QUESTION_TIMEOUT_MS) { this.cancelQuestion(p); this.emitTo(p, { t: 'qclose', reason: 'timeout' }); }
     this.tickBots(dtMs, false);
-    for (const p of this.players.values()) if (!p.pending && this.online(p)) { const was = p.energy; p.energy = Math.max(0, p.energy - ENERGY_DRAIN_PER_S * dt); if (was > 0 && p.energy === 0) this.emitTo(p, { t: 'sleepy' }); }
+    for (const p of this.players.values()) if (!this.busy(p) && this.online(p)) { const was = p.energy; p.energy = Math.max(0, p.energy - ENERGY_DRAIN_PER_S * dt); if (was > 0 && p.energy === 0) this.emitTo(p, { t: 'sleepy' }); }
     this.tickZombies(dt);
     this.tickTags();
     this.tickItems();
     this.tickEvents();
     this.tickRooms(dt);
+    this.tickKittens(dt);
+    for (const p of this.players.values()) if (p.wb && this.gt >= p.wb.endsAt) this.endWordGame(p, 'time');
     for (const p of this.players.values()) p.happy = Math.max(0, (p.happy ?? 40) - HAPPY_DECAY_PER_S * dt);
     if (!this.overtime && this.endsAt - this.gt <= OVERTIME_MS) { this.overtime = true; this.pushFeed('FINAL MINUTE — every fuse counts DOUBLE!', 'big'); this.emitAll({ t: 'fx', k: 'overtime' }); }
     if (this.gt >= this.endsAt) this.finish();
@@ -370,7 +388,7 @@ export class Room {
 
   tickZombies(dt) {
     const party = this.event && this.event.kind === 'party';
-    const targets = this.playersInWorld().filter((p) => !this.isZombie(p) && !p.pending);
+    const targets = this.playersInWorld().filter((p) => !this.isZombie(p) && !this.busy(p));
     for (const z of this.zombies) {
       if (party || z.stunUntil > this.gt) { z.chasing = false; continue; }
       let best = null, bd = this.night ? 8.5 : 6.5;
@@ -415,7 +433,7 @@ export class Room {
 
   tickTags() {
     const ps = this.playersInWorld();
-    const canBeTagged = (p) => !this.isZombie(p) && !p.pending && p.invulnUntil <= this.gt;
+    const canBeTagged = (p) => !this.isZombie(p) && !this.busy(p) && p.invulnUntil <= this.gt;
     for (const z of this.zombies) {
       if (z.stunUntil > this.gt || (this.event && this.event.kind === 'party')) continue;
       for (const p of ps) {
@@ -474,7 +492,7 @@ export class Room {
     for (const p of this.playersInWorld()) {
       const zom = this.isZombie(p);
       if (ev.kind === 'lunch' && !zom && !ev.claimed.has(p.id) && inZone('lunch', p.x, p.y)) {
-        ev.claimed.add(p.id); p.energy = 100; p.bootsUntil = Math.max(p.bootsUntil, this.gt + 5000); p.happy = Math.min(100, p.happy + 30);
+        ev.claimed.add(p.id); p.catFood = Math.min(MAX_CATFOOD, p.catFood + 1); p.energy = 100; p.bootsUntil = Math.max(p.bootsUntil, this.gt + 5000); p.happy = Math.min(100, p.happy + 30);
         this.emitAll({ t: 'fx', k: 'snack', n: p.num });
       }
       if (ev.kind === 'pe' && !zom && !ev.claimed.has(p.id) && inZone('pe', p.x, p.y)) {
@@ -496,6 +514,92 @@ export class Room {
         if (zom) p.zombieUntil = Math.max(this.gt, p.zombieUntil - dt * 2000); // turn back 3× faster in the garden
       }
     }
+  }
+
+  // ---------------- school kittens ----------------
+  feedKitten(p, kid) {
+    this.touch();
+    if (this.phase !== 'play' || this.paused) throw new GameError(409, 'wrong_phase', 'You can feed kittens during the game.');
+    if (this.isZombie(p)) throw new GameError(409, 'zombified', 'Kittens are scared of zombies! Turn back first.');
+    const k = this.kittens[Number(kid)]; if (!k) throw new GameError(400, 'bad_kitten', 'No such kitten.');
+    if (dist(p.x, p.y, k.x, k.y) > 1.6) throw new GameError(409, 'too_far', 'Get closer to the kitten.');
+    if (p.catFood <= 0) throw new GameError(409, 'no_food', 'You need cat food 🐟 — get it from lockers or at lunch time.');
+    if (k.sleepUntil > this.gt) throw new GameError(409, 'napping', `${k.name} is full and napping. Try another kitten!`);
+    p.catFood--; k.sleepUntil = this.gt + KITTEN_NAP_MS; k.follow = { id: p.id, num: p.num, until: this.gt + KITTEN_FOLLOW_MS };
+    if (this.solo) p.score += FEED_POINTS; else this.scores[p.crew] += FEED_POINTS;
+    p.stats.delivered += FEED_POINTS; p.stats.fed++; p.happy = Math.min(100, p.happy + 20);
+    this.emitAll({ t: 'fx', k: 'purr', n: p.num, crew: p.crew, pts: FEED_POINTS, kitten: k.id });
+    this.pushFeed(`${p.callsign} fed ${k.name} the kitten 🐱 +${FEED_POINTS}!`, 'good', p.crew);
+    return { ok: true };
+  }
+
+  tickKittens(dt) {
+    for (const k of this.kittens) {
+      let tx = null, ty = null, speed = 1.0;
+      if (k.follow) {
+        const p = this.players.get(k.follow.id);
+        if (!p || this.gt > k.follow.until || !this.online(p)) k.follow = null;
+        else { const d = dist(k.x, k.y, p.x, p.y); if (d > 0.9) { tx = p.x - 0.5 * (p.dir || 1); ty = p.y + 0.2; speed = Math.min(6, 2 + d * 1.5); } }
+      }
+      if (!k.follow && k.sleepUntil <= this.gt) {
+        if (!k.route.length && this.gt >= k.repathAt) {
+          const home = KITTEN_SPAWNS[k.id];
+          const gx = home[0] + (this.rng() - 0.5) * 6, gy = home[1] + (this.rng() - 0.5) * 5;
+          if (isWalkableTile(Math.floor(gx), Math.floor(gy))) { const r = path(k.x, k.y, gx, gy, 300); k.route = r ? r.slice(0, 10).map(([x, y]) => [x + 0.5, y + 0.5]) : []; }
+          k.repathAt = this.gt + 2500 + this.rng() * 4000;
+        }
+        if (k.route.length) { [tx, ty] = k.route[0]; if (dist(k.x, k.y, tx, ty) < 0.12) { k.route.shift(); tx = null; } }
+      }
+      if (tx === null) continue;
+      const d = dist(k.x, k.y, tx, ty) || 1; const st = Math.min(d, speed * dt);
+      const [nx, ny] = move(k.x, k.y, (tx - k.x) / d * st, (ty - k.y) / d * st, 0.2);
+      if (Math.abs(nx - k.x) > 0.001) k.dir = nx > k.x ? 1 : -1;
+      k.x = nx; k.y = ny;
+    }
+  }
+
+  // ---------------- Word Builder (English teacher's desk) ----------------
+  wordList() {
+    const fromPack = (this.pack.vocab || []).filter((v) => /^[a-z]{3,12}$/i.test(v.word));
+    return fromPack.length >= 3 ? fromPack : STARTER_VOCAB;
+  }
+  openWordGame(p) {
+    this.touch();
+    if (this.phase !== 'play' || this.paused) throw new GameError(409, 'wrong_phase', 'The word game opens during the game.');
+    if (this.isZombie(p)) throw new GameError(409, 'zombified', 'Zombies can\'t spell! Turn back first.');
+    if (this.busy(p)) throw new GameError(409, 'already_open', 'Finish what you\'re doing first.');
+    if (dist(p.x, p.y, WORD_DESK.x, WORD_DESK.y) > INTERACT_DIST + 0.25) throw new GameError(409, 'too_far', 'Walk up to the teacher\'s desk first.');
+    if (p.wbCd > this.gt) throw new GameError(409, 'cooldown', `The word game is resting. Come back in ${Math.ceil((p.wbCd - this.gt) / 1000)} s!`);
+    const words = this.shuffle(this.wordList().slice()).slice(0, WB_WORDS);
+    const scramble = (w) => { const a = w.toLowerCase().split(''); for (let i = 0; i < 8; i++) { this.shuffle(a); if (a.join('') !== w.toLowerCase()) break; } return a; };
+    p.wb = { nonce: tok(6), words: words.map((v) => v.word.toLowerCase()), done: new Map(), endsAt: this.gt + WB_MS, double: !!(this.event && this.event.kind === 'quiz'), points: 0 };
+    p.moving = false;
+    const msg = { t: 'wb', nonce: p.wb.nonce, ms: WB_MS, double: p.wb.double, items: words.map((v) => ({ clue: v.clue, letters: scramble(v.word), len: v.word.length })) };
+    this.emitTo(p, msg);
+    return msg;
+  }
+  wordAnswer(p, { nonce, i, word }) {
+    if (!p.wb || typeof nonce !== 'string' || !safeEqual(nonce, p.wb.nonce)) throw new GameError(409, 'stale', 'That word game has finished.');
+    const idx = Number(i); if (!Number.isInteger(idx) || idx < 0 || idx >= p.wb.words.length) throw new GameError(400, 'bad_word', 'No such word.');
+    if (p.wb.done.has(idx)) throw new GameError(409, 'already_answered', 'You already answered that word.');
+    const guess = typeof word === 'string' ? word.trim().toLowerCase().slice(0, 20) : '';
+    const answer = p.wb.words[idx]; const ok = guess === answer;
+    p.wb.done.set(idx, ok);
+    if (ok) {
+      const pts = p.wb.double ? 2 : 1; p.wb.points += pts; p.stats.words++;
+      if (this.solo) p.score += pts; else this.scores[p.crew] += pts;
+      p.stats.delivered += pts; p.happy = Math.min(100, p.happy + 6); p.energy = Math.min(100, p.energy + 10);
+    }
+    const res = { t: 'wb_res', i: idx, ok, answer };
+    this.emitTo(p, res);
+    if (p.wb.done.size === p.wb.words.length) this.endWordGame(p, 'done');
+    return res;
+  }
+  endWordGame(p, reason) {
+    if (!p.wb) return;
+    const pts = p.wb.points; p.wb = null; p.wbCd = this.gt + WB_COOLDOWN_MS; p.invulnUntil = Math.max(p.invulnUntil, this.gt + 1500);
+    this.emitTo(p, { t: 'wb_end', reason, points: pts, cooldown: WB_COOLDOWN_MS });
+    if (pts) { this.emitAll({ t: 'fx', k: 'words', n: p.num, crew: p.crew, pts }); this.pushFeed(`${p.callsign} spelled words for +${pts} 📝`, 'good', p.crew); }
   }
 
   tickNight() {
@@ -551,6 +655,7 @@ export class Room {
       if (!lobby && d.atLocker !== null && !this.isZombie(p)) {
         try { this.openLocker(p, d.atLocker); p.answerAt = this.gt + 2500 + this.rng() * 4000; } catch { /* cooldown etc. */ }
       }
+      if (!lobby && p.catFood > 0) for (const k of this.kittens) if (k.sleepUntil <= this.gt && dist(p.x, p.y, k.x, k.y) < 1.4) { try { this.feedKitten(p, k.id); } catch { /* not now */ } break; }
       if (lobby && this.rng() < 0.002) p.emote = { e: EMOTES[Math.floor(this.rng() * EMOTES.length)], at: this.now() };
     }
   }
@@ -568,15 +673,16 @@ export class Room {
       if (!this.online(p)) continue;
       let f = 0;
       if (p.moving) f |= 1; if (p.dir < 0) f |= 2; if (this.isZombie(p)) f |= 4; if (p.shieldUntil > g) f |= 8;
-      if (p.bootsUntil > g) f |= 16; if (p.pending) f |= 32; if (p.invulnUntil > g) f |= 64; if (p.fuses.some((v) => v >= 2)) f |= 128; if (p.energy <= 0) f |= 256;
+      if (p.bootsUntil > g) f |= 16; if (this.busy(p)) f |= 32; if (p.invulnUntil > g) f |= 64; if (p.fuses.some((v) => v >= 2)) f |= 128; if (p.energy <= 0) f |= 256;
       const em = p.emote && now - p.emote.at < 2500 ? p.emote.e : 0;
-      ps.push([p.num, Math.round(p.x * 100), Math.round(p.y * 100), f, p.fuses.length, em, p.score, Math.round(p.energy), Math.round(p.happy)]);
+      ps.push([p.num, Math.round(p.x * 100), Math.round(p.y * 100), f, p.fuses.length, em, p.score, Math.round(p.energy), Math.round(p.happy), p.catFood]);
     }
     return {
       t: 's', ph: this.phase, pa: this.paused ? 1 : 0, rv: this.rosterVersion, md: this.settings.teams, gl: this.settings.goal,
       tl: this.phase === 'play' ? Math.max(0, this.endsAt - g) : this.phase === 'countdown' ? Math.max(0, this.countdownEnds - g) : 0,
       ot: this.overtime ? 1 : 0, nt: this.night ? Math.max(0, this.night.endsAt - g) : 0, ev: this.event ? [this.event.kind, Math.max(0, this.event.endsAt - g)] : 0,
       sc: this.scores, p: ps,
+      k: this.kittens.map((k) => [Math.round(k.x * 100), Math.round(k.y * 100), (k.sleepUntil > g ? 1 : 0) | (k.follow ? 2 : 0) | (k.dir < 0 ? 4 : 0), k.follow ? k.follow.num : 0]),
       z: this.zombies.map((z) => [Math.round(z.x * 100), Math.round(z.y * 100), (z.chasing ? 1 : 0) | (z.stunUntil > g ? 2 : 0) | (z.dir < 0 ? 4 : 0)]),
       f: this.loose.map((f) => [f.id, Math.round(f.x * 100), Math.round(f.y * 100), f.v])
     };
@@ -596,7 +702,7 @@ Room.prototype.teacherView = function teacherView() {
     name: p.callsign, crew: p.crew, online: this.online(p), bot: p.bot,
     answered: p.stats.answered, correct: p.stats.correct, delivered: p.stats.delivered,
     sinceAnswerS: this.phase === 'play' ? Math.round((this.gt - p.lastAnswerAt) / 1000) : null,
-    status: !this.online(p) ? 'offline' : p.pending ? 'answering' : this.isZombie(p) ? 'zombie' : p.energy <= 0 ? 'sleepy' : 'exploring'
+    status: !this.online(p) ? 'offline' : p.pending ? 'answering' : p.wb ? 'word game' : this.isZombie(p) ? 'zombie' : p.energy <= 0 ? 'sleepy' : 'exploring'
   }));
   list.sort((a, b) => (b.sinceAnswerS ?? 0) - (a.sinceAnswerS ?? 0) || a.answered - b.answered);
   let n = 0, c = 0; for (const s of this.qstats.values()) { n += s.n; c += s.c; }

@@ -1,7 +1,7 @@
 // World view: camera, cached static map chunks, interpolated players/zombies, effects and event overlays.
-import { W, H, LOCKERS, GENERATOR, CREWS, LAMPS, ROOM_OF, ZONES } from './shared/world.js';
+import { W, H, LOCKERS, GENERATOR, CREWS, LAMPS, ROOM_OF, ZONES, WORD_DESK, KITTENS } from './shared/world.js';
 import { EMOTE_ICON } from './shared/avatar.js';
-import { renderStatic, drawLocker, drawGenerator, drawFuse, drawAvatar, drawZombie, outlinedText, star, rr, INK, TAU } from './art.js';
+import { renderStatic, drawLocker, drawGenerator, drawFuse, drawAvatar, drawZombie, drawKitten, drawDeskBubble, outlinedText, star, rr, INK, TAU } from './art.js';
 
 const CH = 7; // chunk size in tiles
 const lerp = (a, b, k) => a + (b - a) * k;
@@ -53,6 +53,8 @@ export class WorldView {
     if (m.k === 'block' && pos) { this.rings.push({ x: pos[0], y: pos[1] - 0.5, life: 1, col: '#7fe0ff', max: 1.4 }); this.text(pos[0], pos[1] - 1.7, 'BLOCKED!', '#7fe0ff'); }
     if (m.k === 'zap') { this.rings.push({ x: m.x, y: m.y - 0.4, life: 1, col: '#ffe14d', max: 6 }); }
     if (m.k === 'pickup' && pos) { this.text(pos[0], pos[1] - 1.6, '+FUSE', '#ffd23f'); }
+    if (m.k === 'purr' && pos) { this.burst(pos[0], pos[1] - 0.6, 14, ['#ff5fa2', '#ffc0dc', '#ffffff'], 'spark'); this.text(pos[0], pos[1] - 1.8, `purr ❤️ +${m.pts}`, '#ff5fa2'); }
+    if (m.k === 'words' && pos) { this.burst(pos[0], pos[1] - 0.8, 16, ['#6a4cff', '#ffd23f', '#ffffff'], 'spark'); this.text(pos[0], pos[1] - 1.8, `📝 +${m.pts}`, '#6a4cff'); }
     if (m.k === 'snack' && pos) { this.burst(pos[0], pos[1] - 0.8, 12, ['#ffd23f', '#ff9f1c', '#ffffff'], 'spark'); this.text(pos[0], pos[1] - 1.7, 'YUM! 🍜', '#ff9f1c'); }
     if (m.k === 'pe' && pos) { this.burst(pos[0], pos[1] - 0.6, 12, ['#7fe0ff', '#ffffff'], 'spark'); this.text(pos[0], pos[1] - 1.7, 'PE BOOTS! 👟', '#7fe0ff'); }
     if (m.k === 'sing' && pos) { this.burst(pos[0], pos[1] - 1, 8, ['#ff5fa2', '#ffd23f', '#2ec4ff'], 'spark'); this.text(pos[0], pos[1] - 1.8, `♪ +${m.pts}`, crewCol); }
@@ -68,7 +70,7 @@ export class WorldView {
 
   // ---------------- interpolation ----------------
   interp() {
-    const out = { players: new Map(), zombies: [], fuses: [] };
+    const out = { players: new Map(), zombies: [], fuses: [], kittens: [] };
     const n = this.snaps.length; if (!n) return out;
     const rt = performance.now() - 110;
     let a = this.snaps[n - 1], b = a, k = 1;
@@ -81,6 +83,7 @@ export class WorldView {
     }
     out.zombies = b.z.map((z, i) => { const q = a.z[i] || z; return { x: lerp(q[0], z[0], k) / 100, y: lerp(q[1], z[1], k) / 100, f: z[2], i }; });
     out.fuses = b.f.map((f) => ({ id: f[0], x: f[1] / 100, y: f[2] / 100, v: f[3] }));
+    out.kittens = (b.k || []).map((kk, i) => { const q = (a.k || [])[i] || kk; const x = lerp(q[0], kk[0], k) / 100, y = lerp(q[1], kk[1], k) / 100; return { i, x, y, f: kk[2], moving: Math.hypot(kk[0] - q[0], kk[1] - q[1]) > 0.5, follow: kk[3] }; });
     return out;
   }
 
@@ -132,6 +135,9 @@ export class WorldView {
     const total = latest ? latest.sc.reduce((a, b) => a + b, 0) : 0;
     this.genFlash = Math.max(0, this.genFlash - dt * 1.5);
     ents.push({ y: GENERATOR.y + 1, draw: () => drawGenerator(c, S, this.t, total, this.genFlash) });
+    const deskState = !playing ? 'sleep' : (this.mode === 'phone' && (this.myCooldown.get('desk') || 0) > performance.now()) ? 'cooldown' : (this.event === 'quiz' ? 'double' : 'ready');
+    ents.push({ y: WORD_DESK.ty + 1, draw: () => drawDeskBubble(c, WORD_DESK.x * S, WORD_DESK.y * S, S, deskState, this.t) });
+    for (const kt of st.kittens) ents.push({ y: kt.y, draw: () => drawKitten(c, kt.x * S, kt.y * S + S * 0.2, S, { coat: KITTENS[kt.i].coat, t: this.reduced ? 0 : this.t, dir: kt.f & 4 ? -1 : 1, sleep: (kt.f & 1) && !(kt.f & 2), moving: !this.reduced && kt.moving, happy: kt.f & 2, heart: kt.f & 2, seed: kt.i, name: this.mode === 'phone' || this.mode === 'host' ? KITTENS[kt.i].name : null, scale: this.mode === 'phone' ? 1.35 : 1.6 }) });
     for (const f of st.fuses) ents.push({ y: f.y, draw: () => drawFuse(c, f.x * S, f.y * S - S * 0.3, S * 0.9, f.v, this.t) });
     const party = this.event === 'party';
     for (const z of st.zombies) ents.push({ y: z.y, draw: () => drawZombie(c, z.x * S, z.y * S + S * 0.25, S, { t: this.reduced ? 0 : this.t, seed: z.i, dir: z.f & 4 ? -1 : 1, chasing: z.f & 1, stun: z.f & 2, party, scale: this.mode === 'phone' ? 1 : 1.25 }) });

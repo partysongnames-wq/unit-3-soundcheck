@@ -21,6 +21,16 @@ A real-time, Roblox-style classroom game for English review. Every student makes
   | 📚 Pop quiz | English and Thai rooms | Those rooms' lockers give double fuses |
 
   The zombie dance party and fuse rain still happen sometimes too.
+- **🐱 School kittens:** Mango (ginger), Nori (black), Mochi (white) and Tiger (tabby) wander the garden, canteen, car park and road-side garden.
+  - Get **cat food 🐟** as loot from correct locker answers, or at 🍜 lunch time (up to 3).
+  - Walk up to a kitten and tap **FEED**: **+2 points** for your crew (or yourself in Solo), +20 happiness, and the kitten **follows you** for 25 seconds with hearts.
+  - Each kitten naps for 30 seconds after eating, so nobody can farm one cat.
+  - Zombies can't feed kittens. There's a "Cat Friend" badge.
+- **📝 Word Builder (English room):** the English teacher's desk has a glowing "ABC" bubble. Tap **WORDS** for a 25-second challenge.
+  - You get 3 clues from the pack's **key vocabulary** list and tap the scrambled letters (or type them) to spell each word.
+  - **+1 point per correct word**, or +2 during a 📚 Pop quiz bell. Wrong answers show the right spelling.
+  - Then there's a 45-second cooldown, so lockers stay the main loop. You're safe from zombies while spelling, and there's a "Word Wizard" badge.
+  - If a pack has fewer than 3 usable vocabulary words, the starter words are used.
 - **😊 Happiness:** correct answers, room rewards and deliveries make you happier, and happiness slowly fades. At 70 or more (😄), every delivery to the generator gets **+1 bonus point**.
 - **Helpers:** 🧭 auto-walk takes a student to the nearest locker (or the generator), and a private 📋 teacher phone view shows who is and isn't answering.
 - **Our school's layout:** the map follows the real Suksanari campus in a cartoon way (see [The map](#the-map)).
@@ -242,12 +252,12 @@ Movement is predicted on the phone so it feels instant, and the server validates
 
 ## Latest results
 
-All results are from 2026-11-04, after the rename to SnR Daywalkers, the school-bell room events, happiness and music. They were run on a Linux container with Node 22.23 and headless Chromium, and are automated runs only.
+All results are from 2026-11-04, after adding the kittens and Word Builder. They were run on a Linux container with Node 22.23 and headless Chromium, and are automated runs only.
 
 | Suite | Result |
 |---|---|
-| `npm test` | **29 / 29 passed.** New tests cover: lunch in the canteen (full power and speed, once per lunch); PE in the gym (boots after 2 seconds inside); karaoke on the stage (+1 every 3 seconds, at most 4 per player); the garden keeping zombies out and tagged players recovering faster; pop-quiz lockers giving double fuses; happiness rising, decaying, appearing in snapshots, and giving +1 at the generator at 70 or more. The earlier tests for night time, modes, the power meter, the teacher view, security and the map also still pass |
-| `node tests/sim.mjs 20` | **PASS.** 20 simulated clients in a 2-minute game with room events and nights. 138 answers, 0 server errors, 20/20 got their private stats |
-| `node tests/browser.mjs` | **58 / 58 checks passed, 0 console or page errors.** New checks: the day music file is served as `audio/mpeg` and decodes in the browser (about 120 s); a lunch event shows the banner and hint on the phone, with the canteen glowing (screenshots `05b-teacher-lunch-event`, `p09b-lunch-event-arrow`). An earlier run failed because the game asked for the optional `night.mp3` and got a 404 error. The server now lists which music files exist, so the game only asks for those |
+| `npm test` | **31 / 31 passed.** New tests cover:<br>• Kittens: food required; +2 crew points; napping after eating and following the feeder; too far, wrong-kitten and zombie checks refused; cat food dropping from lockers.<br>• Word Builder: must be at the desk; 3 scrambled words, never sent unscrambled; case-insensitive spelling; stale and duplicate answers rejected; the right spelling shown; 45-second cooldown; 25-second time-out.<br>All earlier tests still pass |
+| `node tests/sim.mjs 20` | **PASS.** 20 simulated clients, 2-minute game. 121 answers, 0 server errors, 20/20 got their private stats |
+| `node tests/browser.mjs` | **65 / 65 checks passed, 0 console or page errors**, in two runs. New checks:<br>• Word Builder: the WORDS button at the teacher's desk; tiles and a clue appear; typing all 3 words gives "+3 points".<br>• Kittens: a FEED button appears next to a kitten; feeding gives +2 crew points and the kitten follows.<br>Both music tracks decode. Screenshots: `p14-word-builder`, `p15-word-builder-done`, `p16-kitten`, `p17-kitten-follows` |
 
-The 40-client simulation was not re-run after these changes; the last 40-client run passed. Simulated players are scripts, **not real students or phones**.
+The 40-client simulation was not re-run after these changes. Simulated players are scripts, **not real students or phones**.

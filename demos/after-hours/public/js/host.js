@@ -73,7 +73,7 @@ function onMessage(m) {
     case 's': snap = m; view.push(m); if (m.ph !== phase || !!m.pa !== paused) setPhase(m.ph, !!m.pa); renderTop(); renderBoard(); break;
     case 'stats': stats = m; settings = m.settings; renderStats(); if (phase === 'lobby') renderLobby(); break;
     case 'mode': settings = m.settings; renderLobby(); break;
-    case 'fx': view.fx(m); if (m.k === 'deliver') sound.play('deliver'); if (m.k === 'sing') sound.play('sing'); if (m.k === 'tag') sound.play('tag'); if (m.k === 'overtime') { banner('FINAL MINUTE — DOUBLE POINTS!'); sound.play('event'); } break;
+    case 'fx': view.fx(m); if (m.k === 'deliver') sound.play('deliver'); if (m.k === 'sing') sound.play('sing'); if (m.k === 'purr' || m.k === 'words') sound.play('loot'); if (m.k === 'tag') sound.play('tag'); if (m.k === 'overtime') { banner('FINAL MINUTE — DOUBLE POINTS!'); sound.play('event'); } break;
     case 'event': if (m.kind) { sound.play('bell'); banner({ lunch: '🍜 LUNCH TIME!', karaoke: '🎤 KARAOKE HOUR!', garden: '🌸 QUIET TIME IN THE GARDEN', pe: '🏃 PE LESSON!', quiz: '📚 POP QUIZ!', lights: 'LIGHTS OUT! 🔦', party: 'ZOMBIE DANCE PARTY! 🪩', golden: 'GOLDEN LOCKERS! ✨', rain: 'FUSE RAIN! ⚡' }[m.kind] || 'SURPRISE!'); } break;
     case 'night':
       if (m.stage === 'start') { banner('NIGHT FALLS 🌙'); sound.play('owl'); sound.setNight(true); }
@@ -126,6 +126,8 @@ $('cHow').onclick = () => modal(h('div', {},
     h('li', { text: settings.teams === 0 ? 'Tagged by a zombie? You drop your fuses. Tag another player to turn back!' : 'Tagged by a zombie? You drop your fuses. Tag someone from another crew to turn back!' }),
     h('li', { text: 'Night falls twice for 30 seconds: it gets dark and zombies are faster, but correct answers give a bonus fuse.' }),
     h('li', { text: 'School bell 🔔 = something is happening in a room: lunch in the Canteen, karaoke on the stage, quiet time in the Garden, PE in the Gym, pop quiz in English/Thai. Get there in time!' }),
+    h('li', { text: '🐱 Feed the school kittens (Mango, Nori, Mochi, Tiger): cat food 🐟 comes from lockers and lunch time. +2 points and a kitten friend!' }),
+    h('li', { text: '📝 English room: the teacher\'s desk has Word Builder. Spell 3 vocabulary words from their clues for points.' }),
     h('li', { text: 'Stay happy 😄 (answers, rooms, deliveries): 70+ happiness gives a bonus point at the generator.' }),
     h('li', { text: 'Last minute: every fuse counts DOUBLE!' }))));
 $('cTeacher').onclick = () => {

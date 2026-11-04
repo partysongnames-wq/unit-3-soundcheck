@@ -161,6 +161,15 @@ export function drawObject(c, code, x, y, S) {
       c.fillStyle = '#ffd23f'; c.fillRect(px + S * 0.16, py + S * 0.08, S * 0.12, S * 0.06); c.fillRect(px + S * 0.72, py + S * 0.08, S * 0.12, S * 0.06);
       break;
     }
+    case 'W': {
+      c.fillStyle = 'rgba(0,0,0,0.14)'; rr(c, px + S * 0.04, py + S * 0.3, S * 0.96, S * 0.64, S * 0.1); c.fill();
+      rr(c, px + S * 0.02, py + S * 0.16, S * 0.96, S * 0.6, S * 0.1); fs(c, '#b8743f', INK, lw);
+      rr(c, px + S * 0.08, py + S * 0.22, S * 0.84, S * 0.12, S * 0.04); fs(c, '#d79a5e', null);
+      for (const [bx, col] of [[0.14, '#ff6b8b'], [0.24, '#2ec4ff'], [0.34, '#ffd23f']]) { rr(c, px + S * bx, py + S * 0.36, S * 0.09, S * 0.3, S * 0.02); fs(c, col, INK, lw * 0.4); }
+      c.beginPath(); c.arc(px + S * 0.74, py + S * 0.46, S * 0.1, 0, TAU); fs(c, '#e84a4a', INK, lw * 0.5);
+      c.strokeStyle = '#4f8f3a'; c.lineWidth = lw; c.beginPath(); c.moveTo(px + S * 0.74, py + S * 0.36); c.lineTo(px + S * 0.78, py + S * 0.3); c.stroke();
+      break;
+    }
     case 'Q': {
       c.fillStyle = '#5a3a8a'; c.fillRect(px, py, S, S);
       rr(c, px + S * 0.14, py + S * 0.04, S * 0.72, S * 0.92, S * 0.1); fs(c, '#2b2340', INK, lw);
@@ -240,7 +249,7 @@ export function renderStatic(c, S, x0, y0, x1, y1) {
   for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) {
     const code = tileAt(x, y);
     if (code === '#') drawWall(c, x, y, S);
-    else if ('fTBDKbPXFSVYCQ'.includes(code)) drawObject(c, code, x, y, S);
+    else if ('fTBDKbPXFSVYCQW'.includes(code)) drawObject(c, code, x, y, S);
     else if (code === 'L' || code === 'G' || code === '~') drawFloor(c, code === 'L' ? (ROOM_OF[y][x] ? FLOOR_OF_ROOM(x, y) : (tileAt(x, y + 1) === 'k' || tileAt(x, y - 1) === 'k' ? 'k' : tileAt(x - 1, y) === 'c' ? 'c' : '.')) : (code === 'G' ? 'k' : ','), x, y, S);
     else drawFloor(c, code, x, y, S);
   }
@@ -455,6 +464,62 @@ export function drawZombie(c, x, y, S, o) {
   else { c.strokeStyle = INK; c.lineWidth = lw; c.beginPath(); c.moveTo(0, -k * 0.82); c.quadraticCurveTo(k * 0.05, -k * 0.98, k * 0.12, -k * 0.94); c.stroke(); }
   c.restore();
   if (stun && !party) { c.fillStyle = '#ffd23f'; for (let i = 0; i < 3; i++) { const a = t * 4 + i * 2.1; star(c, x + Math.cos(a) * k * 0.25, y - k * 0.95 + Math.sin(a) * k * 0.08, k * 0.07); } }
+}
+
+// ---------------------------------------------------------------- kittens & desk bubble
+const COATS = [
+  { body: '#f4a259', stripe: '#d4782a', belly: '#ffe3c2', ear: '#ffb3a7' },   // ginger
+  { body: '#3b3550', stripe: '#2b2638', belly: '#f2f0f7', ear: '#ff9fb4' },   // black with white chest
+  { body: '#f7f3ea', stripe: '#e4ddd0', belly: '#ffffff', ear: '#ffb3c8' },   // white
+  { body: '#a39a8c', stripe: '#6e665b', belly: '#e9e2d6', ear: '#ffb3a7' }    // tabby
+];
+export function drawKitten(c, x, y, S, o) {
+  const k = (o.scale || 1) * S; const t = o.t || 0; const col = COATS[o.coat % 4]; const lw = Math.max(1, Math.min(k * 0.04, 2.6));
+  c.save();
+  c.fillStyle = 'rgba(30,20,60,0.2)'; c.beginPath(); c.ellipse(x, y, k * 0.24, k * 0.07, 0, 0, TAU); c.fill();
+  c.translate(x, y); c.scale(o.dir < 0 ? -1 : 1, 1);
+  if (o.sleep) {
+    c.beginPath(); c.ellipse(0, -k * 0.12, k * 0.24, k * 0.14, 0, 0, TAU); fs(c, col.body, INK, lw);
+    c.beginPath(); c.arc(k * 0.15, -k * 0.16, k * 0.11, 0, TAU); fs(c, col.body, INK, lw);
+    for (const ex of [0.11, 0.2]) { c.beginPath(); c.moveTo(k * (ex - 0.04), -k * 0.17); c.lineTo(k * ex, -k * 0.32); c.lineTo(k * (ex + 0.04), -k * 0.17); fs(c, col.body, INK, lw * 0.8); }
+    c.strokeStyle = INK; c.lineWidth = lw; for (const ex of [0.12, 0.19]) { c.beginPath(); c.arc(k * ex, -k * 0.15, k * 0.025, 0, Math.PI); c.stroke(); }
+    c.strokeStyle = col.body; c.lineWidth = k * 0.07; c.lineCap = 'round'; c.beginPath(); c.moveTo(-k * 0.2, -k * 0.06); c.quadraticCurveTo(-k * 0.05, k * 0.04, k * 0.12, -k * 0.03); c.stroke();
+    c.restore();
+    outlinedText(c, 'z', x + k * 0.3, y - k * 0.45 - ((t * 0.6) % 1) * k * 0.2, k * 0.22, '#b9a7ff');
+    return;
+  }
+  const trot = o.moving ? Math.sin(t * 14) : 0; const bob = o.moving ? Math.abs(trot) * k * 0.03 : 0;
+  c.translate(0, -bob);
+  // tail
+  const wag = Math.sin(t * (o.happy ? 9 : 3) + (o.seed || 0)) * 0.35;
+  c.strokeStyle = INK; c.lineWidth = k * 0.09; c.lineCap = 'round'; c.beginPath(); c.moveTo(-k * 0.18, -k * 0.2); c.quadraticCurveTo(-k * 0.36, -k * 0.3, -k * 0.3 + wag * k * 0.12, -k * 0.5); c.stroke();
+  c.strokeStyle = col.body; c.lineWidth = k * 0.06; c.stroke();
+  // legs
+  for (const [lx, ph] of [[-0.12, 1], [-0.04, -1], [0.08, -1], [0.15, 1]]) { rr(c, k * lx - k * 0.03, -k * 0.12 + trot * ph * k * 0.02, k * 0.06, k * 0.12, k * 0.03); fs(c, col.body, INK, lw * 0.8); }
+  // body
+  c.beginPath(); c.ellipse(0, -k * 0.18, k * 0.22, k * 0.11, 0, 0, TAU); fs(c, col.body, INK, lw);
+  c.fillStyle = col.stripe; for (const sx of [-0.1, -0.02, 0.06]) { c.fillRect(k * sx, -k * 0.28, k * 0.03, k * 0.08); }
+  // head
+  const hx = k * 0.2, hy = -k * 0.32;
+  for (const ex of [-0.08, 0.06]) { c.beginPath(); c.moveTo(hx + k * (ex - 0.03), hy - k * 0.06); c.lineTo(hx + k * (ex + 0.01), hy - k * 0.19); c.lineTo(hx + k * (ex + 0.06), hy - k * 0.07); c.closePath(); fs(c, col.body, INK, lw); c.beginPath(); c.moveTo(hx + k * (ex - 0.005), hy - k * 0.08); c.lineTo(hx + k * (ex + 0.015), hy - k * 0.15); c.lineTo(hx + k * (ex + 0.035), hy - k * 0.08); c.closePath(); c.fillStyle = col.ear; c.fill(); }
+  c.beginPath(); c.arc(hx, hy, k * 0.12, 0, TAU); fs(c, col.body, INK, lw);
+  c.beginPath(); c.ellipse(hx + k * 0.02, hy + k * 0.05, k * 0.06, k * 0.04, 0, 0, TAU); c.fillStyle = col.belly; c.fill();
+  const blink = ((t * 1000 + (o.seed || 0) * 777) % 3200) < 140;
+  for (const ex of [-0.045, 0.045]) { if (blink) { c.strokeStyle = INK; c.lineWidth = lw; c.beginPath(); c.moveTo(hx + k * ex - k * 0.02, hy - k * 0.01); c.lineTo(hx + k * ex + k * 0.02, hy - k * 0.01); c.stroke(); } else { c.fillStyle = INK; c.beginPath(); c.ellipse(hx + k * ex, hy - k * 0.01, k * 0.022, k * 0.03, 0, 0, TAU); c.fill(); c.fillStyle = '#fff'; c.fillRect(hx + k * ex, hy - k * 0.03, k * 0.01, k * 0.01); } }
+  c.fillStyle = '#ff7a9a'; c.beginPath(); c.moveTo(hx - k * 0.012, hy + k * 0.03); c.lineTo(hx + k * 0.012, hy + k * 0.03); c.lineTo(hx, hy + k * 0.045); c.closePath(); c.fill();
+  c.strokeStyle = INK; c.lineWidth = lw * 0.5; for (const s2 of [-1, 1]) { c.beginPath(); c.moveTo(hx + s2 * k * 0.05, hy + k * 0.05); c.lineTo(hx + s2 * k * 0.15, hy + k * 0.03); c.stroke(); }
+  c.restore();
+  if (o.heart) { c.fillStyle = '#ff5fa2'; const hy2 = y - k * 0.75 - ((t * 0.8) % 1) * k * 0.2; c.globalAlpha = 0.9; c.font = `${k * 0.3}px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif`; c.textAlign = 'center'; c.fillText('💗', x, hy2); c.globalAlpha = 1; }
+  if (o.name) { const f = Math.max(9, k * 0.17); c.font = `800 ${f}px "Trebuchet MS", Arial`; c.textAlign = 'center'; c.textBaseline = 'middle'; const w = c.measureText(o.name).width + f * 0.8; rr(c, x - w / 2, y + k * 0.05, w, f * 1.3, f * 0.6); fs(c, 'rgba(255,255,255,0.9)', INK, Math.max(1, k * 0.02)); c.fillStyle = INK; c.fillText(`🐾 ${o.name}`.replace('🐾 ', ''), x, y + k * 0.05 + f * 0.67); }
+}
+
+export function drawDeskBubble(c, x, y, S, state, t) {
+  if (state === 'sleep') return;
+  const bob = Math.sin(t * 3) * S * 0.08; const by = y - S * 0.9 + bob; const lw = Math.max(1, S * 0.05);
+  if (state !== 'cooldown') { const g = c.createRadialGradient(x, by, 1, x, by, S * 0.7); g.addColorStop(0, 'rgba(255,255,255,0.75)'); g.addColorStop(1, 'rgba(255,255,255,0)'); c.fillStyle = g; c.beginPath(); c.arc(x, by, S * 0.7, 0, TAU); c.fill(); }
+  rr(c, x - S * 0.42, by - S * 0.24, S * 0.84, S * 0.48, S * 0.2); fs(c, state === 'cooldown' ? '#cfcadf' : state === 'double' ? '#ffd23f' : '#ffffff', INK, lw);
+  c.fillStyle = state === 'cooldown' ? '#8a84a3' : '#6a4cff'; c.font = `900 ${S * 0.26}px "Trebuchet MS", Arial`; c.textAlign = 'center'; c.textBaseline = 'middle';
+  c.fillText(state === 'cooldown' ? '…' : 'ABC', x, by + S * 0.02);
 }
 
 // ---------------------------------------------------------------- text

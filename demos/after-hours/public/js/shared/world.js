@@ -8,7 +8,7 @@ export const RADIUS = 0.3;
 
 // Walkable floor codes and solid object codes
 const FLOORS = new Set([',', '.', ':', ';', '=', '_', 'p', 'o', 'c', 'k', 'd', 'm']);
-export const SOLIDS = new Set(['#', 'f', 'T', 'B', 'D', 'K', '~', 'G', 'L', 'b', 'P', 'F', 'X', 'S', 'V', 'Y', 'C', 'Q']);
+export const SOLIDS = new Set(['#', 'f', 'T', 'B', 'D', 'K', '~', 'G', 'L', 'b', 'P', 'F', 'X', 'S', 'V', 'Y', 'C', 'Q', 'W']);
 
 // Layout loosely follows the real Suksanari campus (north at the top): Gym NW, Maths along the north,
 // Audio-Visual on the east, English classrooms on the west with the canteen beside them, the big covered
@@ -77,6 +77,7 @@ function build() {
   // lockers (question stations)
   const lockers = [];
   const L = (x, y) => { set(x, y, 'L'); lockers.push({ id: lockers.length, x: x + 0.5, y: y + 0.5, tx: x, ty: y }); };
+  set(4, 19, 'W'); // English teacher's desk: Word Builder
   L(2, 6); L(20, 4); L(23, 2); L(32, 2); L(39, 3); L(39, 12); L(2, 13); L(2, 19); L(13, 16); L(2, 23); L(10, 25);
   L(17, 8); L(32, 8); L(17, 16); L(32, 16); L(33, 24); L(15, 23); L(11, 6);
   return { g, room, lockers };
@@ -87,6 +88,9 @@ export const GRID = built.g.map((r) => r.join(''));
 export const ROOM_OF = built.room;
 export const LOCKERS = built.lockers;
 export const GENERATOR = { x: 25, y: 13, r: 1.9 };
+export const WORD_DESK = { x: 4.5, y: 19.5, tx: 4, ty: 19 };
+export const KITTEN_SPAWNS = [[14.5, 22.5], [11.5, 15.5], [26.5, 23.5], [37.5, 20.5]];
+export const KITTENS = [{ name: 'Mango', coat: 0 }, { name: 'Nori', coat: 1 }, { name: 'Mochi', coat: 2 }, { name: 'Tiger', coat: 3 }];
 export const GATE = { x: 21, y: 27 };
 
 export const tileAt = (x, y) => (x < 0 || y < 0 || x >= W || y >= H ? 'f' : GRID[y][x]);

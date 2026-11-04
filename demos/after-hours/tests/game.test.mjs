@@ -3,7 +3,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { Room, GameError, MAX_PLAYERS } from '../src/game.mjs';
 import { STARTER_PACK, GENERIC_PACK, validatePack, importSpreadsheet, validateImage } from '../public/js/shared/packs.js';
-import { LOCKERS, GENERATOR, SPAWNS, ZOMBIE_SPAWNS, walkableTiles, path, collides, lockerStand, isWalkableTile, zoneCenter, inZone, ROOM_OF } from '../public/js/shared/world.js';
+import { LOCKERS, GENERATOR, SPAWNS, ZOMBIE_SPAWNS, walkableTiles, path, collides, lockerStand, isWalkableTile, zoneCenter, inZone, ROOM_OF, WORD_DESK, KITTEN_SPAWNS } from '../public/js/shared/world.js';
 import { cleanAvatar } from '../public/js/shared/avatar.js';
 
 function clock(t = 1_000_000) { const f = () => t; f.add = (ms) => { t += ms; }; return f; }
@@ -333,4 +333,49 @@ test('happiness: rises with answers/rooms, decays, and 70+ gives a bonus point a
   p.happy = 30; p.fuses = [1]; r.tickItems(); assert.equal(r.scores[p.crew], 3, 'no bonus when not happy');
   const h0 = p.happy; for (let t = 0; t < 10_000; t += 100) { now.add(100); r.tick(); online(r); } assert.ok(p.happy < h0, 'decays');
   assert.equal(r.snapshot().p[0][8], Math.round(p.happy), 'happiness in snapshot');
+});
+
+test('kittens: need cat food, give crew points + happiness, then nap and follow you; rules are checked', () => {
+  const { r, now, msgs } = mk({ settings: { night: false } }); const [p, q] = joinN(r, 2); online(r);
+  assert.equal(code(() => r.feedKitten(p, 0)), 'wrong_phase');
+  startPlay(r, now); for (const z of r.zombies) z.stunUntil = 1e12;
+  assert.equal(r.kittens.length, 4); assert.ok(r.snapshot().k.length === 4);
+  const k = r.kittens[0]; p.x = k.x + 0.5; p.y = k.y; k.route = []; k.repathAt = 1e12;
+  assert.equal(code(() => r.feedKitten(p, 0)), 'no_food');
+  p.catFood = 2; q.x = 40; q.y = 26;
+  const before = r.scores[p.crew]; r.feedKitten(p, 0);
+  assert.equal(r.scores[p.crew] - before, 2); assert.equal(p.catFood, 1); assert.equal(p.stats.fed, 1);
+  assert.ok(msgs.some((m) => m.m.k === 'purr'));
+  assert.equal(code(() => r.feedKitten(p, 0)), 'napping', 'kitten naps after eating');
+  assert.ok(r.kittens[0].follow && r.kittens[0].follow.id === p.id, 'kitten follows the feeder');
+  p.x = 2.5; p.y = 7.5; for (let t = 0; t < 4000; t += 100) { now.add(100); r.tick(); online(r); }
+  assert.equal(code(() => r.feedKitten(p, 3)), 'too_far');
+  assert.equal(code(() => r.feedKitten(p, 99)), 'bad_kitten');
+  p.zombieUntil = r.gt + 5000; assert.equal(code(() => r.feedKitten(p, 1)), 'zombified');
+  // cat food can drop from lockers
+  p.zombieUntil = 0; p.catFood = 0; let got = false;
+  for (let i = 0; i < 40 && !got; i++) { const L = LOCKERS[i % LOCKERS.length]; standAt(p, L); p.lockerCd.clear(); p.fuses = []; r.openLocker(p, L.id); const qq = r.qById.get(p.pending.qid); const res = r.answer(p, { nonce: p.pending.nonce, choice: qq.correct }); if (res.loot.item === 'catfood') got = true; }
+  assert.ok(got && p.catFood >= 1, 'cat food appears as locker loot');
+});
+
+test('Word Builder: at the English desk, 3 vocab words, points for correct spelling, stale/duplicate rejected, cooldown', () => {
+  const { r, now } = mk({ settings: { night: false } }); const [p] = joinN(r, 1); online(r); startPlay(r, now);
+  for (const z of r.zombies) z.stunUntil = 1e12;
+  p.x = 22; p.y = 15.5; assert.equal(code(() => r.openWordGame(p)), 'too_far');
+  p.x = WORD_DESK.x; p.y = WORD_DESK.y - 1.0;
+  const m = r.openWordGame(p);
+  assert.equal(m.items.length, 3); assert.ok(m.items.every((it) => it.clue && it.letters.length === it.len));
+  assert.equal(JSON.stringify(m).includes(p.wb.words[0]) && m.items[0].letters.join('') === p.wb.words[0], false, 'the answer is not sent unscrambled');
+  assert.ok(r.snapshot().p[0][3] & 32, 'busy while spelling'); assert.equal(code(() => r.openLocker(p, 0)), 'already_open');
+  const before = r.scores[p.crew];
+  assert.equal(code(() => r.wordAnswer(p, { nonce: 'nope', i: 0, word: 'x' })), 'stale');
+  assert.equal(r.wordAnswer(p, { nonce: m.nonce, i: 0, word: p.wb.words[0].toUpperCase() }).ok, true, 'case-insensitive');
+  assert.equal(code(() => r.wordAnswer(p, { nonce: m.nonce, i: 0, word: p.wb.words[0] })), 'already_answered');
+  const wrong = r.wordAnswer(p, { nonce: m.nonce, i: 1, word: 'zzzz' }); assert.equal(wrong.ok, false); assert.ok(wrong.answer.length >= 3, 'shows the right spelling');
+  r.wordAnswer(p, { nonce: m.nonce, i: 2, word: p.wb.words[2] });
+  assert.equal(p.wb, null, 'round ends after 3 words'); assert.equal(r.scores[p.crew] - before, 2);
+  assert.equal(code(() => r.openWordGame(p)), 'cooldown');
+  // times out if left open
+  p.wbCd = 0; r.openWordGame(p); for (let t = 0; t < 26_000; t += 100) { now.add(100); r.tick(); online(r); }
+  assert.equal(p.wb, null, 'times out');
 });

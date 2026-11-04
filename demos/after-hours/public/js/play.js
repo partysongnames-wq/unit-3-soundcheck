@@ -3,7 +3,7 @@ import { connect } from './rt.js';
 import { WorldView } from './render.js';
 import { drawAvatar, drawZombie } from './art.js';
 import { AVATAR, AVATAR_KEYS, LABELS, NAMES, EMOTES, EMOTE_ICON, randomAvatar, cleanAvatar } from './shared/avatar.js';
-import { CREWS, LOCKERS, SPEED, INTERACT_DIST, GENERATOR, move, dist, path as findPath, lockerStand } from './shared/world.js';
+import { CREWS, LOCKERS, SPEED, INTERACT_DIST, GENERATOR, WORD_DESK, KITTENS, move, dist, path as findPath, lockerStand } from './shared/world.js';
 import { Sound } from './audio.js';
 
 const $ = (id) => document.getElementById(id);
@@ -14,7 +14,7 @@ const sound = new Sound();
 let me = null; let link = null; let view = null; let snap = null; let roster = new Map();
 let avatar = cleanAvatar(store(AV_KEY) || randomAvatar());
 let local = null; let input = { x: 0, y: 0 }; let keys = new Set(); let lastSent = 0; let lastSentPos = null;
-let question = null; let phase = 'lobby'; let paused = false; let myFlags = 0; let myFuses = 0; let nearLocker = null; let myScore = 0; let myEnergy = 100; let myHappy = 40;
+let question = null; let phase = 'lobby'; let paused = false; let myFlags = 0; let myFuses = 0; let nearLocker = null; let myScore = 0; let myEnergy = 100; let myHappy = 40; let myFood = 0; let nearThing = null; let wb = null;
 let settings = { teams: 4, goal: 0 }; let auto = null; let tickStarted = false;
 const cooldown = new Map();
 let userTapped = false; // browsers only allow vibration after the user has touched the page
@@ -142,7 +142,7 @@ function onMessage(m) {
       snap = m; view.push(m);
       if (m.ph !== phase || !!m.pa !== paused) setPhase(m.ph, !!m.pa);
       const mp = m.p.find((p) => p[0] === me.num);
-      if (mp) { myFlags = mp[3]; myFuses = mp[4]; myScore = mp[6] || 0; myEnergy = mp[7] ?? 100; myHappy = mp[8] ?? 40; if (!local) local = { x: mp[1] / 100, y: mp[2] / 100, dir: 1, moving: false }; }
+      if (mp) { myFlags = mp[3]; myFuses = mp[4]; myScore = mp[6] || 0; myEnergy = mp[7] ?? 100; myHappy = mp[8] ?? 40; myFood = mp[9] || 0; if (!local) local = { x: mp[1] / 100, y: mp[2] / 100, dir: 1, moving: false }; }
       if (m.md !== undefined) { settings.teams = m.md; settings.goal = m.gl; }
       updateHud();
       break;
@@ -150,10 +150,13 @@ function onMessage(m) {
     case 'corr': if (local) { local.x = m.x; local.y = m.y; } break;
     case 'q': openQuestion(m); break;
     case 'res': showResult(m); break;
+    case 'wb': openWordGame(m); break;
+    case 'wb_res': wordResult(m); break;
+    case 'wb_end': endWordGame(m); break;
     case 'qclose': closeQuestion(); toast('Locker timed out — try again!'); break;
     case 'fx':
       view.fx(m);
-      if (m.n === me.num) { if (m.k === 'tag') { sound.play('tag'); if (userTapped && navigator.vibrate) navigator.vibrate(180); toast('You got tagged! Tag someone from another crew to turn back!'); } if (m.k === 'cure') sound.play('cure'); if (m.k === 'pickup') sound.play('loot'); if (m.k === 'deliver') { sound.play('deliver'); toast(`+${m.pts} for your crew!`); } if (m.k === 'block') toast('Your shield blocked a tag!'); if (m.k === 'snack') { sound.play('loot'); toast('🍜 Yum! Full power + a speed boost!'); } if (m.k === 'pe') { sound.play('loot'); toast('🏃 PE done! Speed boots for 10 seconds!'); } if (m.k === 'sing') sound.play('sing'); }
+      if (m.n === me.num) { if (m.k === 'tag') { sound.play('tag'); if (userTapped && navigator.vibrate) navigator.vibrate(180); toast('You got tagged! Tag someone from another crew to turn back!'); } if (m.k === 'cure') sound.play('cure'); if (m.k === 'pickup') sound.play('loot'); if (m.k === 'deliver') { sound.play('deliver'); toast(`+${m.pts} for your crew!`); } if (m.k === 'block') toast('Your shield blocked a tag!'); if (m.k === 'snack') { sound.play('loot'); toast('🍜 Yum! Full power + a speed boost!'); } if (m.k === 'pe') { sound.play('loot'); toast('🏃 PE done! Speed boots for 10 seconds!'); } if (m.k === 'sing') sound.play('sing'); if (m.k === 'purr') { sound.play('loot'); toast(`🐱 ${KITTENS[m.kitten].name} purrs! +${m.pts} for your crew. She'll follow you for a bit!`); } }
       if (m.k === 'overtime') banner('FINAL MINUTE! DOUBLE POINTS!');
       break;
     case 'event':
@@ -168,6 +171,7 @@ function onMessage(m) {
     case 'results': showResults(m.results, null); break;
     case 'mystats': showResults(null, m); break;
     case 'err':
+      if (m.about === 'feed' || m.about === 'wb_open') { toast(m.message); if (m.about === 'wb_open' && m.code === 'cooldown') cooldown.set('desk', performance.now() + 8000); }
       if (m.about === 'open') { toast(m.message); if (m.code === 'cooldown' && nearLocker !== null) cooldown.set(nearLocker, performance.now() + 4000); }
       else if (m.about === 'answer') { closeQuestion(); toast(m.message); }
       break;
@@ -212,13 +216,14 @@ function updateHud() {
   $('energyFill').style.width = `${pct}%`; const hp = Math.round(myHappy); $('happyTxt').textContent = `${hp >= 70 ? '😄' : hp >= 35 ? '🙂' : '😐'} ${hp}`; $('happyTxt').classList.toggle('glow', hp >= 70); $('energyTxt').textContent = pct <= 0 ? '💤 Answer to wake up!' : pct < 25 ? '⚡ Power low — answer a question!' : '⚡ Power';
   const tm = $('hudTimer'); tm.textContent = snap.ph === 'play' ? (snap.nt ? '🌙 ' : '') + fmt(snap.tl) : snap.ph === 'lobby' ? 'LOBBY' : snap.ph === 'results' ? 'DONE' : '…'; tm.classList.toggle('ot', !!snap.ot);
   const items = [];
+  if (myFood) items.push(`🐟×${myFood} cat food`);
   if (myFuses) items.push(`⚡×${myFuses}${myFlags & 128 ? ' ✨' : ''} → Generator`);
   if (myFlags & 8) items.push('🛡️ Shield'); if (myFlags & 16) items.push('👟 Speed'); if (myFlags & 4) items.push(settings.teams === 0 ? '🧟 Tag another player!' : '🧟 Tag another crew!');
   $('hudItems').replaceChildren(...items.map((t) => h('span', { text: t })));
 }
 
 // ---------------------------------------------------------------- movement & input
-function canMove() { return local && !question && !paused && (phase === 'lobby' || phase === 'play'); }
+function canMove() { return local && !question && !wb && !paused && (phase === 'lobby' || phase === 'play'); }
 let lastFrame = performance.now();
 function tick(now) {
   const dt = Math.min(0.05, (now - lastFrame) / 1000); lastFrame = now;
@@ -244,9 +249,18 @@ function tick(now) {
       let best = INTERACT_DIST;
       for (const l of LOCKERS) { const d = dist(local.x, local.y, l.x, l.y); if (d < best && (cooldown.get(l.id) || 0) < now) { best = d; nearLocker = l.id; } }
     }
-    $('actBtn').classList.toggle('hidden', nearLocker === null);
+    // other things you can use: the English teacher's desk and the kittens
+    nearThing = nearLocker !== null ? { type: 'locker', id: nearLocker } : null;
+    if (phase === 'play' && !question && !wb && !(myFlags & 4)) {
+      const dd = dist(local.x, local.y, WORD_DESK.x, WORD_DESK.y);
+      if (dd < INTERACT_DIST && (cooldown.get('desk') || 0) < now && (!nearThing || dd < 0.9)) nearThing = { type: 'desk' };
+      if (snap && snap.k) snap.k.forEach((kk, i) => { const d = dist(local.x, local.y, kk[0] / 100, kk[1] / 100); if (d < 1.5 && !(kk[2] & 1) && (!nearThing || nearThing.type === 'kitten' ? (!nearThing || d < nearThing.d) : false)) nearThing = { type: 'kitten', id: i, d }; });
+    }
+    const act = $('actBtn');
+    act.classList.toggle('hidden', !nearThing);
+    if (nearThing) act.textContent = nearThing.type === 'locker' ? 'OPEN ❓' : nearThing.type === 'desk' ? 'WORDS 📝' : myFood ? `FEED ${KITTENS[nearThing.id].name} 🐟` : `🐱 ${KITTENS[nearThing.id].name} is hungry`;
     if (nearLocker !== null && auto && auto.kind === 'locker') stopAuto();
-    $('autoBtn').classList.toggle('hidden', phase !== 'play' || !!question || nearLocker !== null || !!(myFlags & 4));
+    $('autoBtn').classList.toggle('hidden', phase !== 'play' || !!question || !!wb || nearLocker !== null || !!(myFlags & 4));
     $('autoBtn').textContent = auto ? '✋ Stop' : myFuses ? '🧭 To generator' : '🧭 Find a locker';
     const hint = $('hint');
     if (phase === 'play' && !question && myFlags & 4) { hint.textContent = '🧟 You\'re a zombie! Tag a player from another crew'; hint.classList.remove('hidden'); }
@@ -278,7 +292,57 @@ function autoStep() {
 }
 $('autoBtn').addEventListener('click', () => { if (auto) stopAuto(); else startAuto(); });
 
-function openNear() { if (nearLocker === null || question) return; sound.ensure(); link.send({ t: 'open', l: nearLocker }); sound.play('open'); }
+function openNear() {
+  if (!nearThing || question || wb) return; sound.ensure();
+  if (nearThing.type === 'locker') { link.send({ t: 'open', l: nearThing.id }); sound.play('open'); }
+  else if (nearThing.type === 'desk') { link.send({ t: 'wb_open' }); sound.play('open'); }
+  else if (nearThing.type === 'kitten') { if (!myFood) { toast('You need cat food 🐟. Correct locker answers sometimes give it, and so does lunch time!'); return; } link.send({ t: 'feed', k: nearThing.id }); }
+}
+
+// ---------------------------------------------------------------- Word Builder (English teacher's desk)
+function openWordGame(m) {
+  input = { x: 0, y: 0 }; keys.clear();
+  wb = { nonce: m.nonce, items: m.items, i: 0, typed: [], used: [], endsAt: performance.now() + m.ms, double: m.double, results: [] };
+  renderWord();
+  wb.timer = setInterval(() => { const bar = document.querySelector('.wb-time i'); if (bar && wb) bar.style.width = `${Math.max(0, (wb.endsAt - performance.now()) / m.ms) * 100}%`; }, 200);
+}
+function renderWord(flash) {
+  if (!wb) return;
+  const it = wb.items[wb.i]; const kids = [];
+  kids.push(h('div', { class: 'qtop' }, h('span', { class: `qtag${wb.double ? ' gold' : ''}`, text: wb.double ? '📝 WORD BUILDER — double points!' : '📝 WORD BUILDER' }), h('button', { class: 'btn qclose', 'aria-label': 'Close', onclick: () => { link.send({ t: 'wb_close' }); }, text: '✕' })));
+  kids.push(h('div', { class: 'wb-time' }, h('i')));
+  kids.push(h('div', { class: 'muted', text: `Word ${wb.i + 1} of ${wb.items.length} · spell the word that matches the clue` }));
+  kids.push(h('div', { class: 'prompt', text: it.clue }));
+  const slots = h('div', { class: 'wb-slots' }); for (let k = 0; k < it.len; k++) slots.append(h('span', { class: `wb-slot${flash ? ` ${flash}` : ''}`, text: (wb.typed[k] || '').toUpperCase() }));
+  kids.push(slots);
+  if (flash === 'bad') kids.push(h('div', { class: 'why' }, h('b', { text: 'Answer: ' }), wb.lastAnswer));
+  const tiles = h('div', { class: 'wb-tiles' });
+  it.letters.forEach((L, k) => tiles.append(h('button', { class: 'wb-tile', disabled: wb.used.includes(k) || !!flash, onclick: () => tapLetter(k), text: L.toUpperCase() })));
+  kids.push(tiles);
+  kids.push(h('div', { class: 'row wb-row' }, h('button', { class: 'btn', disabled: !wb.typed.length || !!flash, onclick: () => { wb.typed.pop(); wb.used.pop(); renderWord(); sound.play('tick'); }, text: '⌫ Undo' })));
+  $('qModal').replaceChildren(h('div', { class: 'qcard' }, kids)); $('qModal').classList.remove('hidden');
+}
+function tapLetter(k) {
+  if (!wb || wb.used.includes(k)) return;
+  const it = wb.items[wb.i]; wb.used.push(k); wb.typed.push(it.letters[k]); sound.play('pop');
+  if (wb.typed.length === it.len) { link.send({ t: 'wb_word', nonce: wb.nonce, i: wb.i, w: wb.typed.join('') }); renderWord(); }
+  else renderWord();
+}
+function wordResult(m) {
+  if (!wb) return;
+  wb.results[m.i] = m.ok; wb.lastAnswer = m.answer;
+  sound.play(m.ok ? 'correct' : 'wrong');
+  renderWord(m.ok ? 'good' : 'bad');
+  setTimeout(() => { if (!wb) return; if (wb.i < wb.items.length - 1) { wb.i++; wb.typed = []; wb.used = []; renderWord(); } }, m.ok ? 800 : 1800);
+}
+function endWordGame(m) {
+  if (!wb) return;
+  clearInterval(wb.timer); const right = wb.results.filter(Boolean).length; wb = null;
+  cooldown.set('desk', performance.now() + (m.cooldown || 45000));
+  $('qModal').replaceChildren(h('div', { class: 'qcard' }, h('div', { class: `verdict ${right ? 'ok' : 'no'}`, text: right ? `+${m.points} points! 📝` : 'Nice try!' }), h('p', { text: `You spelled ${right} word${right === 1 ? '' : 's'} correctly. Come back to the desk in 45 seconds.` }), h('button', { class: 'btn primary big', onclick: closeQuestion, text: 'Keep going →' })));
+  $('qModal').classList.remove('hidden');
+  if (right) sound.play('loot');
+}
 $('actBtn').addEventListener('click', openNear);
 
 // virtual joystick (touch anywhere in the lower part of the screen)
@@ -303,6 +367,8 @@ document.addEventListener('keydown', (e) => {
   if (KEYMAP[e.key]) { keys.add(KEYMAP[e.key]); e.preventDefault(); }
   if ((e.key === 'e' || e.key === 'E' || e.key === ' ') && !question) { e.preventDefault(); openNear(); }
   if (question && question.stage === 'ask' && ['1', '2', '3', '4'].includes(e.key)) answer(Number(e.key) - 1);
+  if (wb && /^[a-z]$/i.test(e.key)) { const it = wb.items[wb.i]; const k = it.letters.findIndex((L, j) => L === e.key.toLowerCase() && !wb.used.includes(j)); if (k >= 0) tapLetter(k); }
+  if (wb && e.key === 'Backspace' && wb.typed.length) { wb.typed.pop(); wb.used.pop(); renderWord(); }
 });
 document.addEventListener('keyup', (e) => { if (KEYMAP[e.key]) keys.delete(KEYMAP[e.key]); });
 window.addEventListener('blur', () => keys.clear());
@@ -382,4 +448,4 @@ function showResults(results, mine) {
 }
 
 // Read-only hook used by the automated browser test (no game effect).
-window.__ah = { get local() { return local && { x: local.x, y: local.y }; }, get phase() { return phase; }, get near() { return nearLocker; }, get question() { return question && question.stage; }, get flags() { return myFlags; } };
+window.__ah = { get local() { return local && { x: local.x, y: local.y }; }, get phase() { return phase; }, get nearLocker() { return nearLocker; }, get question() { return question && question.stage; }, get near() { return nearThing ? nearThing.type : null; }, get wb() { return wb && { i: wb.i, items: wb.items.length }; }, get food() { return myFood; }, get flags() { return myFlags; } };

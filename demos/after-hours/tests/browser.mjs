@@ -176,7 +176,32 @@ check('server lists both music tracks', JSON.stringify((await (await fetch(base 
 { const room = server.rooms.get(code).room; room.startEvent('lunch'); room.emitAll({ t: 'event', kind: 'lunch', ms: 25000 }); }
 await sleep(1500);
 check('event banner shows on the phone', (await pa.textContent('#banner')).includes('LUNCH'));
-await shot(host, '05b-teacher-lunch-event-1366x768.png'); await shot(pa, 'p09b-lunch-event-arrow-390x844.png'); await noOverflow(host, 'teacher live');
+await shot(host, '05b-teacher-lunch-event-1366x768.png'); await shot(pa, 'p09b-lunch-event-arrow-390x844.png');
+{ // end the lunch event so it doesn't interfere
+  const room = server.rooms.get(code).room; room.event = null; room.emitAll({ t: 'event', kind: null });
+  const paId = await pa.evaluate(() => JSON.parse(localStorage.getItem('afterhours.nc.player.v1')).playerId);
+  const me = room.players.get(paId); me.invulnUntil = room.gt + 120_000; for (const z of room.zombies) z.stunUntil = room.gt + 120_000;
+  // 📝 Word Builder at the English teacher's desk
+  await walkTo(pa, 4.5, 18.4); await sleep(400);
+  check('teacher desk shows a WORDS button', (await pa.evaluate(() => window.__ah.near)) === 'desk' && (await pa.textContent('#actBtn')).includes('WORDS'));
+  await pa.keyboard.press('e'); await sleep(800);
+  check('Word Builder opens with letter tiles and a clue', await pa.isVisible('.wb-tiles') && (await pa.locator('.wb-tile').count()) >= 3);
+  await shot(pa, 'p14-word-builder-390x844.png');
+  const words = me.wb ? me.wb.words.slice() : [];
+  for (let i = 0; i < words.length; i++) { for (const ch of words[i]) { await pa.keyboard.press(ch); await sleep(60); } await sleep(1300); }
+  await sleep(600);
+  check('spelling all 3 words gives points', (await pa.textContent('.qcard')).includes('+3 points'), (await pa.textContent('.qcard')).slice(0, 60));
+  await shot(pa, 'p15-word-builder-done-390x844.png');
+  await pa.locator('.qcard .btn.primary').click(); await sleep(300);
+  // 🐱 feed a kitten
+  me.catFood = 1; const kt = room.kittens[1]; kt.x = me.x + 0.6; kt.y = me.y; kt.route = []; kt.repathAt = room.gt + 60_000; kt.sleepUntil = 0; kt.follow = null;
+  await sleep(700);
+  check('a kitten nearby shows a FEED button', (await pa.textContent('#actBtn')).includes('FEED'), await pa.textContent('#actBtn'));
+  await shot(pa, 'p16-kitten-390x844.png');
+  const sc0 = room.scores[me.crew]; await pa.keyboard.press('e'); await sleep(800);
+  check('feeding the kitten gives +2 crew points and it follows you', room.scores[me.crew] - sc0 === 2 && !!room.kittens[1].follow);
+  await sleep(1200); await shot(pa, 'p17-kitten-follows-390x844.png');
+} await noOverflow(host, 'teacher live');
 await shot(pa, 'p09-playing-390x844.png'); await noOverflow(pa, 'phone playing');
 // pause / resume
 await host.click('#cPause'); await sleep(700);
