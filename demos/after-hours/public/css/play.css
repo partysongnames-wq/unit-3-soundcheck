@@ -48,10 +48,10 @@ body.play { margin: 0; min-height: 100dvh; font-family: "Trebuchet MS", "Arial R
 .hud-timer { background: #2b2340; color: #fff; border-radius: 14px; padding: 6px 12px; font-weight: 900; font-size: 1.2em; min-width: 76px; text-align: center; border: 3px solid #fff; }
 .hud-timer.ot { background: #ff4d6d; animation: pulse .6s infinite alternate; }
 .hud-btn { width: 46px; height: 46px; border-radius: 14px; border: 3px solid #2b2340; background: #fff; font-size: 1.2em; box-shadow: 0 3px 0 #2b2340; }
-.hud-items { position: absolute; left: 10px; top: calc(66px + env(safe-area-inset-top)); display: flex; gap: 6px; pointer-events: none; }
+.hud-items { position: absolute; left: 10px; top: calc(98px + env(safe-area-inset-top)); display: flex; gap: 6px; pointer-events: none; }
 .hud-items span { background: rgba(255,255,255,.92); border: 2px solid #2b2340; border-radius: 12px; padding: 3px 8px; font-weight: 900; font-size: .9em; }
 @keyframes pulse { to { transform: scale(1.08); } }
-.toasts { position: absolute; left: 50%; top: calc(104px + env(safe-area-inset-top)); transform: translateX(-50%); width: min(92%, 420px); display: flex; flex-direction: column; gap: 6px; pointer-events: none; }
+.toasts { position: absolute; left: 50%; top: calc(132px + env(safe-area-inset-top)); transform: translateX(-50%); width: min(92%, 420px); display: flex; flex-direction: column; gap: 6px; pointer-events: none; }
 .toast { background: rgba(43,35,64,.9); color: #fff; border-radius: 12px; padding: 6px 12px; font-weight: 800; font-size: .9em; text-align: center; animation: toastIn .3s ease; }
 @keyframes toastIn { from { opacity: 0; transform: translateY(-8px); } }
 .banner { position: absolute; left: 0; right: 0; top: 34%; text-align: center; font-weight: 900; font-size: 1.7em; color: #fff; -webkit-text-stroke: 1.5px #2b2340; text-shadow: 0 4px 0 #2b2340; padding: 14px; background: linear-gradient(90deg, transparent, rgba(106,76,255,.85) 15%, rgba(255,95,162,.85) 85%, transparent); animation: slideIn .45s cubic-bezier(.2,1.4,.4,1); pointer-events: none; }
@@ -106,3 +106,12 @@ body.play { margin: 0; min-height: 100dvh; font-family: "Trebuchet MS", "Arial R
 .conn-pill { position: fixed; left: 50%; top: 8px; transform: translateX(-50%); z-index: 50; background: #ff4d6d; color: #fff; font-weight: 900; padding: 6px 14px; border-radius: 999px; border: 3px solid #2b2340; }
 .hidden { display: none !important; }
 @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+.energy { position: absolute; left: 8px; right: 8px; top: calc(62px + env(safe-area-inset-top)); display: flex; align-items: center; gap: 8px; pointer-events: none; }
+.energy .ebar { flex: 1; height: 16px; border-radius: 10px; border: 3px solid #2b2340; background: #fff; overflow: hidden; }
+.energy .ebar i { display: block; height: 100%; background: linear-gradient(90deg, #ffd23f, #3ddc84); transition: width .3s; }
+.energy span { background: rgba(255,255,255,.92); border: 2px solid #2b2340; border-radius: 10px; padding: 1px 8px; font-weight: 900; font-size: .8em; white-space: nowrap; }
+.energy.low .ebar i { background: #ff5d7a; }
+.energy.low span { background: #ffd6de; animation: pulse .6s infinite alternate; }
+.auto-btn { position: absolute; left: 12px; bottom: calc(84px + env(safe-area-inset-bottom)); font-family: inherit; font-weight: 900; font-size: 1em; min-height: 52px; padding: 0 14px; border-radius: 18px; border: 3px solid #2b2340; background: #fff; color: #2b2340; box-shadow: 0 4px 0 #2b2340; z-index: 3; }
+.acc-big { background: #ecfff4; border: 3px solid #2fbf71; border-radius: 16px; padding: 8px; font-weight: 900; margin: 8px 0; }
+.acc-big b { font-size: 2em; color: #148a4c; display: block; }

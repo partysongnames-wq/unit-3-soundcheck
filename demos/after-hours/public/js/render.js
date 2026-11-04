@@ -1,5 +1,5 @@
 // World view: camera, cached static map chunks, interpolated players/zombies, effects and event overlays.
-import { W, H, LOCKERS, GENERATOR, CREWS } from './shared/world.js';
+import { W, H, LOCKERS, GENERATOR, CREWS, LAMPS } from './shared/world.js';
 import { EMOTE_ICON } from './shared/avatar.js';
 import { renderStatic, drawLocker, drawGenerator, drawFuse, drawAvatar, drawZombie, outlinedText, star, rr, INK, TAU } from './art.js';
 
@@ -14,6 +14,9 @@ export class WorldView {
     this.genFlash = 0; this.shake = 0; this.event = null; this.phase = 'lobby'; this.myCooldown = new Map();
     this.cam = { x: 24, y: 13 }; this.t0 = performance.now(); this.t = 0; this.lastFrame = performance.now();
     this.overlay = document.createElement('canvas');
+    // one soft warm glow sprite, reused for every lamp (cheap on phones)
+    this.glow = document.createElement('canvas'); this.glow.width = this.glow.height = 128;
+    { const g = this.glow.getContext('2d'); const rg = g.createRadialGradient(64, 64, 4, 64, 64, 64); rg.addColorStop(0, 'rgba(255,200,120,0.55)'); rg.addColorStop(0.5, 'rgba(255,170,90,0.18)'); rg.addColorStop(1, 'rgba(255,160,80,0)'); g.fillStyle = rg; g.fillRect(0, 0, 128, 128); }
     this.resize(); this._ro = new ResizeObserver(() => this.resize()); this._ro.observe(canvas);
     const loop = (now) => { this.frame(now); this.raf = requestAnimationFrame(loop); };
     this.raf = requestAnimationFrame(loop);
@@ -70,7 +73,7 @@ export class WorldView {
     const am = new Map(a.p.map((p) => [p[0], p]));
     for (const p of b.p) {
       const q = am.get(p[0]) || p;
-      out.players.set(p[0], { n: p[0], x: lerp(q[1], p[1], k) / 100, y: lerp(q[2], p[2], k) / 100, f: p[3], fuses: p[4], em: p[5] });
+      out.players.set(p[0], { n: p[0], x: lerp(q[1], p[1], k) / 100, y: lerp(q[2], p[2], k) / 100, f: p[3], fuses: p[4], em: p[5], score: p[6] || 0, energy: p[7] ?? 100 });
     }
     out.zombies = b.z.map((z, i) => { const q = a.z[i] || z; return { x: lerp(q[0], z[0], k) / 100, y: lerp(q[1], z[1], k) / 100, f: z[2], i }; });
     out.fuses = b.f.map((f) => ({ id: f[0], x: f[1] / 100, y: f[2] / 100, v: f[3] }));
@@ -138,10 +141,19 @@ export class WorldView {
         if (me) { c.strokeStyle = 'rgba(255,255,255,0.85)'; c.lineWidth = 3; c.beginPath(); c.ellipse(p.x * S, p.y * S + S * 0.28, S * 0.38, S * 0.13, 0, 0, TAU); c.stroke(); }
         const headTop = drawAvatar(c, p.x * S, p.y * S + S * 0.28, S, { avatar: r.avatar, t: this.reduced ? 0 : this.t, moving: !this.reduced && moving, dir, zombie: p.f & 4, shield: p.f & 8, boots: p.f & 16, thinking: p.f & 32, blink, fuses: p.fuses, gold: p.f & 128, emote: p.em || null, alpha, name: showNames ? r.name : null, crewColor: CREWS[r.crew].color, scale: sc, seed: p.n, me });
         if (p.em) this.emoteBubble(c, p.x * S, headTop - S * 0.25, S * sc, p.em);
+        else if (p.f & 256) { const zt = this.t * 1.5; c.globalAlpha = 0.9; outlinedText(c, 'z', p.x * S + S * 0.35, headTop - S * (0.1 + (zt % 1) * 0.3), S * 0.28, '#b9a7ff'); outlinedText(c, 'Z', p.x * S + S * 0.55, headTop - S * (0.35 + ((zt + 0.5) % 1) * 0.3), S * 0.36, '#b9a7ff'); c.globalAlpha = 1; }
       } });
     }
+    for (const [lx, ly] of LAMPS) ents.push({ y: ly, draw: () => this.lamp(c, lx * S, ly * S, S) });
     ents.sort((a, b) => a.y - b.y || (a.me ? 1 : 0) - (b.me ? 1 : 0));
     for (const e of ents) e.draw();
+    // dusk: a soft violet tint with warm pools of light (stays bright and readable)
+    c.fillStyle = 'rgba(88,52,160,0.15)'; c.fillRect(-ox, -oy, this.w, this.h);
+    c.globalCompositeOperation = 'lighter';
+    const gr = S * 3.2;
+    for (const [lx, ly] of LAMPS) c.drawImage(this.glow, lx * S - gr, ly * S - S * 0.9 - gr, gr * 2, gr * 2);
+    c.drawImage(this.glow, GENERATOR.x * S - gr * 1.3, GENERATOR.y * S - S * 0.6 - gr * 1.3, gr * 2.6, gr * 2.6);
+    c.globalCompositeOperation = 'source-over';
     // particles & texts
     for (const q of this.parts) { q.life -= dt * q.decay; q.vy += 6 * dt * (q.kind === 'confetti' ? 0.8 : 0.3); q.x += q.vx * dt; q.y += q.vy * dt; q.rot += dt * 8;
       c.save(); c.globalAlpha = Math.max(0, q.life); c.fillStyle = q.col; c.translate(q.x * S, q.y * S); c.rotate(q.rot);
@@ -158,6 +170,12 @@ export class WorldView {
     // event overlays
     if (this.event === 'lights') this.lightsOut(st, ox, oy);
     if (this.event === 'party' && !this.reduced) this.disco();
+  }
+
+  lamp(c, x, y, S) {
+    c.fillStyle = 'rgba(30,20,60,0.25)'; c.beginPath(); c.ellipse(x, y, S * 0.18, S * 0.07, 0, 0, TAU); c.fill();
+    c.fillStyle = '#4a3f78'; c.fillRect(x - S * 0.04, y - S * 1.1, S * 0.08, S * 1.1);
+    rr(c, x - S * 0.16, y - S * 1.32, S * 0.32, S * 0.26, S * 0.08); c.fillStyle = '#ffe9a8'; c.fill(); c.strokeStyle = INK; c.lineWidth = Math.max(1, S * 0.04); c.stroke();
   }
 
   emoteBubble(c, x, y, k, e) {

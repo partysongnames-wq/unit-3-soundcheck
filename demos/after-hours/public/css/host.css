@@ -77,3 +77,17 @@ a { color: #6a4cff; font-weight: 800; }
 .conn-pill { position: fixed; left: 50%; top: 8px; transform: translateX(-50%); z-index: 50; background: #ff4d6d; color: #fff; font-weight: 900; padding: 6px 14px; border-radius: 999px; border: 3px solid #2b2340; }
 .hidden { display: none !important; }
 @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+.tips { margin: 10px 0; border: 3px solid #2b2340; border-radius: 14px; padding: 8px 12px; background: #fffbea; }
+.tips summary { font-weight: 900; cursor: pointer; }
+.tips ul { margin: 6px 0 0; padding-left: 1.2em; font-size: .9em; }
+.tips li { margin: 4px 0; }
+.modes { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; }
+.modes .btn { min-height: 38px; padding: 0 10px; font-size: .9em; }
+.modes .btn.on { background: #2b2340; color: #fff; }
+.suggest { font-size: .85em; font-weight: 800; color: #6a4cff; }
+.idle { background: #ffd6de; color: #2b2340; border-radius: 10px; padding: 4px 8px; margin-top: 6px; font-weight: 900; }
+.modal-card { width: min(640px, 100%); background: #fff; border: 4px solid #2b2340; border-radius: 24px; box-shadow: 0 8px 0 #2b2340; padding: 18px 22px; max-height: 100%; overflow: auto; }
+.modal-card h2 { margin: 0 0 8px; }
+.modal-card ol, .modal-card ul { font-weight: 700; line-height: 1.45; }
+.warn { background: #fff1c2; border: 3px solid #f2a900; border-radius: 14px; padding: 8px 12px; font-weight: 800; }
+.solo-row .av { width: 44px; height: 44px; flex: none; }

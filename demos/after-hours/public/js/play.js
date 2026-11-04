@@ -3,7 +3,7 @@ import { connect } from './rt.js';
 import { WorldView } from './render.js';
 import { drawAvatar, drawZombie } from './art.js';
 import { AVATAR, AVATAR_KEYS, LABELS, NAMES, EMOTES, EMOTE_ICON, randomAvatar, cleanAvatar } from './shared/avatar.js';
-import { CREWS, LOCKERS, SPEED, INTERACT_DIST, move, dist } from './shared/world.js';
+import { CREWS, LOCKERS, SPEED, INTERACT_DIST, GENERATOR, move, dist, path as findPath, lockerStand } from './shared/world.js';
 import { Sound } from './audio.js';
 
 const $ = (id) => document.getElementById(id);
@@ -14,8 +14,11 @@ const sound = new Sound();
 let me = null; let link = null; let view = null; let snap = null; let roster = new Map();
 let avatar = cleanAvatar(store(AV_KEY) || randomAvatar());
 let local = null; let input = { x: 0, y: 0 }; let keys = new Set(); let lastSent = 0; let lastSentPos = null;
-let question = null; let phase = 'lobby'; let paused = false; let myFlags = 0; let myFuses = 0; let nearLocker = null;
+let question = null; let phase = 'lobby'; let paused = false; let myFlags = 0; let myFuses = 0; let nearLocker = null; let myScore = 0; let myEnergy = 100;
+let settings = { teams: 4, goal: 0 }; let auto = null; let tickStarted = false;
 const cooldown = new Map();
+let userTapped = false; // browsers only allow vibration after the user has touched the page
+for (const ev of ['pointerdown', 'keydown']) window.addEventListener(ev, () => { userTapped = true; }, { capture: true, once: false });
 
 // ---------------------------------------------------------------- join
 const params = new URLSearchParams(location.search);
@@ -47,7 +50,7 @@ $('joinForm').addEventListener('submit', (e) => {
   const code = $('roomIn').value.trim().toUpperCase();
   if (!/^[A-Z0-9]{5}$/.test(code)) { $('joinErr').textContent = 'The game code has 5 letters/numbers — look at the big screen!'; return; }
   pendingCode = code; sound.ensure(); sound.play('pop');
-  showAvatarCreator();
+  doJoin({ callsign: $('nameIn').value, avatar }, code, true).catch((err) => { $('joinErr').textContent = err.message; });
 });
 
 // ---------------------------------------------------------------- avatar creator
@@ -86,18 +89,16 @@ function animatePreview() {
   requestAnimationFrame(loop);
 }
 $('randAvatar').onclick = () => { avatar = randomAvatar(); store(AV_KEY, avatar); drawChoices(); sound.play('loot'); };
-$('avatarDone').onclick = async () => {
-  store(AV_KEY, avatar);
-  if (me && link) { link.send({ t: 'avatar', a: avatar }); enterGame(); return; }
-  try { await doJoin({ callsign: $('nameIn').value, avatar }, pendingCode); }
-  catch (e) { $('avatarView').classList.add('hidden'); $('joinView').classList.remove('hidden'); $('joinErr').textContent = e.message; }
-};
+function finishAvatar() { store(AV_KEY, avatar); if (link) link.send({ t: 'avatar', a: avatar }); showGame(); }
+$('avatarDone').onclick = finishAvatar;
 
-async function doJoin(body, code) {
+async function doJoin(body, code, creator = false) {
   const r = await api(`/api/rooms/${encodeURIComponent(code)}/join`, { method: 'POST', body });
   me = { code, playerId: r.playerId, secret: r.secret, num: r.num, callsign: r.callsign, crew: r.crew };
-  avatar = cleanAvatar(r.avatar); store(AV_KEY, avatar); store(ID_KEY, me);
-  enterGame();
+  if (!creator) { avatar = cleanAvatar(r.avatar); store(AV_KEY, avatar); }
+  store(ID_KEY, me);
+  ensureLink();
+  if (creator) showAvatarCreator(); else showGame();
 }
 
 const saved = store(ID_KEY);
@@ -106,18 +107,19 @@ if (saved && saved.playerId && (!roomParam || saved.code === roomParam)) {
 }
 
 // ---------------------------------------------------------------- game
-function enterGame() {
-  $('joinView').classList.add('hidden'); $('avatarView').classList.add('hidden'); $('gameView').classList.remove('hidden');
+function ensureLink() {
   history.replaceState(null, '', `play.html?room=${me.code}`);
   if (!view) { view = new WorldView($('world'), { mode: 'phone', reduced }); view.myCooldown = cooldown; }
   view.setMe(me.num);
   if (link) link.close();
-  link = connect({
-    hello: () => ({ t: 'hello', code: me.code, role: 'player', playerId: me.playerId, secret: me.secret }),
-    onMessage, onStatus
-  });
-  requestAnimationFrame(tick);
+  link = connect({ hello: () => ({ t: 'hello', code: me.code, role: 'player', playerId: me.playerId, secret: me.secret }), onMessage, onStatus });
+  if (!tickStarted) { tickStarted = true; requestAnimationFrame(tick); }
 }
+function showGame() {
+  $('joinView').classList.add('hidden'); $('avatarView').classList.add('hidden'); $('gameView').classList.remove('hidden');
+  view.resize();
+}
+const inCreator = () => !$('avatarView').classList.contains('hidden');
 
 function onStatus(s, m) {
   const b = $('conn');
@@ -130,14 +132,18 @@ function onMessage(m) {
   switch (m.t) {
     case 'welcome':
       if (m.you) { local = local && phase !== 'lobby' ? local : { x: m.you.x, y: m.you.y, dir: 1, moving: false }; me.crew = m.you.crew; }
+      if (m.settings) settings = m.settings;
       setPhase(m.phase, m.paused); if (m.results) showResults(m.results, null);
       break;
-    case 'roster': roster = new Map(m.list.map((p) => [p.n, p])); view.setRoster(m.list); const mine = roster.get(me.num); if (mine) me.crew = mine.crew; break;
+    case 'roster': { roster = new Map(m.list.map((p) => [p.n, p])); view.setRoster(m.list); const mine = roster.get(me.num); if (mine) me.crew = mine.crew; break; }
+    case 'mode': settings = m.settings; updateHud(); break;
+    case 'sleepy': toast('💤 You\'re out of power! Answer a locker question to wake up.'); break;
     case 's': {
       snap = m; view.push(m);
       if (m.ph !== phase || !!m.pa !== paused) setPhase(m.ph, !!m.pa);
       const mp = m.p.find((p) => p[0] === me.num);
-      if (mp) { myFlags = mp[3]; myFuses = mp[4]; if (!local) local = { x: mp[1] / 100, y: mp[2] / 100, dir: 1, moving: false }; }
+      if (mp) { myFlags = mp[3]; myFuses = mp[4]; myScore = mp[6] || 0; myEnergy = mp[7] ?? 100; if (!local) local = { x: mp[1] / 100, y: mp[2] / 100, dir: 1, moving: false }; }
+      if (m.md !== undefined) { settings.teams = m.md; settings.goal = m.gl; }
       updateHud();
       break;
     }
@@ -147,7 +153,7 @@ function onMessage(m) {
     case 'qclose': closeQuestion(); toast('Locker timed out — try again!'); break;
     case 'fx':
       view.fx(m);
-      if (m.n === me.num) { if (m.k === 'tag') { sound.play('tag'); if (navigator.vibrate) navigator.vibrate(180); toast('You got tagged! Tag someone from another crew to turn back!'); } if (m.k === 'cure') sound.play('cure'); if (m.k === 'pickup') sound.play('loot'); if (m.k === 'deliver') { sound.play('deliver'); toast(`+${m.pts} for your crew!`); } if (m.k === 'block') toast('Your shield blocked a tag!'); }
+      if (m.n === me.num) { if (m.k === 'tag') { sound.play('tag'); if (userTapped && navigator.vibrate) navigator.vibrate(180); toast('You got tagged! Tag someone from another crew to turn back!'); } if (m.k === 'cure') sound.play('cure'); if (m.k === 'pickup') sound.play('loot'); if (m.k === 'deliver') { sound.play('deliver'); toast(`+${m.pts} for your crew!`); } if (m.k === 'block') toast('Your shield blocked a tag!'); }
       if (m.k === 'overtime') banner('FINAL MINUTE! DOUBLE POINTS!');
       break;
     case 'event':
@@ -166,6 +172,7 @@ function onMessage(m) {
 
 function setPhase(p, pa) {
   const prev = phase; phase = p; paused = pa;
+  if ((p === 'countdown' || p === 'play') && inCreator()) { finishAvatar(); toast('The game is starting! You can change your look after the game.'); }
   if (p === 'countdown' && prev !== 'countdown') countdown();
   if (p === 'play' && prev === 'countdown') { sound.play('go'); banner('GO! Find the glowing lockers ❓'); }
   if (p === 'lobby') { resultsShown = null; closeQuestion(); showOverlay(h('div', { class: 'lobby-tip' }, 'Waiting for your teacher… run around and try emotes! 😊'), false); }
@@ -190,13 +197,18 @@ function toast(text) { const t = h('div', { class: 'toast', text }); $('toasts')
 function fmt(ms) { const s = Math.ceil(ms / 1000); return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`; }
 function updateHud() {
   if (!snap) return;
-  const crew = CREWS[me.crew]; const scores = snap.sc; const mine = scores[me.crew];
-  const place = 1 + scores.filter((s, i) => s > mine && [...roster.values()].some((p) => p.crew === i)).length;
-  const hc = $('hudCrew'); hc.replaceChildren(h('span', { class: 'dot', style: { background: crew.color } }), h('span', { text: crew.name }), h('span', { class: 'place', text: phase === 'play' ? `#${place}` : '' }), h('span', { class: 'score', text: `⚡${mine}` }));
+  const crew = CREWS[me.crew]; const solo = settings.teams === 0; const goal = settings.goal ? `/${settings.goal}` : '';
+  let mine, place;
+  if (solo) { mine = myScore; place = 1 + snap.p.filter((p) => (p[6] || 0) > myScore).length; }
+  else { const scores = snap.sc; mine = scores[me.crew]; place = 1 + scores.filter((s, i) => s > mine && [...roster.values()].some((p) => p.crew === i)).length; }
+  const hc = $('hudCrew'); hc.replaceChildren(h('span', { class: 'dot', style: { background: crew.color } }), h('span', { text: solo ? 'You' : crew.name }), h('span', { class: 'place', text: phase === 'play' ? `#${place}` : '' }), h('span', { class: 'score', text: `⚡${mine}${goal}` }));
+  const en = $('energy'); const pct = Math.max(0, Math.min(100, myEnergy));
+  en.classList.toggle('hidden', phase !== 'play'); en.classList.toggle('low', pct < 25);
+  $('energyFill').style.width = `${pct}%`; $('energyTxt').textContent = pct <= 0 ? '💤 Answer to wake up!' : pct < 25 ? '⚡ Power low — answer a question!' : '⚡ Power';
   const tm = $('hudTimer'); tm.textContent = snap.ph === 'play' ? fmt(snap.tl) : snap.ph === 'lobby' ? 'LOBBY' : snap.ph === 'results' ? 'DONE' : '…'; tm.classList.toggle('ot', !!snap.ot);
   const items = [];
   if (myFuses) items.push(`⚡×${myFuses}${myFlags & 128 ? ' ✨' : ''} → Generator`);
-  if (myFlags & 8) items.push('🛡️ Shield'); if (myFlags & 16) items.push('👟 Speed'); if (myFlags & 4) items.push('🧟 Tag another crew!');
+  if (myFlags & 8) items.push('🛡️ Shield'); if (myFlags & 16) items.push('👟 Speed'); if (myFlags & 4) items.push(settings.teams === 0 ? '🧟 Tag another player!' : '🧟 Tag another crew!');
   $('hudItems').replaceChildren(...items.map((t) => h('span', { text: t })));
 }
 
@@ -207,10 +219,12 @@ function tick(now) {
   const dt = Math.min(0.05, (now - lastFrame) / 1000); lastFrame = now;
   if (local) {
     let ix = input.x, iy = input.y;
+    if (auto && (keys.size || Math.hypot(input.x, input.y) > 0.1 || question || phase !== 'play')) stopAuto();
+    if (auto) { const st = autoStep(); if (st) { ix = st[0]; iy = st[1]; } }
     if (keys.size) { ix = (keys.has('right') ? 1 : 0) - (keys.has('left') ? 1 : 0); iy = (keys.has('down') ? 1 : 0) - (keys.has('up') ? 1 : 0); const l = Math.hypot(ix, iy); if (l > 1) { ix /= l; iy /= l; } }
     const moving = canMove() && Math.hypot(ix, iy) > 0.1;
     if (moving) {
-      const sp = myFlags & 4 ? SPEED.zombified : myFlags & 16 ? SPEED.boots : SPEED.player;
+      const sp = myFlags & 4 ? SPEED.zombified : myFlags & 16 ? SPEED.boots : myFlags & 256 ? SPEED.sleepy : SPEED.player;
       [local.x, local.y] = move(local.x, local.y, ix * sp * dt, iy * sp * dt);
       if (Math.abs(ix) > 0.15) local.dir = ix > 0 ? 1 : -1;
     }
@@ -226,6 +240,9 @@ function tick(now) {
       for (const l of LOCKERS) { const d = dist(local.x, local.y, l.x, l.y); if (d < best && (cooldown.get(l.id) || 0) < now) { best = d; nearLocker = l.id; } }
     }
     $('actBtn').classList.toggle('hidden', nearLocker === null);
+    if (nearLocker !== null && auto && auto.kind === 'locker') stopAuto();
+    $('autoBtn').classList.toggle('hidden', phase !== 'play' || !!question || nearLocker !== null || !!(myFlags & 4));
+    $('autoBtn').textContent = auto ? '✋ Stop' : myFuses ? '🧭 To generator' : '🧭 Find a locker';
     const hint = $('hint');
     if (phase === 'play' && !question && myFlags & 4) { hint.textContent = '🧟 You\'re a zombie! Tag a player from another crew'; hint.classList.remove('hidden'); }
     else if (phase === 'play' && !question && nearLocker === null && !myFuses) { hint.textContent = 'Find a glowing ❓ locker'; hint.classList.remove('hidden'); }
@@ -234,6 +251,28 @@ function tick(now) {
   }
   requestAnimationFrame(tick);
 }
+// Auto-walk: helps students who find steering hard. Walks to the nearest ready locker (or the generator with fuses).
+function startAuto() {
+  if (!local) return;
+  let goal = null; let kind = 'locker';
+  if (myFuses) { goal = [GENERATOR.x, GENERATOR.y + 1.4]; kind = 'gen'; }
+  else {
+    const now = performance.now(); let best = null;
+    for (const l of LOCKERS) { if ((cooldown.get(l.id) || 0) > now) continue; const st = lockerStand(l); const p = st && findPath(local.x, local.y, st[0], st[1]); if (p && (!best || p.length < best.p.length)) best = { p, st }; }
+    if (best) goal = best.st;
+  }
+  if (!goal) return;
+  const p = findPath(local.x, local.y, goal[0], goal[1]) || [];
+  auto = { kind, pts: [...p.map(([x, y]) => [x + 0.5, y + 0.5]), goal] }; sound.play('pop');
+}
+function stopAuto() { auto = null; }
+function autoStep() {
+  while (auto && auto.pts.length && dist(local.x, local.y, auto.pts[0][0], auto.pts[0][1]) < 0.15) auto.pts.shift();
+  if (!auto || !auto.pts.length) { stopAuto(); return null; }
+  const [tx, ty] = auto.pts[0]; const d = dist(local.x, local.y, tx, ty) || 1; return [(tx - local.x) / d, (ty - local.y) / d];
+}
+$('autoBtn').addEventListener('click', () => { if (auto) stopAuto(); else startAuto(); });
+
 function openNear() { if (nearLocker === null || question) return; sound.ensure(); link.send({ t: 'open', l: nearLocker }); sound.play('open'); }
 $('actBtn').addEventListener('click', openNear);
 
@@ -313,13 +352,18 @@ function showResults(results, mine) {
   if (results) resultsShown.results = results; if (mine) resultsShown.mine = mine;
   const r = resultsShown.results; const s = resultsShown.mine;
   const kids = [];
-  if (r) {
+  if (r && r.mode === 0) {
+    const place = s ? s.place : null; const medal = place ? ['🥇', '🥈', '🥉'][place - 1] || '🏅' : '🏅';
+    kids.push(h('div', { style: { fontSize: '3.4em' }, text: medal }), h('h2', { text: place ? `You came #${place} of ${s.of}!` : 'Game over!' }), h('p', { text: `${s ? s.score : 0} power · Class got ${Math.round(r.accuracy * 100)}% right` }));
+    if (place === 1) sound.play('win');
+  } else if (r) {
     const my = r.crews.find((c) => c.crew === me.crew);
     const medal = my ? ['🥇', '🥈', '🥉', '🏅'][Math.min(3, my.place - 1)] : '🏅';
     kids.push(h('div', { style: { fontSize: '3.4em' }, text: medal }), h('h2', { text: my ? `Crew ${CREWS[me.crew].name}: #${my.place}` : 'Game over!' }), h('p', { text: `${my ? my.score : 0} power for your crew · Class got ${Math.round(r.accuracy * 100)}% right` }));
     if (my && my.place === 1) sound.play('win');
   }
   if (s) {
+    if (s.accuracy !== null) kids.push(h('div', { class: 'acc-big' }, h('b', { text: `${Math.round(s.accuracy * 100)}%` }), ' of your answers were correct'));
     kids.push(h('div', { class: 'stats' },
       h('div', {}, h('b', { text: `${s.stats.correct}/${s.stats.answered}` }), 'correct'),
       h('div', {}, h('b', { text: String(s.stats.delivered) }), 'power delivered'),

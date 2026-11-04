@@ -116,14 +116,19 @@ for (let i = 0; i < 2; i++) {
     await p.locator('.tabs button', { hasText: 'Extra' }).click(); await p.locator('#choices button').nth(2).click();
     await sleep(400); await shot(p, 'p02-avatar-creator-390x844.png'); await noOverflow(p, 'avatar creator');
   }
-  await p.click('#avatarDone'); await sleep(1200);
-  check(`phone ${i}: in game view`, await p.isVisible('#world'));
-  phones.push(p);
+  if (i === 0) { await p.click('#avatarDone'); await sleep(1200); check('phone 0: in game view', await p.isVisible('#world')); }
+  phones.push(p); // phone 1 stays in the avatar creator on purpose
+
 }
 const [pa, pb] = phones;
 await shot(pa, 'p03-lobby-390x844.png'); await shot(host, '03-teacher-lobby-qr-1366x768.png'); await noOverflow(host, 'teacher lobby');
 check('lobby shows QR', await host.locator('.lobby svg').count() === 1);
-check('lobby lists 2 players', (await host.textContent('.lobby .count')).includes('2 / 40'));
+check('lobby lists 2 players (even one still designing)', (await host.textContent('.lobby .count')).includes('2 / 40'));
+check('lobby suggests a mode for a small group', /Suggested for 2 players: Solo/.test(await host.textContent('.lobby')));
+await host.locator('.modes .btn', { hasText: '2 crews' }).click(); await sleep(600);
+check('teacher can switch to 2 crews in the lobby', (await host.locator('.modes .btn.on').textContent()).includes('2 crews'));
+await host.click('#cHow'); await sleep(300); check('how-to-play card opens', (await host.textContent('#overlay')).includes('How to play'));
+await shot(host, '03b-teacher-how-to-1366x768.png'); await host.locator('.modal-card .btn', { hasText: 'Close' }).click(); await sleep(300);
 // emote in lobby
 await pa.click('#emoteBtn'); await pa.locator('#emoteWheel button').nth(1).click(); await sleep(600);
 await shot(pa, 'p04-emote-390x844.png');
@@ -132,6 +137,8 @@ await host.click('#cStart'); await sleep(1300);
 await shot(host, '04-teacher-countdown-1366x768.png');
 await sleep(3200);
 check('game is playing', (await pa.evaluate(() => window.__ah.phase)) === 'play');
+check('Start pulled the still-designing phone into the game', await pb.isVisible('#world') && !(await pb.isVisible('#avatarView')));
+check('power meter shows during play', await pa.isVisible('#energy'));
 // walk to the nearest locker and open it
 const L = await nearestLocker(pa); const [sx, sy] = lockerStand(L);
 await walkTo(pa, sx, sy); await sleep(300);
@@ -147,7 +154,9 @@ await shot(pa, 'p07-correct-loot-why-390x844.png');
 await sleep(1000); await pa.click('.qcard .btn.primary'); await sleep(300);
 check('card closes to keep playing', !(await pa.isVisible('.qcard')));
 // phone B answers wrong
-const Lb = await nearestLocker(pb); const [bx, by] = lockerStand(Lb); await walkTo(pb, bx, by); await sleep(300);
+await pb.click('#autoBtn');
+for (let k = 0; k < 40 && (await pb.evaluate(() => window.__ah.near)) === null; k++) await sleep(250);
+check('🧭 auto-walk brings the player to a locker', (await pb.evaluate(() => window.__ah.near)) !== null);
 if (await openLockerHere(pb)) {
   const qb2 = byPrompt.get((await pb.textContent('.qcard .prompt')).trim());
   await pb.locator('.ans').nth((qb2.correct + 1) % 4).click(); await sleep(900);
@@ -168,6 +177,12 @@ const idB = await pb.evaluate(() => JSON.parse(localStorage.getItem('afterhours.
 await pb.reload(); await sleep(2000);
 check('reload reconnects with the same player', (await pb.evaluate(() => JSON.parse(localStorage.getItem('afterhours.nc.player.v1')).playerId)) === idB && (await pb.evaluate(() => window.__ah.phase)) === 'play');
 // end -> results
+await host.click('#cTeacher'); await sleep(400);
+const tUrl = (await host.locator('.modal-card svg').getAttribute('aria-label')).replace('QR code for ', '');
+await host.locator('.modal-card .btn', { hasText: 'Close' }).click();
+const tp = await page(390, 844, 'teacher-phone'); await tp.goto(tUrl); await sleep(1500);
+check('teacher phone view lists nicknames and answer counts', (await tp.textContent('#rows')).includes('Sparkly Mochi') && (await tp.textContent('#sum')).includes('answers'));
+await shot(tp, 't01-teacher-phone-390x844.png', true); await noOverflow(tp, 'teacher phone');
 await host.click('#cEnd'); await sleep(2500);
 check('teacher sees podium + review', await host.isVisible('.results') && (await host.textContent('.results')).includes('review'));
 await shot(host, '06-teacher-results-review-1366x768.png'); await noOverflow(host, 'teacher results');
@@ -184,11 +199,16 @@ check('DEMO game is labelled', await demo.isVisible('#demoTag'));
 const dcode = (await demo.textContent('#codeMini')).trim();
 const dp = await page(390, 844, 'demo-phone');
 await dp.goto(`${base}/play.html?room=${dcode}`); await sleep(500); await dp.fill('#nameIn', 'Cosmic Star'); await dp.click('button[type=submit]'); await sleep(400); await dp.click('#avatarDone'); await sleep(800);
+await demo.locator('.modes .btn', { hasText: 'Solo' }).click(); await sleep(500);
 await demo.click('#cStart'); await sleep(30_000);
+check('Solo mode shows a top-5 leaderboard', (await demo.textContent('#railTitle')) === 'Leaderboard' && (await demo.locator('#board .crow').count()) <= 5);
 await shot(demo, '07-teacher-demo-busy-1366x768.png');
 await shot(dp, 'p11-demo-crowd-390x844.png');
 const board = await demo.textContent('#board');
-check('crew race scores are moving in DEMO', /⚡[1-9]/.test(board), board.replace(/\s+/g, ' ').slice(0, 80));
+check('scores are moving in DEMO', /⚡[1-9]/.test(board), board.replace(/\s+/g, ' ').slice(0, 80));
+await demo.click('#cEnd'); await sleep(2500);
+check('Solo results show a player podium', /wins!/.test(await demo.textContent('.results h2')));
+await shot(demo, '08-teacher-solo-results-1366x768.png'); await shot(dp, 'p12-solo-results-390x844.png');
 
 await browser.close(); server.closeAllConnections?.(); server.close();
 console.table(results);

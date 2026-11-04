@@ -42,6 +42,15 @@ export function normaliseCallsign(raw) {
 const clampInt = (v, lo, hi, d) => { const n = Number(v); return Number.isFinite(n) ? Math.max(lo, Math.min(hi, Math.round(n))) : d; };
 const BOT_NAMES = ['Sleepy Ghost', 'Mochi Cat', 'Jelly Bean', 'Star Fox', 'Pudding', 'Comet Kid', 'Lotus Pop', 'Mango Moon', 'Pixel Puff', 'Boba Bat', 'Cloud Nine', 'Sunny Owl', 'Kiwi Spark', 'Taro Cake', 'Nova Bun', 'Peach Fizz'];
 
+export const TEAM_OPTIONS = [0, 2, 3, 4]; // 0 = solo
+export const GOAL_OPTIONS = [0, 20, 30, 50, 80];
+export function cleanSettings(s = {}) {
+  const teams = TEAM_OPTIONS.includes(Number(s.teams)) ? Number(s.teams) : 4;
+  const goal = GOAL_OPTIONS.includes(Number(s.goal)) ? Number(s.goal) : 0;
+  return { minutes: clampInt(s.minutes, 1, 15, 8), teams, goal };
+}
+const ENERGY_DRAIN_PER_S = 100 / 75; // a full power meter lasts ~75 s without answering
+
 export class Room {
   constructor({ code, pack, settings = {}, now = Date.now, rng = Math.random, demoBots = 0, connectedMs = CONNECTED_MS, out = () => {} }) {
     const v = validatePack(pack);
@@ -50,7 +59,8 @@ export class Room {
     this.pack = deepFreeze(JSON.parse(JSON.stringify(v.pack)));
     this.qById = new Map(this.pack.questions.map((q) => [q.id, q]));
     this.now = now; this.rng = rng; this.connectedMs = connectedMs; this.out = out;
-    this.settings = { minutes: clampInt(settings.minutes, 1, 15, 8) };
+    this.settings = cleanSettings(settings);
+    this.viewToken = tok(16); // read-only teacher phone view
     this.players = new Map(); this.byNum = new Map(); this.nextNum = 1;
     this.lastActivity = now(); this.lastTick = now();
     this.rosterVersion = 1; this.demo = demoBots > 0;
@@ -77,6 +87,7 @@ export class Room {
     p.fuses = []; p.shieldUntil = 0; p.bootsUntil = 0; p.zombieUntil = 0; p.invulnUntil = 0;
     p.pending = null; p.lockerCd = new Map(); p.emote = null; p.streak = 0;
     p.stats = { answered: 0, correct: 0, delivered: 0, golden: 0, cures: 0, bestStreak: 0 };
+    p.score = 0; p.energy = 100; p.lastAnswerAt = this.gt || 0;
     p.queue = this.shuffle(this.pack.questions.map((q) => q.id));
     if (respawn) { const [x, y] = this.spawnPoint(); p.x = x; p.y = y; }
   }
@@ -93,7 +104,15 @@ export class Room {
 
   // ---------------- players ----------------
   crewSize(c) { let n = 0; for (const p of this.players.values()) if (p.crew === c) n++; return n; }
-  pickCrew() { let best = 0, n = Infinity; for (const c of CREWS) { const k = this.crewSize(c.id); if (k < n) { n = k; best = c.id; } } return best; }
+  get solo() { return this.settings.teams === 0; }
+  crewPool() { return CREWS.slice(0, this.solo ? 4 : this.settings.teams); }
+  pickCrew() { let best = 0, n = Infinity; for (const c of this.crewPool()) { const k = this.crewSize(c.id); if (k < n) { n = k; best = c.id; } } return best; }
+  rebalance() {
+    const pool = this.crewPool().map((c) => c.id); let i = 0;
+    for (const p of [...this.players.values()].sort((a, b) => a.num - b.num)) p.crew = pool[i++ % pool.length];
+    this.rosterVersion++;
+  }
+  scoreOf(p) { return this.solo ? p.score : this.scores[p.crew]; }
 
   join({ callsign, avatar, playerId, secret } = {}) {
     this.touch();
@@ -131,7 +150,7 @@ export class Room {
 
   setAvatar(p, avatar) { p.avatar = cleanAvatar(avatar); this.rosterVersion++; }
 
-  speedOf(p) { if (this.isZombie(p)) return SPEED.zombified; if (p.bootsUntil > this.gt) return SPEED.boots; return SPEED.player; }
+  speedOf(p) { if (this.isZombie(p)) return SPEED.zombified; if (p.bootsUntil > this.gt) return SPEED.boots; if (p.energy <= 0) return SPEED.sleepy; return SPEED.player; }
   isZombie(p) { return p.zombieUntil > this.gt; }
 
   /** Client-reported movement, validated against speed and walls. Returns a correction or null. */
@@ -191,7 +210,8 @@ export class Room {
     p.pending = null;
     const correct = choice === q.correct;
     const st = this.qstats.get(q.id) || { n: 0, c: 0 }; st.n++; if (correct) st.c++; this.qstats.set(q.id, st);
-    p.stats.answered++;
+    p.stats.answered++; p.lastAnswerAt = this.gt;
+    p.energy = Math.min(100, p.energy + (correct ? 45 : 25));
     p.lockerCd.set(lockerId, this.gt + LOCKER_PLAYER_COOLDOWN_MS);
     p.invulnUntil = Math.max(p.invulnUntil, this.gt + 1500);
     let loot = null;
@@ -230,9 +250,17 @@ export class Room {
   }
 
   // ---------------- host controls ----------------
-  hostAction(action) {
+  hostAction(action, body = {}) {
     this.touch();
     switch (action) {
+      case 'settings': {
+        if (this.phase !== 'lobby') throw new GameError(409, 'wrong_phase', 'Change the mode in the lobby, before starting.');
+        const before = this.settings.teams;
+        this.settings = cleanSettings({ ...this.settings, ...(body && typeof body === 'object' ? body : {}) });
+        if (before !== this.settings.teams) this.rebalance();
+        this.emitAll({ t: 'mode', settings: this.settings });
+        break;
+      }
       case 'start':
         if (this.phase !== 'lobby') throw new GameError(409, 'wrong_phase', 'Already started.');
         if (this.players.size === 0) throw new GameError(409, 'no_players', 'Wait for at least one player.');
@@ -268,20 +296,22 @@ export class Room {
   finish() {
     this.phase = 'results'; this.paused = false;
     for (const p of this.players.values()) if (p.pending) p.pending = null;
-    const order = CREWS.map((c) => ({ crew: c.id, score: this.scores[c.id], members: this.crewSize(c.id) })).filter((c) => c.members > 0).sort((a, b) => b.score - a.score);
-    let place = 0, last = null; order.forEach((c, i) => { if (c.score !== last) { place = i + 1; last = c.score; } c.place = place; });
+    const rank = (arr) => { let place = 0, last = null; arr.forEach((c, i) => { if (c.score !== last) { place = i + 1; last = c.score; } c.place = place; }); return arr; };
+    const order = this.solo ? [] : rank(this.crewPool().map((c) => ({ crew: c.id, score: this.scores[c.id], members: this.crewSize(c.id) })).filter((c) => c.members > 0).sort((a, b) => b.score - a.score));
+    const solo = this.solo ? rank([...this.players.values()].map((p) => ({ n: p.num, name: p.callsign, score: p.score, crew: p.crew })).sort((a, b) => b.score - a.score)) : [];
+    this.soloRanks = new Map(solo.map((x) => [x.n, x.place]));
     let n = 0, c = 0; for (const s of this.qstats.values()) { n += s.n; c += s.c; }
     const perQuestion = this.pack.questions.map((q, i) => { const s = this.qstats.get(q.id) || { n: 0, c: 0 }; return { i, id: q.id, prompt: q.prompt, n: s.n, c: s.c, acc: s.n ? s.c / s.n : null, correct: q.correct, explanation: q.explanation, options: q.options }; });
     const hardest = perQuestion.filter((q) => q.n >= 2).sort((a, b) => a.acc - b.acc).slice(0, 3);
-    this.results = { crews: order, answers: n, correct: c, accuracy: n ? c / n : 0, perQuestion: perQuestion.map(({ i, n: nn, acc }) => ({ i, n: nn, acc })), hardest, players: this.players.size };
+    this.results = { mode: this.settings.teams, crews: order, top: solo.slice(0, 5), answers: n, correct: c, accuracy: n ? c / n : 0, perQuestion: perQuestion.map(({ i, n: nn, acc }) => ({ i, n: nn, acc })), hardest, players: this.players.size };
     this.emitAll({ t: 'phase', phase: 'results' });
     this.emitAll({ t: 'results', results: this.publicResults() });
     this.emitHost({ t: 'results', results: this.hostResults() });
-    for (const p of this.players.values()) this.emitTo(p, { t: 'mystats', stats: p.stats, badges: this.badges(p) });
+    for (const p of this.players.values()) this.emitTo(p, { t: 'mystats', stats: p.stats, badges: this.badges(p), score: p.score, place: this.solo ? this.soloRanks.get(p.num) : null, of: this.players.size, accuracy: p.stats.answered ? p.stats.correct / p.stats.answered : null });
   }
 
   hostResults() { return this.results && { ...this.publicResults(), hardest: this.results.hardest }; }
-  publicResults() { const r = this.results; return r && { crews: r.crews, answers: r.answers, correct: r.correct, accuracy: r.accuracy, perQuestion: r.perQuestion, players: r.players }; }
+  publicResults() { const r = this.results; return r && { mode: r.mode, top: r.top, crews: r.crews, answers: r.answers, correct: r.correct, accuracy: r.accuracy, perQuestion: r.perQuestion, players: r.players }; }
 
   badges(p) {
     const s = p.stats; const b = [];
@@ -304,6 +334,7 @@ export class Room {
     // questions timing out
     for (const p of this.players.values()) if (p.pending && this.gt - p.pending.openedAt > QUESTION_TIMEOUT_MS) { this.cancelQuestion(p); this.emitTo(p, { t: 'qclose', reason: 'timeout' }); }
     this.tickBots(dtMs, false);
+    for (const p of this.players.values()) if (!p.pending && this.online(p)) { const was = p.energy; p.energy = Math.max(0, p.energy - ENERGY_DRAIN_PER_S * dt); if (was > 0 && p.energy === 0) this.emitTo(p, { t: 'sleepy' }); }
     this.tickZombies(dt);
     this.tickTags();
     this.tickItems();
@@ -373,7 +404,7 @@ export class Room {
     for (const zp of ps) {
       if (!this.isZombie(zp)) continue;
       for (const p of ps) {
-        if (p === zp || p.crew === zp.crew || !canBeTagged(p) || dist(zp.x, zp.y, p.x, p.y) > 0.6) continue;
+        if (p === zp || (!this.solo && p.crew === zp.crew) || !canBeTagged(p) || dist(zp.x, zp.y, p.x, p.y) > 0.6) continue;
         if (this.zombify(p, zp.num)) {
           zp.zombieUntil = 0; zp.invulnUntil = this.gt + INVULN_MS; zp.stats.cures++;
           this.emitAll({ t: 'fx', k: 'cure', n: zp.num });
@@ -398,9 +429,11 @@ export class Room {
     for (const p of ps) {
       if (!p.fuses.length || this.isZombie(p) || dist(p.x, p.y, GENERATOR.x, GENERATOR.y) > GENERATOR.r) continue;
       const pts = p.fuses.reduce((s, v) => s + v, 0) * (this.overtime ? 2 : 1);
-      this.scores[p.crew] += pts; p.stats.delivered += pts; p.fuses = [];
+      if (this.solo) p.score += pts; else this.scores[p.crew] += pts;
+      p.stats.delivered += pts; p.fuses = [];
       this.emitAll({ t: 'fx', k: 'deliver', n: p.num, crew: p.crew, pts });
-      this.pushFeed(`${p.callsign} powered up +${pts} for Crew ${CREWS[p.crew].name}!`, 'good', p.crew);
+      this.pushFeed(this.solo ? `${p.callsign} powered up +${pts}!` : `${p.callsign} powered up +${pts} for Crew ${CREWS[p.crew].name}!`, 'good', p.crew);
+      if (this.settings.goal && this.scoreOf(p) >= this.settings.goal && this.phase === 'play') { this.pushFeed(this.solo ? `${p.callsign} reached ${this.settings.goal}!` : `Crew ${CREWS[p.crew].name} reached ${this.settings.goal}!`, 'big', p.crew); this.finish(); return; }
     }
   }
 
@@ -454,12 +487,12 @@ export class Room {
       if (!this.online(p)) continue;
       let f = 0;
       if (p.moving) f |= 1; if (p.dir < 0) f |= 2; if (this.isZombie(p)) f |= 4; if (p.shieldUntil > g) f |= 8;
-      if (p.bootsUntil > g) f |= 16; if (p.pending) f |= 32; if (p.invulnUntil > g) f |= 64; if (p.fuses.some((v) => v >= 2)) f |= 128;
+      if (p.bootsUntil > g) f |= 16; if (p.pending) f |= 32; if (p.invulnUntil > g) f |= 64; if (p.fuses.some((v) => v >= 2)) f |= 128; if (p.energy <= 0) f |= 256;
       const em = p.emote && now - p.emote.at < 2500 ? p.emote.e : 0;
-      ps.push([p.num, Math.round(p.x * 100), Math.round(p.y * 100), f, p.fuses.length, em]);
+      ps.push([p.num, Math.round(p.x * 100), Math.round(p.y * 100), f, p.fuses.length, em, p.score, Math.round(p.energy)]);
     }
     return {
-      t: 's', ph: this.phase, pa: this.paused ? 1 : 0, rv: this.rosterVersion,
+      t: 's', ph: this.phase, pa: this.paused ? 1 : 0, rv: this.rosterVersion, md: this.settings.teams, gl: this.settings.goal,
       tl: this.phase === 'play' ? Math.max(0, this.endsAt - g) : this.phase === 'countdown' ? Math.max(0, this.countdownEnds - g) : 0,
       ot: this.overtime ? 1 : 0, ev: this.event ? [this.event.kind, Math.max(0, this.event.endsAt - g)] : 0,
       sc: this.scores, p: ps,
@@ -472,9 +505,23 @@ export class Room {
     let n = 0, c = 0; for (const s of this.qstats.values()) { n += s.n; c += s.c; }
     const crews = CREWS.map((cr) => ({ id: cr.id, members: this.crewSize(cr.id), online: [...this.players.values()].filter((p) => p.crew === cr.id && this.online(p)).length }));
     const hardest = this.pack.questions.map((q, i) => { const s = this.qstats.get(q.id) || { n: 0, c: 0 }; return { i, n: s.n, acc: s.n ? s.c / s.n : null }; }).filter((x) => x.n >= 2).sort((a, b) => a.acc - b.acc).slice(0, 3);
-    return { t: 'stats', answers: n, correct: c, accuracy: n ? c / n : null, players: this.players.size, crews, hardest, settings: this.settings, demo: this.demo, packTitle: this.pack.title, questions: this.pack.questions.length };
+    const idle = this.phase === 'play' ? [...this.players.values()].filter((p) => this.online(p) && !p.pending && this.gt - p.lastAnswerAt > 60_000).length : 0;
+    return { t: 'stats', answers: n, correct: c, accuracy: n ? c / n : null, players: this.players.size, crews, hardest, settings: this.settings, idle, demo: this.demo, packTitle: this.pack.title, questions: this.pack.questions.length };
   }
 }
+
+Room.prototype.teacherView = function teacherView() {
+  const list = [...this.players.values()].map((p) => ({
+    name: p.callsign, crew: p.crew, online: this.online(p), bot: p.bot,
+    answered: p.stats.answered, correct: p.stats.correct, delivered: p.stats.delivered,
+    sinceAnswerS: this.phase === 'play' ? Math.round((this.gt - p.lastAnswerAt) / 1000) : null,
+    status: !this.online(p) ? 'offline' : p.pending ? 'answering' : this.isZombie(p) ? 'zombie' : p.energy <= 0 ? 'sleepy' : 'exploring'
+  }));
+  list.sort((a, b) => (b.sinceAnswerS ?? 0) - (a.sinceAnswerS ?? 0) || a.answered - b.answered);
+  let n = 0, c = 0; for (const s of this.qstats.values()) { n += s.n; c += s.c; }
+  return { phase: this.phase, paused: this.paused, timeLeft: this.phase === 'play' ? Math.max(0, this.endsAt - this.gt) : 0, settings: this.settings, answers: n, accuracy: n ? c / n : null, players: list,
+    questions: this.pack.questions.map((q, i) => { const s = this.qstats.get(q.id) || { n: 0, c: 0 }; return { i, prompt: q.prompt, n: s.n, acc: s.n ? s.c / s.n : null }; }) };
+};
 
 function deepFreeze(o) { if (o && typeof o === 'object') { Object.freeze(o); for (const v of Object.values(o)) deepFreeze(v); } return o; }
 export { isWalkableTile };

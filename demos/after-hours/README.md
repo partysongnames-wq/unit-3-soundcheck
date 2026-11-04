@@ -6,7 +6,11 @@ A real-time, Roblox-style classroom game for English review. Every student makes
 - An avatar creator with hair, colours, outfits (including a school uniform), ears, bows, glasses and crowns. There are also emotes (wave, dance, heart…).
 - Lockers hold the questions. A correct answer gives loot: a fuse, a golden fuse, speed boots, a shield or a zombie zap. Every answer shows the **WHY**.
 - Zombies are cute and silly, and getting tagged is playground tag, not elimination. A tagged player turns into a mini-zombie for 8 s, drops her fuses, and turns back by tagging someone from another crew.
-- Four crews race. The projector shows a live leaderboard, a feed, surprise events and a double-points final minute. The game ends with a podium and a review of the toughest questions.
+- **Solo or teams:** play solo (everyone for herself) or in 2, 3 or 4 crews. The projector shows a live leaderboard, a feed, surprise events and a double-points final minute. The game ends with a podium and a review of the toughest questions.
+- **Timer or goal:** the game runs on a timer (5–12 minutes), or ends early when someone reaches a goal score (20, 30, 50 or 80).
+- **Answering keeps you going:** a ⚡ power meter drains while you explore and refills when you answer. If it runs out, your character gets sleepy and slow.
+- **Helpers:** 🧭 auto-walk takes a student to the nearest locker (or the generator), and a private 📋 teacher phone view shows who is and isn't answering.
+- **Dusk look:** a soft evening tint with glowing lamp posts and a glowing generator, so it feels like "after hours" while staying bright.
 - Runs on one laptop on the classroom Wi-Fi. There are no accounts, no real names, no chat and no internet services. All artwork is original and drawn in code; there are no image files and no emblems.
 
 > **Status:** tested with automated clients and headless Chromium only, not yet with a real class on real phones. See [Limitations](#limitations-and-open-issues).
@@ -36,15 +40,40 @@ The server prints the teacher URL (`http://localhost:8787/host.html`) and the ad
 
 ## Running a game (teacher)
 
-1. Open `host.html` on the projector laptop. Pick a question pack and a game length (5, 8, 10 or 12 minutes), then click **Create game**.
+1. Open `host.html` on the projector laptop.
+   - Pick a question pack, **Teams** (Solo, 2, 3 or 4 crews), **Game length** (5, 6, 8, 10 or 12 minutes) and an optional **Goal** ("first to 20/30/50/80").
+   - Click **Create game**. There are also **Teacher tips** on the setup screen.
 2. The lobby shows a QR code and a 5-letter code. Students join, make a character and can already run around the school.
-3. Click **▶ Start**. There's a 3-2-1 countdown, then the game starts.
+   - You can change the team mode in the lobby once you see how many joined. The lobby also suggests one, for example Solo for under 6 players or 2 crews for 6–11.
+3. Click **▶ Start**. There's a 3-2-1 countdown, then the game starts. **Start pulls everyone into the game**, including students still designing their character; they can change their look after the game.
 4. Controls:
    - **Pause** (or `P`) freezes everything and shows "Paused" on every phone.
    - **+1 min** adds time.
    - **End** goes to the results.
    - **Reset** goes back to the lobby with the same players.
+   - **❓** shows a how-to-play card.
+   - **📋** shows a QR code for the private teacher phone view. **Blank or freeze the projector first**, then scan it with *your* phone.
    - You can also toggle music and sound effects and switch to full screen.
+
+### Suggested lesson flow
+
+- Before the lesson, test the laptop and 2–3 phones on the school Wi-Fi.
+- In class:
+  1. Join and design characters (about 2 minutes).
+  2. A **5-minute** first game.
+  3. The question review.
+  4. A **6–8 minute** second game.
+- **Pairs** (one phone per two students) also work well. That means half the phones and less Wi-Fi load; one steers, the other reads and answers.
+
+### Teacher phone view (`teacher.html`)
+
+- It is **read-only**: it uses a separate view token that can't start, pause or end the game.
+- It lists every nickname with:
+  - how many questions she has answered and how many were correct
+  - how long since her last answer (highlighted after 60 seconds)
+  - what she's doing right now (exploring, answering, zombie, sleepy, offline)
+- It also shows accuracy for each question, and refreshes every 3 seconds.
+- The projector only ever shows a count ("3 players haven't answered in the last minute"), never names.
 5. Results: a crew podium with dancing avatars, the class accuracy, and **the three toughest questions with their answers and WHY** for a quick class review. **Play again** returns to the lobby.
 
 **Try a DEMO (bots)** starts a game with 14 bot players so you can see it before class. It is labelled DEMO on screen.
@@ -52,19 +81,20 @@ The server prints the teacher URL (`http://localhost:8787/host.html`) and the ad
 ## How to play (students)
 
 1. Scan the QR code, type a nickname (🎲 suggests one) and make your character.
-2. Move with the joystick: touch anywhere on the lower part of the screen and drag. On a keyboard, use WASD or the arrow keys.
+2. Move with the joystick: touch anywhere on the lower part of the screen and drag. On a keyboard, use WASD or the arrow keys. **🧭** walks you to the nearest locker automatically, or to the generator when you're carrying fuses.
 3. Walk up to a glowing **❓ locker** and tap **OPEN** (or press `E`). Answer the question.
    - Correct: you get loot, plus an extra fuse for every 3 correct answers in a row.
    - Wrong: you see the right answer and the WHY. The question comes back later so you can try again.
-4. Carry fuses to the **GENERATOR** in the middle to score for your crew. You can carry up to 3.
-5. If a zombie tags you, you drop your fuses (anyone can grab them). Tag a player from another crew to turn back. Shields block one tag. Every player is safe for 6 seconds at the start of the game and while answering a question.
-6. Surprise events:
+4. Carry fuses to the **GENERATOR** in the middle to score for your crew (or for yourself in Solo). You can carry up to 3.
+5. Keep your **⚡ power meter** up. It drains in about 75 seconds of exploring. A correct answer adds 45 and any answer adds at least 25. When it's empty you're sleepy and slow until you answer.
+6. If a zombie tags you, you drop your fuses (anyone can grab them). Tag a player from another crew to turn back. Shields block one tag. Every player is safe for 6 seconds at the start of the game and while answering a question.
+7. Surprise events:
    - **Lights out**: the screen goes dark except around players.
    - **Zombie dance party**: the zombies stop chasing.
    - **Golden lockers**: loot is doubled.
    - **Fuse rain**: fuses drop around the school.
    - **Final minute**: every fuse is worth double.
-7. At the end, each phone privately shows that student's own stats (correct answers, power delivered, best streak) and badges.
+8. At the end, each phone privately shows that student's own **accuracy %**, stats, badges and (in Solo) her own place. The projector shows only the top 5 in Solo.
 
 ### Learning design
 
@@ -113,8 +143,9 @@ See [Latest results](#latest-results) at the bottom.
 
 ### Screenshots (`screenshots/`, generated by `tests/browser.mjs`)
 
-- **Projector:** `01-title`, `02-teacher-setup`, `03-teacher-lobby-qr`, `04-teacher-countdown`, `05-teacher-live-map`, `06-teacher-results-review`, `07-teacher-demo-busy`.
-- **Phone:** `p00-title`, `p01-join`, `p02-avatar-creator`, `p03-lobby`, `p04-emote`, `p05-at-locker`, `p06-question`, `p07-correct-loot-why`, `p08-wrong-why`, `p09-playing`, `p10-results`, `p11-demo-crowd`.
+- **Projector:** `01-title`, `02-teacher-setup`, `03-teacher-lobby-qr`, `03b-teacher-how-to`, `04-teacher-countdown`, `05-teacher-live-map`, `06-teacher-results-review`, `07-teacher-demo-busy`, `08-teacher-solo-results`.
+- **Phone:** `p00-title`, `p01-join`, `p02-avatar-creator`, `p03-lobby`, `p04-emote`, `p05-at-locker`, `p06-question`, `p07-correct-loot-why`, `p08-wrong-why`, `p09-playing`, `p10-results`, `p11-demo-crowd`, `p12-solo-results`.
+- **Teacher phone:** `t01-teacher-phone`.
 - **Editor:** `e01-editor`.
 
 ## Architecture
@@ -130,7 +161,8 @@ public/js/shared/packs.js     Pack schema, validation, spreadsheet import, start
 public/js/art.js              All artwork (tiles, furniture, avatars, zombies, items)
 public/js/render.js           Camera, cached map chunks, interpolation, effects, event overlays
 public/play.html + js/play.js Phone: join, avatar creator, joystick, lockers, loot, emotes, results
-public/host.html + js/host.js Projector: lobby/QR, live map, crew race, feed, podium + review
+public/host.html + js/host.js Projector: lobby/QR + mode switch, live map, leaderboard, feed, podium + review
+public/teacher.html + js/teacher.js  Private read-only teacher phone view
 public/editor.html + js/editor.js  Question pack editor
 public/js/vendor/qrcode.mjs   QR encoder (qrcode-generator 2.0.4, MIT, Kazuhiko Arase), vendored locally
 ```
@@ -140,7 +172,7 @@ Movement is predicted on the phone so it feels instant, and the server validates
 ## Security, privacy and retention
 
 - **No personal data:** no accounts, no real names and no chat. Students type a nickname, which is filtered for format and a short list of bad words.
-- **Secret tokens:** the teacher gets a random 48-hex host token. Each player gets a random id and secret, kept on the phone so reconnects restore the same player. Tokens are checked in constant time and never appear in shared messages.
+- **Secret tokens:** the teacher gets a random 48-hex host token and a separate read-only view token for the teacher phone page. Each player gets a random id and secret, kept on the phone so reconnects restore the same player. Tokens are checked in constant time and never appear in shared messages.
 - **Questions:** each locker question carries a single-use code tied to one player, so stale or forged answers are rejected.
 - **Limits:**
   - HTTP bodies: 4 KB, or 3.2 MB when sending a pack.
@@ -156,6 +188,8 @@ Movement is predicted on the phone so it feels instant, and the server validates
 - **Not tested with real students or real phones** (iOS Safari, Android Chrome), and not on school Wi-Fi. Run a 5-minute trial with a few phones first.
 - **Balance** (zombie count and speed, loot odds, event timing) was tuned with bots and may need adjusting after a real class.
 - On the projector, 40 name tags can overlap where many players crowd together.
+- The 📋 teacher QR appears on the laptop screen, so blank or freeze the projector before you show it. If a student scans it anyway, she can only *see* the list, not control the game.
+- The school map is a generic cartoon school. Real Suksanari landmarks (statue, gate, buildings) can be added once there are photos or descriptions.
 - There is no button to kick a player yet, so the teacher should watch the lobby list.
 - In-memory only, so restarting the server ends the game.
 - There's no public deployment, and none should be done without adding HTTPS, rate limiting and other hardening.
@@ -167,10 +201,9 @@ All results are from 2026-11-04, on a Linux container with Node 22.23 and headle
 
 | Suite | Result |
 |---|---|
-| `npm test` | **19 / 19 passed.** Covers: map connectivity; pack validation and spreadsheet import; avatar sanitising; 40 joins with the 41st rejected and crews of 10/10/10/10; nickname rules; same-identity reconnect; locker phase, distance, cooldown and single-use-code checks; answers hidden until answered; loot only for correct answers; missed questions re-queued; teleport and wall-walking corrected; zombie tag, fuse drop, shield, and pass-it-on tag (other crews only); fuse delivery and the double-points final minute; pause, +1 min, end and reset; no secrets or answers in shared messages; frozen pack copy; events firing; a full DEMO game reaching results. Also, over HTTP and WebSocket: host token required, bad credentials refused, the full locker → answer → WHY flow, forged and duplicate answers rejected, oversized frames closed, body limits, and path-traversal attempts refused |
-| `node tests/sim.mjs 20` | **PASS.** A 2-minute game with 20 simulated clients. 2 joined late, and 3 dropped at 35 s and reconnected at 55 s with the same id and crew. 201 answers at 82% simulated accuracy. 0 position corrections, 0 server errors, 0 fatal errors. About 9.5 world updates per second per client. Open → question p95 1.4 ms, answer → result p95 1.0 ms. 20/20 clients got their private stats |
-| `node tests/sim.mjs 40` | **PASS.** The same script with 40 clients. 346 answers at 80%. 0 corrections, 0 server errors. 9.7 updates per second per client, about 490 KB/s in total downstream (~12 KB/s per phone). Open → question p95 2.2 ms, answer → result p95 1.7 ms. 40/40 got their private stats |
-| `node tests/browser.mjs` | **41 / 41 checks passed, 0 console or page errors**, in two consecutive runs. A third run failed before the test was fixed: Playwright would not click the bobbing OPEN button. The test now presses the E key and retries. Covered: no horizontal overflow at 1366×768 and 390×844 (title, setup, lobby, live game, results, join, avatar creator, question, editor); the editor still works; join → avatar creator → lobby; emote; start and countdown; walking to a locker with the keyboard; the OPEN prompt; correct answer → loot + WHY; wrong answer → correct answer + WHY with no loot; pause/resume shown on phones; a phone reload reconnecting as the same player; the podium and toughest-question review; personal stats on phones; play again; a DEMO game with moving scores |
+| `npm test` | **24 / 24 passed.** Covers everything from the previous version, plus: solo scoring; 2- and 3-crew assignment; switching mode in the lobby with rebalancing (and refused mid-game); invalid settings falling back to defaults; solo tag hitting anyone; the solo podium; goal mode ending the game; the power meter draining, pausing while answering, refilling on answers and making players sleepy/slow; the teacher view listing who isn't answering while projector stats stay nameless; the read-only view token unable to control the game |
+| `node tests/sim.mjs 20` | **PASS.** A 2-minute game with 20 simulated WebSocket clients, 2 late joiners, and 3 that dropped and reconnected as the same player. 177 answers at 85%. 0 server errors, 0 position corrections. Open → question p95 1.7 ms. 20/20 got their private stats |
+| `node tests/sim.mjs 40` | **PASS.** 40 clients, 364 answers at 79%. 0 server errors. 3 position corrections out of thousands of moves, expected when a simulated client keeps moving just as a locker opens. About 590 KB/s in total downstream (~15 KB/s per phone). Open → question p95 2.1 ms. 40/40 got their private stats |
+| `node tests/browser.mjs` | **50 / 50 checks passed, 0 console or page errors.** One earlier run failed on a real bug: the phone tried to vibrate before the student had tapped the screen. That's fixed, and vibration now waits for a first tap. New checks: the lobby suggests a mode for 2 players; switching to 2 crews in the lobby; the how-to card; **Start pulling a still-designing phone into the game**; the power meter showing; **🧭 auto-walk reaching a locker**; the **teacher phone page** listing nicknames and answers; a Solo DEMO showing a top-5 leaderboard and a player podium. Plus all the earlier checks (no overflow at 1366×768 and 390×844, editor, locker → loot + WHY, wrong → WHY, pause, reconnect, results) |
 
-The simulated players are scripts with simple behaviour and a fixed 80% accuracy. **They are not real students or real phones**, so classroom readiness is still unproven.
-
+Simulated players are scripts, **not real students or phones**. Classroom readiness is still unproven until a real-phone trial on the school Wi-Fi.

@@ -197,3 +197,60 @@ test('surprise events happen during a game; DEMO bots play a full game to result
   assert.ok(r.scores.reduce((a, b) => a + b, 0) > 5, `scores ${r.scores}`);
   assert.ok(msgs.some((m) => m.m.t === 'fx' && m.m.k === 'tag'), 'zombies tagged someone');
 });
+
+test('modes: solo scores per player, 2 crews only use two crews, lobby switch rebalances', () => {
+  const { r, now } = mk({ settings: { teams: 2 } }); const ps = joinN(r, 6); online(r);
+  assert.deepEqual([...new Set(ps.map((p) => p.crew))].sort(), [0, 1]);
+  r.hostAction('settings', { teams: 0 });
+  assert.equal(r.solo, true);
+  r.hostAction('settings', { teams: 3, goal: 30, minutes: 6 });
+  assert.deepEqual([0, 1, 2].map((c) => r.crewSize(c)), [2, 2, 2]); assert.equal(r.settings.goal, 30);
+  r.hostAction('settings', { teams: 99, goal: 7 }); assert.equal(r.settings.teams, 4); assert.equal(r.settings.goal, 0, 'invalid values fall back');
+  r.hostAction('settings', { teams: 0 });
+  startPlay(r, now);
+  assert.equal(code(() => r.hostAction('settings', { teams: 4 })), 'wrong_phase');
+  for (const z of r.zombies) z.stunUntil = 1e12;
+  const [a, b] = ps; a.fuses = [1, 1]; a.x = GENERATOR.x; a.y = GENERATOR.y + 1.4; r.tickItems();
+  assert.equal(a.score, 2); assert.deepEqual(r.scores, [0, 0, 0, 0], 'solo does not add crew score');
+  // solo tag can hit a same-colour player
+  run(r, now, 6500); online(r); for (const z of r.zombies) { z.x = 40; z.y = 26; }
+  b.crew = a.crew; a.zombieUntil = r.gt + 5000; b.x = a.x + 0.2; b.y = a.y; b.invulnUntil = 0; r.tickTags();
+  assert.ok(r.isZombie(b));
+  r.hostAction('end');
+  assert.equal(r.results.mode, 0); assert.equal(r.results.top[0].n, a.num); assert.equal(r.results.crews.length, 0);
+});
+
+test('goal mode ends the game when a crew reaches the goal', () => {
+  const { r, now } = mk({ settings: { goal: 20 } }); const [p] = joinN(r, 2); online(r); startPlay(r, now);
+  for (const z of r.zombies) z.stunUntil = 1e12;
+  r.scores[p.crew] = 18; p.fuses = [2]; p.x = GENERATOR.x; p.y = GENERATOR.y + 1.4; r.tickItems();
+  assert.equal(r.phase, 'results'); assert.equal(r.results.crews[0].crew, p.crew);
+});
+
+test('power meter drains while exploring, answers refill it, empty meter = sleepy + slow', () => {
+  const { r, now } = mk(); const [p] = joinN(r, 1); online(r); startPlay(r, now);
+  for (const z of r.zombies) z.stunUntil = 1e12;
+  assert.ok(p.energy > 99, 'starts full');
+  for (let i = 0; i < 80; i++) { run(r, now, 1000, 100); online(r); }
+  assert.equal(p.energy, 0); assert.ok(r.speedOf(p) < 3, 'sleepy is slow');
+  assert.ok(r.snapshot().p.find((x) => x[0] === p.num)[3] & 256, 'sleepy flag in snapshot');
+  standAt(p, LOCKERS[1]); p.invulnUntil = 1e12; r.openLocker(p, 1);
+  const before = r.snapshot(); void before;
+  run(r, now, 5000, 100); online(r);
+  assert.equal(p.energy, 0, 'no drain while answering');
+  const q = r.qById.get(p.pending.qid); r.answer(p, { nonce: p.pending.nonce, choice: q.correct });
+  assert.equal(p.energy, 45); assert.ok(r.speedOf(p) > 4);
+});
+
+test('teacher view lists who has not answered; host stats count them without names', () => {
+  const { r, now } = mk(); const ps = joinN(r, 3); online(r); startPlay(r, now);
+  for (const z of r.zombies) z.stunUntil = 1e12;
+  standAt(ps[0], LOCKERS[0]); r.openLocker(ps[0], 0); const q = r.qById.get(ps[0].pending.qid); r.answer(ps[0], { nonce: ps[0].pending.nonce, choice: q.correct });
+  for (let i = 0; i < 65; i++) { run(r, now, 1000, 100); online(r); }
+  const st = r.hostStats();
+  assert.equal(st.idle, 3); assert.equal(JSON.stringify(st).includes(ps[1].callsign), false, 'projector stats have no names');
+  const tv = r.teacherView();
+  assert.equal(tv.players.length, 3); assert.ok(tv.players.find((x) => x.name === ps[0].callsign).answered === 1);
+  assert.equal(JSON.stringify(tv).includes(ps[0].secret), false);
+  assert.ok(r.viewToken && r.viewToken !== r.hostToken);
+});

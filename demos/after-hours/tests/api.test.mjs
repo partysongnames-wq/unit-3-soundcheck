@@ -121,3 +121,15 @@ test('input limits and safe static files', async () => {
   for (const p of ['/../server.mjs', '/%2e%2e/server.mjs', '/.git/config', '/server.mjs', '/js/../../package.json']) assert.notEqual((await call(p)).status, 200, p);
   assert.equal((await call('/host.html', { method: 'POST', body: {} })).status, 405);
 });
+
+test('teacher phone view: read-only token works, cannot control the game, bad token refused', async () => {
+  const r = await newRoom(); await join(r.code, 'Quiet Star');
+  assert.ok(r.viewToken && r.viewToken !== r.hostToken);
+  const ok = await call(`/api/rooms/${r.code}/teacher`, { headers: { 'X-View-Token': r.viewToken } });
+  assert.equal(ok.status, 200); assert.equal(ok.data.players[0].name, 'Quiet Star');
+  assert.equal(JSON.stringify(ok.data).includes(r.hostToken), false);
+  assert.equal((await call(`/api/rooms/${r.code}/teacher`, { headers: { 'X-View-Token': 'nope' } })).status, 403);
+  assert.equal((await call(`/api/rooms/${r.code}/host/start`, { method: 'POST', body: {}, headers: { 'X-Host-Token': r.viewToken } })).status, 403, 'view token cannot control');
+  const mode = await call(`/api/rooms/${r.code}/host/settings`, { method: 'POST', body: { teams: 0 }, headers: { 'X-Host-Token': r.hostToken } });
+  assert.equal(mode.status, 200);
+});

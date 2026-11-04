@@ -3,7 +3,7 @@
 export const W = 42;
 export const H = 28;
 
-export const SPEED = { player: 4.2, boots: 6.0, zombified: 3.5, zombieChase: 2.75, zombieWander: 1.4 };
+export const SPEED = { player: 4.2, boots: 6.0, zombified: 3.5, sleepy: 2.5, zombieChase: 2.75, zombieWander: 1.4 };
 export const RADIUS = 0.3;
 
 // Walkable floor codes and solid object codes
@@ -131,6 +131,9 @@ export function lockerStand(l) {
   for (const [ox, oy] of [[0, 1], [0, -1], [1, 0], [-1, 0]]) if (isWalkableTile(l.tx + ox, l.ty + oy)) return [l.tx + ox + 0.5, l.ty + oy + 0.5];
   return null;
 }
+
+// Lamp posts (decoration + dusk lighting)
+export const LAMPS = [[3, 11.2], [12.5, 11.2], [17, 15.2], [28.5, 11.4], [36.5, 11.2], [23.2, 18.2], [26.6, 23.5], [23.2, 25.6], [14.5, 2.2], [27.5, 4.6]];
 
 export const SPAWNS = [[24.5, 13.5], [23.5, 13.2], [25.5, 13.8], [22.5, 12.6], [26.5, 12.6], [24.5, 15.5], [25.5, 16.5], [23, 14.4]];
 export const ZOMBIE_SPAWNS = [[34.5, 6.5], [6.5, 5.5], [35, 20.5], [4.5, 21.5], [15.5, 21.5], [20.5, 4.5], [37.5, 4.5], [3.5, 8]];

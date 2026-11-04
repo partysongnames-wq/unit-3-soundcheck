@@ -5,7 +5,7 @@ import { readFile, stat } from 'node:fs/promises';
 import { networkInterfaces } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { Room, GameError, makeRoomCode } from './src/game.mjs';
+import { Room, GameError, makeRoomCode, safeEqual } from './src/game.mjs';
 import { acceptUpgrade } from './src/ws.mjs';
 
 const ROOT = path.dirname(fileURLToPath(import.meta.url));
@@ -103,7 +103,7 @@ export function createServer({ port = 8787, joinBaseUrl = '', now = Date.now, lo
       entry.room = new Room({ code, pack: body.pack, settings: body.settings || {}, now, demoBots, out: makeOut(entry), ...(connectedMs ? { connectedMs } : {}) });
       rooms.set(code, entry);
       log(`room ${code} created (${entry.room.pack.questions.length} questions${demoBots ? `, DEMO ${demoBots} bots` : ''})`);
-      return send(res, 201, { code, hostToken: entry.room.hostToken, packTitle: entry.room.pack.title });
+      return send(res, 201, { code, hostToken: entry.room.hostToken, viewToken: entry.room.viewToken, packTitle: entry.room.pack.title });
     }
     const entry = getEntry(parts[2]); const room = entry.room;
     if (parts[3] === 'join' && req.method === 'POST') {
@@ -113,9 +113,15 @@ export function createServer({ port = 8787, joinBaseUrl = '', now = Date.now, lo
     }
     if (parts[3] === 'host' && req.method === 'POST' && parts[4]) {
       if (!room.isHost(String(req.headers['x-host-token'] || ''))) throw new GameError(403, 'bad_token', 'Teacher token required.');
-      await readBody(req, SMALL_BODY);
-      room.hostAction(parts[4]);
+      const hb = await readBody(req, SMALL_BODY);
+      room.hostAction(parts[4], hb);
       return send(res, 200, { ok: true, phase: room.phase, paused: room.paused });
+    }
+    if (parts[3] === 'teacher' && req.method === 'GET') {
+      const t = String(req.headers['x-view-token'] || ''); const ht = String(req.headers['x-host-token'] || '');
+      if (!(t && safeEqual(t, room.viewToken)) && !room.isHost(ht)) throw new GameError(403, 'bad_token', 'Teacher view link is not valid.');
+      room.touch();
+      return send(res, 200, { code: room.code, ...room.teacherView() });
     }
     if (parts[3] === 'check' && req.method === 'GET') {
       if (!room.isHost(String(req.headers['x-host-token'] || ''))) throw new GameError(403, 'bad_token', 'Teacher token required.');
@@ -208,7 +214,7 @@ export function createServer({ port = 8787, joinBaseUrl = '', now = Date.now, lo
     clearTimeout(hello);
     c.entry = entry; entry.conns.add(c);
     const p = c.playerId ? room.players.get(c.playerId) : null;
-    reply({ t: 'welcome', role: c.role, code: room.code, you: p ? { n: p.num, name: p.callsign, crew: p.crew, x: p.x, y: p.y, avatar: p.avatar } : null, phase: room.phase, paused: room.paused, results: room.phase === 'results' ? (c.role === 'host' ? room.hostResults() : room.publicResults()) : null, demo: room.demo, minutes: room.settings.minutes });
+    reply({ t: 'welcome', role: c.role, code: room.code, you: p ? { n: p.num, name: p.callsign, crew: p.crew, x: p.x, y: p.y, avatar: p.avatar } : null, phase: room.phase, paused: room.paused, results: room.phase === 'results' ? (c.role === 'host' ? room.hostResults() : room.publicResults()) : null, demo: room.demo, settings: room.settings });
     if (p && p.pending) room.cancelQuestion(p);
     if (c.role === 'host') reply(room.hostStats());
   }
