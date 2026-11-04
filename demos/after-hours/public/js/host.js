@@ -26,7 +26,7 @@ api('/api/info').then((info) => {
   sound.available = info.audio || [];
   if (!$('joinBase').value) $('joinBase').value = info.joinBaseUrl || location.origin;
   $('lanHint').textContent = info.lanAddresses.length ? `This computer: ${info.lanAddresses.join(', ')}. Phones must be on the same Wi-Fi ("localhost" won't work on phones).` : 'No network address found — phones can\'t reach "localhost". Join the classroom Wi-Fi or set JOIN_BASE_URL.';
-}).catch(() => { $('joinBase').value = location.origin; });
+}).catch(() => { $('joinBase').value = location.origin; $('setupErr').textContent = '⚠️ This page isn\'t connected to the game server. Run "npm start" in demos/after-hours on this laptop, then open http://localhost:8787/host.html.'; });
 const saved = store(HOST_KEY);
 if (saved && saved.code) {
   api(`/api/rooms/${saved.code}/check`, { headers: { 'X-Host-Token': saved.token } }).then((r) => {
@@ -58,10 +58,24 @@ function enterGame(info) {
   $('codeMini').textContent = room.code;
   link = connect({ hello: () => ({ t: 'hello', code: room.code, role: 'host', token: room.token }), onMessage, onStatus });
   sound.ensure(); sound.setMusic(true);
+  renderLobby(); // show the QR code straight away
 }
+let connFails = 0; let connected = false;
 function onStatus(s, m) {
   const b = $('conn');
-  if (s === 'ok') { b.classList.add('hidden'); return; }
+  if (s === 'ok') { b.classList.add('hidden'); connFails = 0; if (!connected) { connected = true; if (phase === 'lobby') renderLobby(); } return; }
+  if (s === 'reconnecting' && ++connFails >= 4 && !connected) {
+    b.textContent = 'Can\'t reach the game server'; b.classList.remove('hidden');
+    overlay(h('div', { class: 'modal-card' },
+      h('h2', { text: '⚠️ The game server isn\'t running here' }),
+      h('p', { text: 'This page can\'t connect to the live game server, so phones can\'t join yet.' }),
+      h('ol', {},
+        h('li', { text: 'On this laptop, open Terminal in the demos/after-hours folder and run: npm start' }),
+        h('li', { text: 'Then open http://localhost:8787/host.html (not a website copy such as *.workers.dev or github.io — those can show the pages but can\'t run the game server).' }),
+        h('li', { text: 'Phones join with the QR code that appears in the lobby (same Wi-Fi as the laptop).' })),
+      h('p', { class: 'muted small', text: `Address of this page: ${location.origin}` })), true);
+    return;
+  }
   if (s === 'fatal') { store(HOST_KEY, null); b.textContent = `Game unavailable: ${m.message}`; b.classList.remove('hidden'); return; }
   b.textContent = 'Reconnecting to the game server…'; b.classList.remove('hidden');
 }

@@ -69,6 +69,14 @@ The server prints the teacher URL (`http://localhost:8787/host.html`) and the ad
 | `HOST` | `0.0.0.0` | Bind address (`0.0.0.0` makes it reachable on the LAN) |
 | `JOIN_BASE_URL` | first LAN IP found | The address the join QR code uses |
 
+### Important: the game needs its own server
+
+You must open the teacher screen from the running game server, at **http://localhost:8787/host.html** after `npm start`.
+
+A website-only copy can show the pages but can't run the real-time game server. Examples are a Cloudflare `*.workers.dev` site, GitHub Pages or a file opened from disk. On those, the teacher screen shows "Reconnecting to the game server…" and no QR code. The setup screen and lobby now explain this when it happens.
+
+Hosting it online would need a host that can run Node.js with WebSockets, or a rewrite for Cloudflare Durable Objects. That hasn't been done.
+
 ### Network caveats
 
 - Phones must be on the **same network** as the laptop. On a phone, `localhost` means the phone itself, so it never works.
