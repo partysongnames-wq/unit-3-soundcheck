@@ -16,7 +16,7 @@ export class WorldView {
     this.overlay = document.createElement('canvas');
     // one soft warm glow sprite, reused for every lamp (cheap on phones)
     this.glow = document.createElement('canvas'); this.glow.width = this.glow.height = 128;
-    { const g = this.glow.getContext('2d'); const rg = g.createRadialGradient(64, 64, 4, 64, 64, 64); rg.addColorStop(0, 'rgba(255,200,120,0.55)'); rg.addColorStop(0.5, 'rgba(255,170,90,0.18)'); rg.addColorStop(1, 'rgba(255,160,80,0)'); g.fillStyle = rg; g.fillRect(0, 0, 128, 128); }
+    { const g = this.glow.getContext('2d'); const rg = g.createRadialGradient(64, 64, 4, 64, 64, 64); rg.addColorStop(0, 'rgba(255,190,110,0.30)'); rg.addColorStop(0.5, 'rgba(255,160,90,0.10)'); rg.addColorStop(1, 'rgba(255,160,80,0)'); g.fillStyle = rg; g.fillRect(0, 0, 128, 128); }
     this.resize(); this._ro = new ResizeObserver(() => this.resize()); this._ro.observe(canvas);
     const loop = (now) => { this.frame(now); this.raf = requestAnimationFrame(loop); };
     this.raf = requestAnimationFrame(loop);
@@ -127,7 +127,7 @@ export class WorldView {
     }
     const total = latest ? latest.sc.reduce((a, b) => a + b, 0) : 0;
     this.genFlash = Math.max(0, this.genFlash - dt * 1.5);
-    ents.push({ y: 12, draw: () => drawGenerator(c, S, this.t, total, this.genFlash) });
+    ents.push({ y: GENERATOR.y + 1, draw: () => drawGenerator(c, S, this.t, total, this.genFlash) });
     for (const f of st.fuses) ents.push({ y: f.y, draw: () => drawFuse(c, f.x * S, f.y * S - S * 0.3, S * 0.9, f.v, this.t) });
     const party = this.event === 'party';
     for (const z of st.zombies) ents.push({ y: z.y, draw: () => drawZombie(c, z.x * S, z.y * S + S * 0.25, S, { t: this.reduced ? 0 : this.t, seed: z.i, dir: z.f & 4 ? -1 : 1, chasing: z.f & 1, stun: z.f & 2, party, scale: this.mode === 'phone' ? 1 : 1.25 }) });

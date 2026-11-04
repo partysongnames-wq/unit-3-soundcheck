@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import net from 'node:net';
 import { createServer } from '../server.mjs';
 import { STARTER_PACK } from '../public/js/shared/packs.js';
-import { LOCKERS, lockerStand } from '../public/js/shared/world.js';
+import { LOCKERS, lockerStand, path as findPath } from '../public/js/shared/world.js';
 
 let server, base, port;
 test.before(async () => { server = createServer({ port: 0, log: () => {} }); await new Promise((r) => server.listen(0, '127.0.0.1', r)); port = server.address().port; base = `http://127.0.0.1:${port}`; });
@@ -62,23 +62,28 @@ test('WebSocket game flow: locker question → answer → result with WHY; error
   const r = await newRoom();
   const p = await join(r.code, 'Lucky Mochi');
   const c = wsClient({ t: 'hello', code: r.code, role: 'player', playerId: p.playerId, secret: p.secret });
+  try { await gameFlow(r, c); } finally { c.ws.close(); }
+});
+async function gameFlow(r, c) {
   await c.wait((m) => m.t === 'welcome');
   c.send({ t: 'open', l: 0 });
   assert.equal((await c.wait((m) => m.t === 'err')).code, 'wrong_phase');
   await call(`/api/rooms/${r.code}/host/start`, { method: 'POST', body: {}, headers: { 'X-Host-Token': r.hostToken } });
   await c.wait((m) => m.t === 's' && m.ph === 'play', 6000);
-  // walk to locker 4 in small valid steps
-  const L = LOCKERS[4]; const [tx, ty] = lockerStand(L);
-  let me = (await c.wait((m) => m.t === 's' && m.p.length)).p[0]; let x = me[1] / 100, y = me[2] / 100;
-  c.send({ t: 'open', l: 4 }); assert.equal((await c.wait((m) => m.t === 'err' && m.code === 'too_far')).code, 'too_far');
+  // walk to the nearest locker in small valid steps (inside the 6 s spawn protection)
+  const me = (await c.wait((m) => m.t === 's' && m.p.length)).p[0]; let x = me[1] / 100, y = me[2] / 100;
+  const L = LOCKERS.map((l) => ({ l, n: (findPath(x, y, ...lockerStand(l)) || []).length })).sort((a, b) => a.n - b.n)[0].l; const [tx, ty] = lockerStand(L);
+  const far = LOCKERS.find((l) => Math.hypot(l.x - x, l.y - y) > 5);
+  c.send({ t: 'open', l: far.id }); assert.equal((await c.wait((m) => m.t === 'err' && m.code === 'too_far')).code, 'too_far');
   // route: move along the corridor row then to the stand point
   const steps = [];
   const goto = (gx, gy) => { while (Math.hypot(gx - x, gy - y) > 0.05) { const d = Math.hypot(gx - x, gy - y); const k = Math.min(1, 0.3 / d); x += (gx - x) * k; y += (gy - y) * k; steps.push([x, y]); } };
-  goto(x, 13.5); goto(tx, 13.5); goto(tx, ty);
+  for (const [px, py] of findPath(x, y, tx, ty)) goto(px + 0.5, py + 0.5);
+  goto(tx, ty);
   for (const [sx, sy] of steps) { c.send({ t: 'pos', x: sx, y: sy, d: 1, m: true }); await new Promise((res) => setTimeout(res, 80)); }
   const corr = c.inbox.filter((m) => m.t === 'corr').length;
   assert.equal(corr, 0, 'valid walking is never corrected');
-  c.send({ t: 'open', l: 4 });
+  c.send({ t: 'open', l: L.id });
   const q = await c.wait((m) => m.t === 'q');
   assert.equal('correct' in q.question, false); assert.equal('explanation' in q.question, false);
   c.send({ t: 'answer', nonce: 'forged', c: 0 });
@@ -91,8 +96,7 @@ test('WebSocket game flow: locker question → answer → result with WHY; error
   // teleport is corrected
   c.send({ t: 'pos', x: 38, y: 13.5, d: 1, m: true });
   assert.ok(await c.wait((m) => m.t === 'corr'));
-  c.ws.close();
-});
+}
 
 test('WebSocket limits: oversized frames close the socket; non-ws upgrade paths refused', async () => {
   const r = await newRoom(); const p = await join(r.code, 'Big Sender');

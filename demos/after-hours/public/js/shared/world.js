@@ -7,16 +7,19 @@ export const SPEED = { player: 4.2, boots: 6.0, zombified: 3.5, sleepy: 2.5, zom
 export const RADIUS = 0.3;
 
 // Walkable floor codes and solid object codes
-const FLOORS = new Set([',', '.', ':', ';', '=', '_', 'p', 'o']);
-export const SOLIDS = new Set(['#', 'f', 'T', 'B', 'D', 'K', '~', 'G', 'L', 'b', 'P', 'F', 'X']);
+const FLOORS = new Set([',', '.', ':', ';', '=', '_', 'p', 'o', 'c', 'k']);
+export const SOLIDS = new Set(['#', 'f', 'T', 'B', 'D', 'K', '~', 'G', 'L', 'b', 'P', 'F', 'X', 'S', 'V', 'Y', 'C']);
 
+// Layout loosely follows the real Suksanari campus (north at the top): Gym NW, Maths along the north,
+// Audio-Visual on the east, English classrooms on the west with the canteen beside them, the big covered
+// court in the middle, Thai class SW, then security, car park, garden and the front gate in the south.
 export const ROOMS = {
-  LIB: { name: 'Library', wall: '#8fd9b6', face: '#5fb894', floor: ';' },
-  ART: { name: 'Art & Music', wall: '#c9b6ff', face: '#9d86ea', floor: ':' },
-  GYM: { name: 'Gym', wall: '#ffc29a', face: '#f29a66', floor: '=' },
-  CLA: { name: 'Room 1', wall: '#9fd3ff', face: '#6fb1ea', floor: ':' },
-  CLB: { name: 'Room 2', wall: '#ffb3d1', face: '#f07fab', floor: ':' },
-  CAN: { name: 'Canteen', wall: '#ffe48a', face: '#f2c34f', floor: '_' }
+  GYM: { name: 'Gym', wall: '#ffc29a', face: '#e98a52', floor: '=' },
+  MATH: { name: 'Maths', wall: '#e6c3a5', face: '#9c5b3c', floor: ':' },
+  AV: { name: 'Audio-Visual', wall: '#c9b6ff', face: '#8f76e0', floor: ';' },
+  ENG: { name: 'English', wall: '#f7e6a8', face: '#e3a23a', floor: ':' },
+  CAN: { name: 'Canteen', wall: '#fff3dc', face: '#d6453b', floor: '_' },
+  THAI: { name: 'Thai', wall: '#efb7a3', face: '#a44f39', floor: ':' }
 };
 
 function build() {
@@ -31,43 +34,48 @@ function build() {
     }
     for (const [x, y] of doors) set(x, y, 'o');
   };
-  // outer fence
   for (let x = 0; x < W; x++) { set(x, 0, 'f'); set(x, H - 1, 'f'); }
   for (let y = 0; y < H; y++) { set(0, y, 'f'); set(W - 1, y, 'f'); }
-  mkRoom('LIB', 1, 1, 12, 9, [[6, 9], [7, 9]]);
-  mkRoom('ART', 15, 1, 26, 8, [[20, 8], [21, 8]]);
-  mkRoom('GYM', 29, 1, 40, 10, [[34, 10], [35, 10], [29, 6]]);
-  mkRoom('CLA', 1, 16, 10, 25, [[5, 16], [6, 16]]);
-  mkRoom('CLB', 12, 16, 20, 25, [[16, 16], [17, 16]]);
-  mkRoom('CAN', 29, 16, 40, 25, [[33, 16], [34, 16], [29, 21]]);
-  fill(1, 12, 40, 14, '.');          // main corridor
-  fill(16, 9, 25, 11, '.');          // generator plaza
-  fill(24, 15, 25, 26, 'p');         // courtyard path to the gate
-  for (let x = 23; x <= 26; x++) set(x, H - 1, 'X'); // front gate
-  // generator (2×2)
-  fill(20, 10, 21, 11, 'G');
-  // library shelves + plants
-  for (const y of [3, 6]) for (const x of [3, 4, 5, 8, 9, 10]) set(x, y, 'B');
-  set(2, 2, 'P'); set(11, 2, 'P');
-  // art desks
-  for (const y of [3, 5]) for (const x of [17, 18, 22, 23]) set(x, y, 'D');
-  // gym benches
-  for (const x of [31, 32, 33, 36, 37, 38]) set(x, 2, 'b');
-  // classrooms
-  for (const y of [18, 20, 22]) { for (const x of [3, 5, 7]) set(x, y, 'D'); for (const x of [14, 16, 18]) set(x, y, 'D'); }
-  // canteen tables
-  for (const y of [18, 22]) for (const x of [31, 32, 33, 36, 37, 38]) set(x, y, 'K');
-  // courtyard
-  fill(22, 20, 23, 21, '~');
-  set(27, 17, 'F'); set(21, 17, 'b'); set(28, 20, 'b');
-  // trees
-  for (const [x, y] of [[13, 2], [14, 5], [13, 8], [27, 2], [28, 6], [27, 9], [2, 10], [30, 11], [39, 11], [22, 16], [27, 25], [22, 25], [14, 10]]) set(x, y, 'T');
+  // walkways first, buildings on top
+  fill(1, 6, 40, 8, '.');        // north walkway (under Maths, above court)
+  fill(8, 8, 8, 21, '.');        // west walkway between English and canteen
+  fill(15, 6, 15, 19, '.');      // court west edge
+  fill(34, 6, 34, 19, '.');      // court east edge
+  fill(8, 18, 34, 19, '.');      // south walkway
+  fill(1, 21, 13, 21, 'p');      // path to Thai class
+  mkRoom('GYM', 1, 1, 10, 7, [[5, 7], [6, 7], [10, 4]]);
+  mkRoom('MATH', 12, 1, 33, 5, [[16, 5], [17, 5], [27, 5], [28, 5]]);
+  mkRoom('AV', 35, 1, 40, 17, [[35, 6], [35, 7], [35, 13], [35, 14]]);
+  mkRoom('ENG', 1, 9, 7, 20, [[7, 11], [7, 12], [7, 17], [7, 18]]);
+  mkRoom('CAN', 9, 9, 14, 17, [[11, 9], [12, 9], [14, 11], [14, 12], [14, 15], [14, 16]]);
+  mkRoom('THAI', 1, 22, 11, 26, [[6, 22], [7, 22], [11, 24]]);
+  // the big covered court (assembly area) — blue court floor, roof columns at the corners
+  fill(16, 7, 33, 17, 'k');
+  for (const [x, y] of [[16, 7], [33, 7], [16, 17], [33, 17], [24, 7], [25, 17]]) set(x, y, 'C');
+  fill(24, 12, 25, 13, 'G');     // generator in the middle of the court
+  // south: security hut, car park, garden, front gate
+  fill(17, 20, 33, 26, 'c');
+  fill(15, 20, 16, 20, 'S');
+  for (const x of [19, 21, 23, 27, 29, 31]) set(x, 22, 'V');
+  for (const x of [20, 24, 30]) set(x, 25, 'V');
+  set(33, 20, 'F');
+  for (let x = 19; x <= 22; x++) set(x, H - 1, 'X');
+  // furniture
+  for (const x of [3, 4, 7, 8]) set(x, 2, 'b');
+  for (const x of [15, 18, 21, 25, 29, 31]) set(x, 3, 'D');
+  for (const y of [4, 9, 15]) { set(37, y, 'D'); set(38, y, 'D'); }
+  for (const y of [11, 14, 17]) { set(3, y, 'D'); set(5, y, 'D'); }
+  for (const y of [11, 14]) for (const x of [10, 11, 12]) set(x, y, 'K');
+  for (const x of [3, 5, 7, 9]) set(x, 24, 'D');
+  set(2, 10, 'P'); set(13, 2, 'P');
+  // garden trees + palms along the road
+  for (const [x, y] of [[13, 23], [16, 24], [14, 26], [12, 25], [36, 21], [39, 24], [37, 26]]) set(x, y, 'T');
+  for (const [x, y] of [[35, 19], [38, 19], [40, 22], [35, 24], [12, 20]]) set(x, y, 'Y');
   // lockers (question stations)
   const lockers = [];
   const L = (x, y) => { set(x, y, 'L'); lockers.push({ id: lockers.length, x: x + 0.5, y: y + 0.5, tx: x, ty: y }); };
-  for (const x of [4, 10, 15, 27, 32, 38]) L(x, 12);
-  for (const x of [8, 19, 30, 37]) L(x, 14);
-  L(11, 7); L(25, 6); L(39, 8); L(2, 24); L(19, 24); L(39, 24); L(27, 22); L(21, 24);
+  L(2, 6); L(20, 4); L(23, 2); L(32, 2); L(39, 3); L(39, 16); L(2, 13); L(2, 19); L(13, 16); L(2, 23); L(10, 25);
+  L(17, 8); L(32, 8); L(17, 16); L(32, 16); L(33, 24); L(15, 23); L(11, 6);
   return { g, room, lockers };
 }
 
@@ -75,8 +83,8 @@ const built = build();
 export const GRID = built.g.map((r) => r.join(''));
 export const ROOM_OF = built.room;
 export const LOCKERS = built.lockers;
-export const GENERATOR = { x: 21, y: 11, r: 1.9 };
-export const GATE = { x: 25, y: 27 };
+export const GENERATOR = { x: 25, y: 13, r: 1.9 };
+export const GATE = { x: 21, y: 27 };
 
 export const tileAt = (x, y) => (x < 0 || y < 0 || x >= W || y >= H ? 'f' : GRID[y][x]);
 export const isSolidTile = (x, y) => SOLIDS.has(tileAt(x, y));
@@ -133,10 +141,10 @@ export function lockerStand(l) {
 }
 
 // Lamp posts (decoration + dusk lighting)
-export const LAMPS = [[3, 11.2], [12.5, 11.2], [17, 15.2], [28.5, 11.4], [36.5, 11.2], [23.2, 18.2], [26.6, 23.5], [23.2, 25.6], [14.5, 2.2], [27.5, 4.6]];
+export const LAMPS = [[11.5, 8.4], [20, 6.3], [30, 6.3], [15.3, 12], [34.3, 11], [12, 18.3], [22, 18.3], [30, 18.3], [18, 20.3], [33.5, 26.3], [8.3, 15]];
 
-export const SPAWNS = [[24.5, 13.5], [23.5, 13.2], [25.5, 13.8], [22.5, 12.6], [26.5, 12.6], [24.5, 15.5], [25.5, 16.5], [23, 14.4]];
-export const ZOMBIE_SPAWNS = [[34.5, 6.5], [6.5, 5.5], [35, 20.5], [4.5, 21.5], [15.5, 21.5], [20.5, 4.5], [37.5, 4.5], [3.5, 8]];
+export const SPAWNS = [[22.5, 15.5], [27.5, 15.5], [24.5, 15.8], [21.5, 10.5], [28.5, 10.5], [23, 16.4], [26.5, 16.4], [20.5, 14]];
+export const ZOMBIE_SPAWNS = [[5.5, 4.5], [23.5, 3.5], [37.5, 11.5], [4.5, 15.5], [5.5, 25.5], [26, 24], [14.5, 24.5], [11.5, 12.5]];
 
 export const CREWS = [
   { id: 0, name: 'Lantern', color: '#ff9f1c', light: '#ffd08a' },

@@ -10,6 +10,7 @@ A real-time, Roblox-style classroom game for English review. Every student makes
 - **Timer or goal:** the game runs on a timer (5–12 minutes), or ends early when someone reaches a goal score (20, 30, 50 or 80).
 - **Answering keeps you going:** a ⚡ power meter drains while you explore and refills when you answer. If it runs out, your character gets sleepy and slow.
 - **Helpers:** 🧭 auto-walk takes a student to the nearest locker (or the generator), and a private 📋 teacher phone view shows who is and isn't answering.
+- **Our school's layout:** the map follows the real Suksanari campus in a cartoon way (see [The map](#the-map)).
 - **Dusk look:** a soft evening tint with glowing lamp posts and a glowing generator, so it feels like "after hours" while staying bright.
 - Runs on one laptop on the classroom Wi-Fi. There are no accounts, no real names, no chat and no internet services. All artwork is original and drawn in code; there are no image files and no emblems.
 
@@ -104,6 +105,23 @@ The server prints the teacher URL (`http://localhost:8787/host.html`) and the ad
 - The projector names students only for positive events ("Mochi powered up +3 for Crew Comet!"). It never names anyone for a wrong answer or a tag.
 - Trade-off: because everyone plays at her own pace, faster players answer more questions. Crews are kept balanced in size (±1).
 
+## The map
+
+The school is a cartoon version of the real Suksanari campus, laid out from the teacher's annotated satellite map with north at the top. It is meant to be recognisable, not an exact copy:
+
+| Real place | In the game |
+|---|---|
+| Gym (north-west) | Orange gym with court lines and benches |
+| Maths building (along the north road) | Long classroom building across the top |
+| Audio-visual room (east side) | Long lilac building down the right side |
+| English classrooms (west side) | Cream building with orange trim (like the front building's balconies), with a "โรงเรียนศึกษานารี" sign |
+| Canteen lunch area | Beside the English building, with red numbered food-stall banners, long tables and wall fans |
+| Outdoor sports / basketball courts / assembly area | The big blue court in the middle, with yellow key areas, roof columns, an "อนุสรณ์ ๑๐๐ ปี" (100-year memorial) sign, and the **generator** in the centre circle |
+| Thai class (south-west) | Building with a terracotta-red roof colour |
+| Security, car park, garden | A security booth, a car park with yellow lines and parked cars, garden trees and palm trees along the road, and the front gate at the bottom |
+
+No official emblem, crest or royal portrait is drawn.
+
 ## Question packs and the editor
 
 The pack editor (`editor.html`) carried over from the first version:
@@ -189,7 +207,7 @@ Movement is predicted on the phone so it feels instant, and the server validates
 - **Balance** (zombie count and speed, loot odds, event timing) was tuned with bots and may need adjusting after a real class.
 - On the projector, 40 name tags can overlap where many players crowd together.
 - The 📋 teacher QR appears on the laptop screen, so blank or freeze the projector before you show it. If a student scans it anyway, she can only *see* the list, not control the game.
-- The school map is a generic cartoon school. Real Suksanari landmarks (statue, gate, buildings) can be added once there are photos or descriptions.
+- The map follows the campus layout loosely, not to scale. Building interiors (apart from the canteen and the court) are made up.
 - There is no button to kick a player yet, so the teacher should watch the lobby list.
 - In-memory only, so restarting the server ends the game.
 - There's no public deployment, and none should be done without adding HTTPS, rate limiting and other hardening.
@@ -197,13 +215,15 @@ Movement is predicted on the phone so it feels instant, and the server validates
 
 ## Latest results
 
-All results are from 2026-11-04, on a Linux container with Node 22.23 and headless Chromium. These are automated runs only.
+All results are from 2026-11-04, after the campus-layout map change, on a Linux container with Node 22.23 and headless Chromium. These are automated runs only.
 
 | Suite | Result |
 |---|---|
-| `npm test` | **24 / 24 passed.** Covers everything from the previous version, plus: solo scoring; 2- and 3-crew assignment; switching mode in the lobby with rebalancing (and refused mid-game); invalid settings falling back to defaults; solo tag hitting anyone; the solo podium; goal mode ending the game; the power meter draining, pausing while answering, refilling on answers and making players sleepy/slow; the teacher view listing who isn't answering while projector stats stay nameless; the read-only view token unable to control the game |
-| `node tests/sim.mjs 20` | **PASS.** A 2-minute game with 20 simulated WebSocket clients, 2 late joiners, and 3 that dropped and reconnected as the same player. 177 answers at 85%. 0 server errors, 0 position corrections. Open → question p95 1.7 ms. 20/20 got their private stats |
-| `node tests/sim.mjs 40` | **PASS.** 40 clients, 364 answers at 79%. 0 server errors. 3 position corrections out of thousands of moves, expected when a simulated client keeps moving just as a locker opens. About 590 KB/s in total downstream (~15 KB/s per phone). Open → question p95 2.1 ms. 40/40 got their private stats |
-| `node tests/browser.mjs` | **50 / 50 checks passed, 0 console or page errors.** One earlier run failed on a real bug: the phone tried to vibrate before the student had tapped the screen. That's fixed, and vibration now waits for a first tap. New checks: the lobby suggests a mode for 2 players; switching to 2 crews in the lobby; the how-to card; **Start pulling a still-designing phone into the game**; the power meter showing; **🧭 auto-walk reaching a locker**; the **teacher phone page** listing nicknames and answers; a Solo DEMO showing a top-5 leaderboard and a player podium. Plus all the earlier checks (no overflow at 1366×768 and 390×844, editor, locker → loot + WHY, wrong → WHY, pause, reconnect, results) |
+| `npm test` | **24 / 24 passed**, in two consecutive full runs plus 5 extra runs of the network tests. Everything is checked against the new map: every walkable tile and every locker is reachable, spawns are clear, and you can stand next to the generator. One network test was flaky after the map change: its long walk to a far locker could be caught by a zombie, and it then left a socket open, so the run hung. It now walks to the nearest locker and always closes its socket |
+| `node tests/sim.mjs 20` | **PASS.** 20 simulated clients, 2-minute game, late joiners and reconnects. 137 answers at 76%. 0 server errors. 5 position corrections. 20/20 got their private stats |
+| `node tests/sim.mjs 40` | **PASS.** 40 clients, 215 answers at 83%. 0 server errors. 32 position corrections out of tens of thousands of moves. About 555 KB/s in total downstream. 40/40 got their private stats |
+| `node tests/browser.mjs` | **50 / 50 checks passed, 0 console or page errors** on the new map (same checks as before) |
+
+**Note on the new map:** simulated players answered fewer questions per minute than on the old map (40 clients: 215 answers vs 364), because the walks between lockers are longer. That might suit real students, who need reading time anyway. If students seem to run around more than they answer, add lockers or move them closer together.
 
 Simulated players are scripts, **not real students or phones**. Classroom readiness is still unproven until a real-phone trial on the school Wi-Fi.

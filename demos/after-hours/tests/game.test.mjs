@@ -22,12 +22,13 @@ function online(r) { for (const p of r.players.values()) { p.connected = true; p
 
 test('world: every walkable tile is reachable, lockers are reachable, spawns are clear', () => {
   const all = walkableTiles();
-  const unreachable = all.filter(([x, y]) => !(x === 24 && y === 13) && path(24, 13, x, y) === null);
+  const [sx, sy] = SPAWNS[0];
+  const unreachable = all.filter(([x, y]) => !(x === Math.floor(sx) && y === Math.floor(sy)) && path(sx, sy, x, y) === null);
   assert.equal(unreachable.length, 0);
   assert.ok(LOCKERS.length >= 16);
-  for (const l of LOCKERS) { const s = lockerStand(l); assert.ok(s, `locker ${l.id} has a standing spot`); assert.ok(path(24, 13, s[0], s[1]) !== null); }
+  for (const l of LOCKERS) { const s = lockerStand(l); assert.ok(s, `locker ${l.id} has a standing spot`); assert.ok(path(sx, sy, s[0], s[1]) !== null); }
   for (const [x, y] of [...SPAWNS, ...ZOMBIE_SPAWNS]) assert.equal(collides(x, y), false, `spawn ${x},${y}`);
-  assert.ok(isWalkableTile(21, 12), 'generator is reachable from the corridor');
+  assert.ok(isWalkableTile(GENERATOR.x, GENERATOR.y + 1) && !collides(GENERATOR.x, GENERATOR.y + 1.4), 'you can stand next to the generator');
 });
 
 test('packs: starter content valid, answers spread A–D, bad input rejected', () => {
@@ -106,12 +107,13 @@ test('learning: only correct answers give loot; wrong answers come back later', 
 
 test('movement is validated: no teleporting, no walking through walls', () => {
   const { r, now } = mk(); const [p] = joinN(r, 1); online(r); startPlay(r, now);
-  p.x = 24.5; p.y = 13.5; now.add(100);
-  assert.equal(r.updatePos(p, { x: 24.8, y: 13.5, dir: 1, moving: true }), null);
+  p.x = 22.5; p.y = 15.5; now.add(100);
+  assert.equal(r.updatePos(p, { x: 22.8, y: 15.5, dir: 1, moving: true }), null);
   now.add(100);
-  assert.deepEqual(r.updatePos(p, { x: 35, y: 13.5 }), { x: 24.8, y: 13.5 }, 'teleport corrected');
-  now.add(100);
-  assert.ok(r.updatePos(p, { x: 24.8, y: 11.0 }), 'into the wall/fence corrected');
+  assert.deepEqual(r.updatePos(p, { x: 35, y: 15.5 }), { x: 22.8, y: 15.5 }, 'teleport corrected');
+  now.add(500);
+  assert.ok(collides(24.5, 12.5));
+  assert.ok(r.updatePos(p, { x: 24.5, y: 12.5 }), 'walking into the generator corrected');
   assert.ok(r.updatePos(p, { x: NaN, y: 1 }));
 });
 
