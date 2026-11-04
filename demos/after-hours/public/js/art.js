@@ -200,8 +200,15 @@ export function drawDecor(c, S) {
   c.strokeStyle = '#f2c230'; c.lineWidth = Math.max(1.5, S * 0.06);
   for (let x = 18; x <= 33; x += 2) { c.beginPath(); c.moveTo(x * S, 21.6 * S); c.lineTo(x * S, 23.4 * S); c.moveTo(x * S, 24.6 * S); c.lineTo(x * S, 26.4 * S); c.stroke(); }
   c.beginPath(); c.moveTo(17.3 * S, 24 * S); c.lineTo(33.7 * S, 24 * S); c.setLineDash([S * 0.4, S * 0.3]); c.stroke(); c.setLineDash([]);
-  // canteen: red food-stall banners along the back wall with stall numbers
-  const ban = ['🍜', '🍗', '🍛', '🍝']; for (let i = 0; i < 4; i++) { const bx = (9.3 + i * 1.35) * S; rr(c, bx, 9.45 * S, 1.25 * S, 0.5 * S, S * 0.06); fs(c, '#c8302c', INK, lw * 0.6); c.fillStyle = '#ffd23f'; c.font = `900 ${S * 0.22}px "Trebuchet MS", Arial`; c.textAlign = 'left'; c.textBaseline = 'middle'; c.fillText(String(11 + i), bx + S * 0.08, 9.72 * S); c.font = `${S * 0.3}px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif`; c.textAlign = 'right'; c.fillText(ban[i], bx + S * 1.18, 9.72 * S); }
+  // canteen: red food-stall banners running down the LEFT wall (stall numbers + food), like the real stall row
+  const ban = ['🍜', '🍗', '🍛', '🍝'];
+  for (let i = 0; i < 4; i++) {
+    const by = (10.05 + i * 1.7) * S; const bx = 9.4 * S; const bw = 0.62 * S, bh = 1.5 * S;
+    rr(c, bx, by, bw, bh, S * 0.07); fs(c, '#c8302c', INK, lw * 0.6);
+    c.fillStyle = '#ffd23f'; c.font = `900 ${S * 0.24}px "Trebuchet MS", Arial`; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText(String(11 + i), bx + bw / 2, by + S * 0.25);
+    c.font = `${S * 0.34}px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif`; c.fillText(ban[i], bx + bw / 2, by + S * 0.85);
+    c.fillStyle = '#ffffff'; c.fillRect(bx + S * 0.12, by + bh - S * 0.22, bw - S * 0.24, S * 0.06);
+  }
   // canteen wall fans
   for (const fy of [12.5, 15.5]) { c.beginPath(); c.arc(13.55 * S, fy * S, S * 0.22, 0, TAU); fs(c, '#2b2d42', INK, lw * 0.5); c.fillStyle = '#9aa0b5'; for (let k = 0; k < 3; k++) { c.beginPath(); c.ellipse(13.55 * S + Math.cos(k * 2.1) * S * 0.12, fy * S + Math.sin(k * 2.1) * S * 0.12, S * 0.1, S * 0.05, k * 2.1, 0, TAU); c.fill(); } }
   // school name on the English building (front building colours: cream with orange balconies)
