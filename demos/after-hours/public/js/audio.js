@@ -76,18 +76,21 @@ export class Sound {
     await this.startTrack();
   }
   async startTrack() {
+    if (this.available && this.available.includes('night')) this.load('night'); // preload so night starts instantly
     const want = this.night && (await this.load('night')) ? 'night' : 'day';
     const buf = await this.load(want);
     if (!this.musicOn) return;
     const t = this.ctx.currentTime;
     if (!buf) { this.startSynth(); this.musicGain.gain.linearRampToValueAtTime(0.5, t + 1); return; }
-    if (this.src && this.srcKind === want) { this.applyNight(); this.musicGain.gain.linearRampToValueAtTime(this.night ? 0.32 : 0.45, t + 1); return; }
-    const old = this.src;
-    const src = this.ctx.createBufferSource(); src.buffer = buf; src.loop = true; src.connect(this.filter); src.start();
-    this.src = src; this.srcKind = want;
-    if (old) setTimeout(() => { try { old.stop(); } catch { /* already stopped */ } }, 900);
+    this.musicGain.gain.cancelScheduledValues(t); this.musicGain.gain.setValueAtTime(this.musicGain.gain.value, t); this.musicGain.gain.linearRampToValueAtTime(0.45, t + 0.8);
+    if (this.src && this.srcKind === want) { this.applyNight(); return; }
+    // crossfade: old song fades out while the new one fades in
+    const old = this.src; const oldGain = this.srcGain;
+    const g = this.ctx.createGain(); g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(1, t + 1.5); g.connect(this.filter);
+    const src = this.ctx.createBufferSource(); src.buffer = buf; src.loop = true; src.connect(g); src.start();
+    this.src = src; this.srcGain = g; this.srcKind = want;
+    if (old) { oldGain.gain.cancelScheduledValues(t); oldGain.gain.setValueAtTime(oldGain.gain.value, t); oldGain.gain.exponentialRampToValueAtTime(0.0001, t + 1.5); setTimeout(() => { try { old.stop(); } catch { /* already stopped */ } }, 1700); }
     this.applyNight();
-    this.musicGain.gain.cancelScheduledValues(t); this.musicGain.gain.setValueAtTime(this.musicGain.gain.value, t); this.musicGain.gain.linearRampToValueAtTime(this.night ? 0.32 : 0.45, t + 1.2);
   }
   // Night without a night track: the day song goes slower, softer and muffled.
   applyNight() {

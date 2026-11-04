@@ -37,7 +37,7 @@ A real-time, Roblox-style classroom game for English review. Every student makes
 ## Music
 
 - The day music is the teacher's own Suno track **"After-School Shuffle"**, saved as `public/audio/day.mp3`.
-- To use a separate night song, add `public/audio/night.mp3` and the game switches to it at night. Without one, the day song plays slower, softer and muffled during the night.
+- The night music is the teacher's Suno track **"Nocturnal Tension"** (`public/audio/night.mp3`). When night falls, the songs crossfade over about 1.5 seconds and switch back at morning. Without a night file, the day song plays slower, softer and muffled during the night.
 - If no track is there at all, a small built-in loop plays instead.
 - Music plays only on the projector. Phones play sound effects only, and students can mute them.
 - Suno's free plan allows non-commercial use only; check Suno's current terms if you share the game beyond class.

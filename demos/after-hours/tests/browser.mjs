@@ -167,8 +167,11 @@ if (await openLockerHere(pb)) {
 await sleep(1500);
 await shot(host, '05-teacher-live-map-1366x768.png');
 // music: the teacher's song is served and decodes in the browser
-const music = await host.evaluate(async () => { const r = await fetch('audio/day.mp3'); const ct = r.headers.get('content-type'); const ac = new AudioContext(); const b = await ac.decodeAudioData(await r.arrayBuffer()); return { ct, sec: Math.round(b.duration) }; });
-check('day music track is served and decodes', music.ct === 'audio/mpeg' && music.sec > 60, JSON.stringify(music));
+for (const kind of ['day', 'night']) {
+  const music = await host.evaluate(async (k) => { const r = await fetch(`audio/${k}.mp3`); const ct = r.headers.get('content-type'); const ac = new AudioContext(); const b = await ac.decodeAudioData(await r.arrayBuffer()); return { ct, sec: Math.round(b.duration) }; }, kind);
+  check(`${kind} music track is served and decodes`, music.ct === 'audio/mpeg' && music.sec > 60, JSON.stringify(music));
+}
+check('server lists both music tracks', JSON.stringify((await (await fetch(base + '/api/info')).json()).audio) === '["day","night"]');
 // timetable event (started directly on the in-process server): room glows, phone shows a direction arrow + hint
 { const room = server.rooms.get(code).room; room.startEvent('lunch'); room.emitAll({ t: 'event', kind: 'lunch', ms: 25000 }); }
 await sleep(1500);
