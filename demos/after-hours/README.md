@@ -120,7 +120,7 @@ The school is a cartoon version of the real Suksanari campus, laid out from the 
 |---|---|
 | Gym (north-west) | Orange gym with court lines and benches |
 | Maths building (along the north road) | Long classroom building across the top |
-| Audio-visual room (east side) | **Karaoke & AV room** down the right side: stage with speakers and a mic, a karaoke screen that scrolls the pack's key vocabulary words, a disco floor with moving spotlights, sofas, and music notes over anyone inside (try the 🎤 emote) |
+| Audio-visual room (east side) | **Karaoke & AV room** down the right side: stage at the bottom of the room facing north (like the real room), with speakers and a mic, a karaoke screen that scrolls the pack's key vocabulary words, a disco floor with moving spotlights, sofas, and music notes over anyone inside (try the 🎤 emote) |
 | English classrooms (west side) | Cream building with orange trim (like the front building's balconies), with a "โรงเรียนศึกษานารี" sign |
 | Canteen lunch area (the narrow strip between the English building and the courts) | Beside the English building, with red numbered food-stall banners, long tables and wall fans |
 | Outdoor sports / basketball courts / assembly area | The big blue court in the middle, with yellow key areas, roof columns, an "อนุสรณ์ ๑๐๐ ปี" (100-year memorial) sign, and the **generator** in the centre circle |

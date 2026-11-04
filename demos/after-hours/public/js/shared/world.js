@@ -64,8 +64,9 @@ function build() {
   for (const x of [3, 4, 7, 8]) set(x, 2, 'b');
   for (const x of [15, 18, 21, 25, 29, 31]) set(x, 3, 'D');
   // Audio-visual room = karaoke room: stage with speakers at the top, disco floor, sofas
-  fill(36, 2, 39, 3, 'm'); set(36, 2, 'Q'); set(39, 2, 'Q');
-  for (const x of [37, 38]) { set(x, 10, 'b'); set(x, 14, 'b'); }
+  // stage at the BOTTOM of the room, facing north (like the real room); audience + sofas in the top half
+  fill(36, 14, 39, 16, 'm'); set(36, 16, 'Q'); set(39, 16, 'Q');
+  for (const x of [37, 38]) { set(x, 6, 'b'); set(x, 9, 'b'); }
   for (const y of [11, 14, 17]) { set(3, y, 'D'); set(5, y, 'D'); }
   for (const y of [11, 14]) for (const x of [10, 11, 12]) set(x, y, 'K');
   for (const x of [3, 5, 7, 9]) set(x, 24, 'D');
@@ -76,7 +77,7 @@ function build() {
   // lockers (question stations)
   const lockers = [];
   const L = (x, y) => { set(x, y, 'L'); lockers.push({ id: lockers.length, x: x + 0.5, y: y + 0.5, tx: x, ty: y }); };
-  L(2, 6); L(20, 4); L(23, 2); L(32, 2); L(39, 3); L(39, 16); L(2, 13); L(2, 19); L(13, 16); L(2, 23); L(10, 25);
+  L(2, 6); L(20, 4); L(23, 2); L(32, 2); L(39, 3); L(39, 12); L(2, 13); L(2, 19); L(13, 16); L(2, 23); L(10, 25);
   L(17, 8); L(32, 8); L(17, 16); L(32, 16); L(33, 24); L(15, 23); L(11, 6);
   return { g, room, lockers };
 }

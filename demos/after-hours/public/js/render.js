@@ -184,18 +184,19 @@ export class WorldView {
     const t = this.reduced ? 0 : this.t;
     const words = this.vocab && this.vocab.length ? this.vocab : ['la', 'la', 'la', 'sing!'];
     const i = Math.floor(t / 1.2) % words.length;
-    c.save(); c.beginPath(); c.roundRect(36.35 * S, 1.2 * S, 3.3 * S, 0.65 * S, S * 0.08); c.clip();
-    c.fillStyle = '#151032'; c.fillRect(36.35 * S, 1.2 * S, 3.3 * S, 0.65 * S);
-    const f = Math.max(9, S * 0.36); c.font = `900 ${f}px "Trebuchet MS", Arial`; c.textBaseline = 'middle'; c.textAlign = 'center';
+    const SY = 16.2; // karaoke screen on the bottom wall
+    c.save(); c.beginPath(); c.roundRect(37.07 * S, SY * S, 1.86 * S, 0.65 * S, S * 0.08); c.clip();
+    c.fillStyle = '#151032'; c.fillRect(37.07 * S, SY * S, 1.86 * S, 0.65 * S);
+    const f = Math.max(8, S * 0.28); c.font = `900 ${f}px "Trebuchet MS", Arial`; c.textBaseline = 'middle'; c.textAlign = 'center';
     const prog = (t / 1.2) % 1; const word = `♪ ${words[i]} ♪`; const wW = c.measureText(word).width;
-    c.fillStyle = '#ffffff'; c.fillText(word, 38 * S, 1.53 * S);
-    c.save(); c.beginPath(); c.rect(38 * S - wW / 2, 1.2 * S, wW * prog, 0.65 * S); c.clip(); c.fillStyle = '#ff5fa2'; c.fillText(word, 38 * S, 1.53 * S); c.restore();
+    c.fillStyle = '#ffffff'; c.fillText(word, 38 * S, (SY + 0.33) * S);
+    c.save(); c.beginPath(); c.rect(38 * S - wW / 2, SY * S, wW * prog, 0.65 * S); c.clip(); c.fillStyle = '#ff5fa2'; c.fillText(word, 38 * S, (SY + 0.33) * S); c.restore();
     c.restore();
     if (!this.reduced) {
       c.globalCompositeOperation = 'lighter';
       const cols = ['rgba(255,95,162,0.22)', 'rgba(46,196,255,0.22)', 'rgba(255,210,63,0.20)'];
       cols.forEach((col, k) => {
-        const sx = (36.6 + k * 1.4) * S, sy = 2.2 * S; const tx = (37.5 + Math.sin(t * (0.8 + k * 0.3) + k * 2) * 1.6) * S, ty = (8 + Math.cos(t * (0.6 + k * 0.2) + k) * 5) * S;
+        const sx = (36.6 + k * 1.4) * S, sy = 15.8 * S; const tx = (37.5 + Math.sin(t * (0.8 + k * 0.3) + k * 2) * 1.6) * S, ty = (8 + Math.cos(t * (0.6 + k * 0.2) + k) * 5) * S;
         c.fillStyle = col; c.beginPath(); c.moveTo(sx, sy); c.lineTo(tx - S * 1.1, ty); c.lineTo(tx + S * 1.1, ty); c.closePath(); c.fill();
         c.beginPath(); c.ellipse(tx, ty, S * 1.1, S * 0.45, 0, 0, TAU); c.fill();
       });
