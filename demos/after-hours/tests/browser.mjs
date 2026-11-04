@@ -126,7 +126,7 @@ check('lobby shows QR', await host.locator('.lobby svg').count() === 1);
 check('lobby lists 2 players (even one still designing)', (await host.textContent('.lobby .count')).includes('2 / 40'));
 check('lobby suggests a mode for a small group', /Suggested for 2 players: Solo/.test(await host.textContent('.lobby')));
 await host.locator('.modes .btn', { hasText: '2 crews' }).click(); await sleep(600);
-check('teacher can switch to 2 crews in the lobby', (await host.locator('.modes .btn.on').textContent()).includes('2 crews'));
+check('teacher can switch to 2 crews in the lobby', (await host.locator('.modes .btn.on').first().textContent()).includes('2 crews'));
 await host.click('#cHow'); await sleep(300); check('how-to-play card opens', (await host.textContent('#overlay')).includes('How to play'));
 await shot(host, '03b-teacher-how-to-1366x768.png'); await host.locator('.modal-card .btn', { hasText: 'Close' }).click(); await sleep(300);
 // emote in lobby
@@ -212,6 +212,22 @@ check('scores are moving in DEMO', /⚡[1-9]/.test(board), board.replace(/\s+/g,
 await demo.click('#cEnd'); await sleep(2500);
 check('Solo results show a player podium', /wins!/.test(await demo.textContent('.results h2')));
 await shot(demo, '08-teacher-solo-results-1366x768.png'); await shot(dp, 'p12-solo-results-390x844.png');
+
+// ---------------- night time (short 1-minute DEMO game so night falls quickly) ----------------
+const nh = await page(1366, 768, 'night-host');
+await nh.goto(base + '/host.html'); await sleep(600);
+await nh.evaluate(() => { const sel = document.getElementById('minutes'); sel.append(new Option('1 minute (test)', '1')); sel.value = '1'; });
+check('night time is on by default', await nh.isChecked('#night'));
+await nh.click('#demoBtn'); await sleep(1200);
+const ncode = (await nh.textContent('#codeMini')).trim();
+const np = await page(390, 844, 'night-phone');
+await np.goto(`${base}/play.html?room=${ncode}`); await sleep(500); await np.fill('#nameIn', 'Moon Bunny'); await np.click('button[type=submit]'); await sleep(400); await np.click('#avatarDone'); await sleep(800);
+await nh.click('#cStart'); await sleep(3600 + 21000 + 3500);
+check('night falls: teacher timer shows the moon', (await nh.textContent('#bigTimer')).includes('🌙'));
+check('night falls: phone timer shows the moon', (await np.textContent('#hudTimer')).includes('🌙'));
+await shot(nh, '09-teacher-night-1366x768.png'); await shot(np, 'p13-night-390x844.png');
+await sleep(30_000);
+check('morning comes back after 30 s', !(await nh.textContent('#bigTimer')).includes('🌙'));
 
 await browser.close(); server.closeAllConnections?.(); server.close();
 console.table(results);

@@ -160,6 +160,11 @@ function onMessage(m) {
       if (m.kind) { sound.play('event'); banner({ lights: 'LIGHTS OUT! 🔦', party: 'ZOMBIE DANCE PARTY! 🪩', golden: 'GOLDEN LOCKERS! ✨', rain: 'FUSE RAIN! ⚡' }[m.kind]); }
       break;
     case 'feed': if (m.kind === 'event' || m.kind === 'big') break; if (m.crew === me.crew) toast(m.text); break;
+    case 'night':
+      if (m.stage === 'warn') { toast('🌙 Night is coming… stay near your crew!'); sound.play('owl'); }
+      if (m.stage === 'start') { banner('NIGHT FALLS 🌙'); sound.play('owl'); setTimeout(() => toast('Zombies are faster at night — but correct answers give a BONUS fuse!'), 900); }
+      if (m.stage === 'end') { banner('☀️ GOOD MORNING!'); sound.play('go'); }
+      break;
     case 'results': showResults(m.results, null); break;
     case 'mystats': showResults(null, m); break;
     case 'err':
@@ -205,7 +210,7 @@ function updateHud() {
   const en = $('energy'); const pct = Math.max(0, Math.min(100, myEnergy));
   en.classList.toggle('hidden', phase !== 'play'); en.classList.toggle('low', pct < 25);
   $('energyFill').style.width = `${pct}%`; $('energyTxt').textContent = pct <= 0 ? '💤 Answer to wake up!' : pct < 25 ? '⚡ Power low — answer a question!' : '⚡ Power';
-  const tm = $('hudTimer'); tm.textContent = snap.ph === 'play' ? fmt(snap.tl) : snap.ph === 'lobby' ? 'LOBBY' : snap.ph === 'results' ? 'DONE' : '…'; tm.classList.toggle('ot', !!snap.ot);
+  const tm = $('hudTimer'); tm.textContent = snap.ph === 'play' ? (snap.nt ? '🌙 ' : '') + fmt(snap.tl) : snap.ph === 'lobby' ? 'LOBBY' : snap.ph === 'results' ? 'DONE' : '…'; tm.classList.toggle('ot', !!snap.ot);
   const items = [];
   if (myFuses) items.push(`⚡×${myFuses}${myFlags & 128 ? ' ✨' : ''} → Generator`);
   if (myFlags & 8) items.push('🛡️ Shield'); if (myFlags & 16) items.push('👟 Speed'); if (myFlags & 4) items.push(settings.teams === 0 ? '🧟 Tag another player!' : '🧟 Tag another crew!');
@@ -334,7 +339,7 @@ function showResult(m) {
   kids.push(h('div', { class: `verdict ${m.correct ? 'ok' : 'no'}`, text: m.correct ? (m.streak >= 3 ? `CORRECT! 🔥 ×${m.streak}` : 'CORRECT! ✨') : 'Not quite!' }));
   if (m.correct && m.loot) {
     const [ic, name, desc] = LOOT[m.loot.item] || ['🎁', 'Loot!', ''];
-    kids.push(h('div', { class: 'loot' }, h('span', { class: 'ic', text: ic }), h('div', {}, h('b', { text: name + (m.loot.golden ? ' (double!)' : '') }), desc, m.loot.combo ? h('div', { text: '🔥 Combo bonus: +1 extra fuse!' }) : null)));
+    kids.push(h('div', { class: 'loot' }, h('span', { class: 'ic', text: ic }), h('div', {}, h('b', { text: name + (m.loot.golden ? ' (double!)' : '') }), desc, m.loot.combo ? h('div', { text: '🔥 Combo bonus: +1 extra fuse!' }) : null, m.loot.moon ? h('div', { text: '🌙 Night bonus: +1 extra fuse!' }) : null)));
   }
   kids.push(h('div', { class: 'answers' }, q.options.map((o, i) => h('button', { class: `ans a${i}${i === m.correctIndex ? ' right' : ''}${i === m.choice ? ' picked' : ''}`, disabled: true }, h('span', { class: 'L', text: i === m.correctIndex ? '✓' : LETTERS[i] }), h('span', { text: o })))));
   kids.push(h('div', { class: 'why' }, h('b', { text: m.correct ? 'Why: ' : `The answer is ${LETTERS[m.correctIndex]}. Why: ` }), m.explanation));

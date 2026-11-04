@@ -32,10 +32,12 @@ export class Sound {
       case 'tick': this.tone(n(12), 0.05, { vol: 0.06 }); break;
       case 'go': this.tone(n(12), 0.35, { vol: 0.12 }); this.tone(n(19), 0.35, { vol: 0.08 }); break;
       case 'win': [0, 4, 7, 12, 7, 12, 16, 19].forEach((s, i) => this.tone(n(s), 0.22, { at: i * 0.11, vol: 0.1 })); break;
+      case 'owl': this.tone(n(-2), 0.32, { type: 'sine', vol: 0.12, slide: 0.9 }); this.tone(n(-5), 0.5, { type: 'sine', vol: 0.12, at: 0.38, slide: 0.88 }); break;
       case 'pop': this.tone(n(17), 0.06, { type: 'sine', vol: 0.1 }); break;
       default: break;
     }
   }
+  setNight(on) { this.night = on; if (this.musicBus && this.ctx) this.musicBus.gain.linearRampToValueAtTime(on ? 0.12 : 0.22, this.ctx.currentTime + 1.5); }
   setMusic(on) {
     this.musicOn = on;
     if (!on) { clearInterval(this.timer); this.timer = null; return; }
@@ -49,7 +51,7 @@ export class Sound {
       while (next < this.ctx.currentTime + 0.25) {
         const i = this.step++; const at = next - this.ctx.currentTime;
         if (i % 2 === 0) this.tone(n(bass[(i >> 2) % 8]), beat * 1.6, { type: 'triangle', vol: 0.22, at, bus: this.musicBus });
-        this.tone(n(arp[i % 16] + ((i >> 4) % 2 ? 0 : -12) + 12), beat * 0.8, { type: 'square', vol: 0.05, at, bus: this.musicBus });
+        this.tone(n(arp[i % 16] + ((i >> 4) % 2 ? 0 : -12) + (this.night ? 0 : 12)), beat * (this.night ? 1.4 : 0.8), { type: this.night ? 'triangle' : 'square', vol: 0.05, at, bus: this.musicBus });
         if (i % 4 === 2) this.tone(2000, 0.03, { type: 'square', vol: 0.025, at, bus: this.musicBus });
         next += beat;
       }

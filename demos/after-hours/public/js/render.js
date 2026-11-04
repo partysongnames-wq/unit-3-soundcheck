@@ -36,7 +36,7 @@ export class WorldView {
   setLocal(x, y, dir, moving) { this.local = { x, y, dir, moving }; }
   push(s) {
     s._at = performance.now(); this.snaps.push(s); if (this.snaps.length > 4) this.snaps.shift();
-    this.phase = s.ph; this.event = s.ev ? s.ev[0] : null;
+    this.phase = s.ph; this.event = s.ev ? s.ev[0] : null; this.nightLeft = s.nt || 0;
   }
   latest() { return this.snaps[this.snaps.length - 1]; }
 
@@ -170,7 +170,12 @@ export class WorldView {
     this.texts = this.texts.filter((tx) => tx.life > 0);
     c.restore();
     // event overlays
-    if (this.event === 'lights') this.lightsOut(st, ox, oy);
+    // night: fade in/out over ~2.5 s
+    const NIGHT = 30000; const nl = this.nightLeft || 0;
+    const target = nl > 0 ? Math.max(0, Math.min(1, Math.min(NIGHT - nl, nl) / 2500)) : 0;
+    this.nightA = (this.nightA || 0) + (target - (this.nightA || 0)) * (this.reduced ? 1 : Math.min(1, dt * 4));
+    if (this.nightA > 0.01) this.nightOverlay(st, ox, oy, this.nightA);
+    else if (this.event === 'lights') this.lightsOut(st, ox, oy);
     if (this.event === 'party' && !this.reduced) this.disco();
   }
 
@@ -214,6 +219,34 @@ export class WorldView {
     const r = k * 0.32; c.beginPath(); c.arc(x, y - r, r, 0, TAU); c.fillStyle = '#ffffff'; c.fill(); c.strokeStyle = INK; c.lineWidth = Math.max(1, k * 0.04); c.stroke();
     c.beginPath(); c.moveTo(x - r * 0.3, y - r * 0.15); c.lineTo(x, y + r * 0.4); c.lineTo(x + r * 0.3, y - r * 0.15); c.fill();
     c.font = `${r * 1.15}px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif`; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText(EMOTE_ICON[e] || '❔', x, y - r * 0.95);
+  }
+
+  nightOverlay(st, ox, oy, a) {
+    const o = this.overlay.getContext('2d'); const S = this.S;
+    o.setTransform(this.dpr, 0, 0, this.dpr, 0, 0); o.globalCompositeOperation = 'source-over';
+    o.clearRect(0, 0, this.w, this.h); o.fillStyle = `rgba(8,10,38,${0.8 * a})`; o.fillRect(0, 0, this.w, this.h);
+    o.globalCompositeOperation = 'destination-out';
+    const hole = (x, y, r, k = 1) => { const g = o.createRadialGradient(x, y, r * 0.15, x, y, r); g.addColorStop(0, `rgba(0,0,0,${k})`); g.addColorStop(1, 'rgba(0,0,0,0)'); o.fillStyle = g; o.beginPath(); o.arc(x, y, r, 0, TAU); o.fill(); };
+    for (const p of st.players.values()) hole(ox + p.x * S, oy + (p.y - 0.3) * S, S * (p.n === this.me ? 3.3 : 2.0));
+    for (const [lx, ly] of LAMPS) hole(ox + lx * S, oy + (ly - 0.5) * S, S * 2.2, 0.85);
+    for (const l of LOCKERS) hole(ox + l.x * S, oy + (l.y - 0.6) * S, S * 1.0, 0.8);
+    hole(ox + GENERATOR.x * S, oy + GENERATOR.y * S, S * 2.4);
+    o.globalCompositeOperation = 'source-over';
+    // a few stars and the moon (projector only, where there's space)
+    this.c.setTransform(1, 0, 0, 1, 0, 0); this.c.drawImage(this.overlay, 0, 0);
+    const c = this.c; c.setTransform(this.dpr, 0, 0, this.dpr, 0, 0);
+    // glowing zombie eyes in the dark
+    const k = S * (this.mode === 'phone' ? 1 : 1.25);
+    c.globalAlpha = a;
+    for (const z of st.zombies) {
+      const dir = z.f & 4 ? -1 : 1; const ex = ox + z.x * S, ey = oy + z.y * S + S * 0.25 - k * 0.58;
+      for (const [dx, r] of [[0.07, 0.06], [0.2, 0.045]]) {
+        const g = c.createRadialGradient(ex + dir * dx * k, ey, 0, ex + dir * dx * k, ey, r * k * 3);
+        g.addColorStop(0, 'rgba(210,255,120,1)'); g.addColorStop(0.35, 'rgba(180,255,90,0.6)'); g.addColorStop(1, 'rgba(180,255,90,0)');
+        c.fillStyle = g; c.beginPath(); c.arc(ex + dir * dx * k, ey, r * k * 3, 0, TAU); c.fill();
+      }
+    }
+    c.globalAlpha = 1;
   }
 
   lightsOut(st, ox, oy) {

@@ -41,7 +41,7 @@ async function create(demo) {
   if (!/^https?:\/\/[^\s/]+/.test(joinBase)) { $('setupErr').textContent = 'Join address must start with http://'; return; }
   try {
     sound.ensure();
-    const r = await api('/api/rooms', { method: 'POST', body: { pack: v.pack, demo, demoBots: 14, settings: { minutes: Number($('minutes').value), teams: Number($('teams').value), goal: Number($('goal').value) } } });
+    const r = await api('/api/rooms', { method: 'POST', body: { pack: v.pack, demo, demoBots: 14, settings: { minutes: Number($('minutes').value), teams: Number($('teams').value), goal: Number($('goal').value), night: $('night').checked } } });
     const info = { code: r.code, token: r.hostToken, view: r.viewToken, joinBase }; store(HOST_KEY, info); enterGame(info);
   } catch (e) { $('setupErr').textContent = e.message; }
 }
@@ -73,6 +73,11 @@ function onMessage(m) {
     case 'mode': settings = m.settings; renderLobby(); break;
     case 'fx': view.fx(m); if (m.k === 'deliver') sound.play('deliver'); if (m.k === 'tag') sound.play('tag'); if (m.k === 'overtime') { banner('FINAL MINUTE — DOUBLE POINTS!'); sound.play('event'); } break;
     case 'event': if (m.kind) { sound.play('event'); banner({ lights: 'LIGHTS OUT! 🔦', party: 'ZOMBIE DANCE PARTY! 🪩', golden: 'GOLDEN LOCKERS! ✨', rain: 'FUSE RAIN! ⚡' }[m.kind]); } break;
+    case 'night':
+      if (m.stage === 'start') { banner('NIGHT FALLS 🌙'); sound.play('owl'); sound.setNight(true); }
+      if (m.stage === 'warn') { sound.play('owl'); }
+      if (m.stage === 'end') { banner('☀️ GOOD MORNING!'); sound.play('go'); sound.setNight(false); }
+      break;
     case 'feed': feedItems.unshift(m); feedItems.length = Math.min(feedItems.length, 7); renderFeed(); break;
     case 'results': results = m.results; if (phase === 'results') renderResults(); break;
     default: break;
@@ -117,6 +122,7 @@ $('cHow').onclick = () => modal(h('div', {},
     h('li', { text: 'Carry fuses to the GENERATOR in the middle. That scores!' }),
     h('li', { text: 'Your ⚡ power meter drains. Answer questions to keep it full, or you get sleepy and slow.' }),
     h('li', { text: settings.teams === 0 ? 'Tagged by a zombie? You drop your fuses. Tag another player to turn back!' : 'Tagged by a zombie? You drop your fuses. Tag someone from another crew to turn back!' }),
+    h('li', { text: 'Night falls twice for 30 seconds: it gets dark and zombies are faster, but correct answers give a bonus fuse.' }),
     h('li', { text: 'Last minute: every fuse counts DOUBLE!' }))));
 $('cTeacher').onclick = () => {
   if (!room.view) { modal(h('p', { text: 'This game was resumed from an older version — create a new game to get a teacher phone link.' })); return; }
@@ -139,7 +145,7 @@ function countdown() {
 const fmt = (ms) => { const s = Math.ceil(ms / 1000); return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`; };
 function renderTop() {
   const t = $('bigTimer');
-  t.textContent = snap.ph === 'play' ? fmt(snap.tl) : snap.ph === 'lobby' ? 'LOBBY' : snap.ph === 'results' ? 'FINISHED' : 'GET READY';
+  t.textContent = snap.ph === 'play' ? (snap.nt ? '🌙 ' : '') + fmt(snap.tl) : snap.ph === 'lobby' ? 'LOBBY' : snap.ph === 'results' ? 'FINISHED' : 'GET READY';
   t.classList.toggle('ot', !!snap.ot && snap.ph === 'play');
 }
 function renderBoard() {
@@ -192,7 +198,8 @@ function renderLobby() {
 function modeButtons() {
   const n = roster.length; const sug = n < 6 ? 0 : n < 12 ? 2 : n < 20 ? 3 : 4;
   const opts = [[0, 'Solo'], [2, '2 crews'], [3, '3 crews'], [4, '4 crews']];
-  return h('div', {}, h('div', { class: 'modes' }, opts.map(([v, label]) => h('button', { class: `btn${settings.teams === v ? ' on' : ''}`, onclick: () => act('settings', { teams: v }), text: label }))),
+  return h('div', {}, h('div', { class: 'modes' }, opts.map(([v, label]) => h('button', { class: `btn${settings.teams === v ? ' on' : ''}`, onclick: () => act('settings', { teams: v }), text: label })),
+      h('button', { class: `btn${settings.night !== false ? ' on' : ''}`, title: 'Two 30-second spooky nights per game', onclick: () => act('settings', { night: settings.night === false }), text: settings.night !== false ? '🌙 Night: on' : '🌙 Night: off' })),
     h('div', { class: 'suggest', text: n ? `Suggested for ${n} players: ${opts.find((o) => o[0] === sug)[1]}${settings.goal ? ` · Goal: first to ${settings.goal}` : ''}` : (settings.goal ? `Goal: first to ${settings.goal}` : '') }));
 }
 

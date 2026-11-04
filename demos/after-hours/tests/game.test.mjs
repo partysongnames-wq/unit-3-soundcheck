@@ -256,3 +256,42 @@ test('teacher view lists who has not answered; host stats count them without nam
   assert.equal(JSON.stringify(tv).includes(ps[0].secret), false);
   assert.ok(r.viewToken && r.viewToken !== r.hostToken);
 });
+
+test('night falls twice for 30 s (warning first), zombies get faster, correct answers give a bonus fuse', () => {
+  const { r, now, msgs } = mk({ settings: { minutes: 6 } }); const [p] = joinN(r, 2); online(r); startPlay(r, now);
+  assert.equal(r.nights.length, 2);
+  const first = r.nights[0] - r.gt; assert.ok(Math.abs(first - 0.35 * 6 * 60_000) < 200, `first night at ${first} ms`);
+  const tick = (ms) => { for (let t = 0; t < ms; t += 100) { now.add(100); r.tick(); online(r); } };
+  tick(first - 4000);
+  assert.ok(msgs.some((m) => m.m.t === 'night' && m.m.stage === 'warn'), 'warning before night');
+  assert.equal(r.night, null);
+  tick(4500);
+  assert.ok(r.night, 'night has started'); assert.ok(r.snapshot().nt > 25_000);
+  assert.equal(r.event, null, 'no other event during the night');
+  for (const z of r.zombies) z.stunUntil = 1e12;
+  p.fuses = []; standAt(p, LOCKERS[5]); p.lockerCd.clear(); p.zombieUntil = 0; r.openLocker(p, 5);
+  const q = r.qById.get(p.pending.qid); const res = r.answer(p, { nonce: p.pending.nonce, choice: q.correct });
+  assert.equal(res.loot.moon, true, 'night bonus'); assert.ok(p.fuses.length >= 1);
+  tick(30_500);
+  assert.equal(r.night, null); assert.ok(msgs.some((m) => m.m.t === 'night' && m.m.stage === 'end'));
+  tick(r.nights[0] - r.gt + 500);
+  assert.ok(r.night, 'second night'); assert.equal(r.nights.length, 0);
+});
+
+test('night time can be switched off by the teacher', () => {
+  const { r, now } = mk({ settings: { night: false } }); joinN(r, 1); online(r);
+  assert.equal(r.settings.night, false);
+  r.hostAction('settings', { night: true }); assert.equal(r.settings.night, true);
+  r.hostAction('settings', { night: false });
+  startPlay(r, now); assert.equal(r.nights.length, 0);
+});
+
+test('short games get one night; nights never run back-to-back', () => {
+  const { r, now } = mk({ settings: { minutes: 1 } }); joinN(r, 1); online(r); startPlay(r, now);
+  assert.equal(r.nights.length, 1);
+  const { r: r2, now: n2 } = mk({ settings: { minutes: 3 } }); joinN(r2, 1); online(r2); startPlay(r2, n2);
+  r2.nights[1] = r2.nights[0] + 31_000; // pretend the second night was scheduled right after the first
+  const until = r2.nights[0] - r2.gt + 31_000;
+  for (let t = 0; t < until; t += 100) { n2.add(100); r2.tick(); online(r2); }
+  assert.equal(r2.night, null, 'morning'); assert.equal(r2.nights.length, 0, 'back-to-back night dropped');
+});

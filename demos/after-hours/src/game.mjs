@@ -47,8 +47,10 @@ export const GOAL_OPTIONS = [0, 20, 30, 50, 80];
 export function cleanSettings(s = {}) {
   const teams = TEAM_OPTIONS.includes(Number(s.teams)) ? Number(s.teams) : 4;
   const goal = GOAL_OPTIONS.includes(Number(s.goal)) ? Number(s.goal) : 0;
-  return { minutes: clampInt(s.minutes, 1, 15, 8), teams, goal };
+  return { minutes: clampInt(s.minutes, 1, 15, 8), teams, goal, night: s.night === undefined ? true : !!s.night };
 }
+export const NIGHT_MS = 30_000;
+const NIGHT_WARN_MS = 5000;
 const ENERGY_DRAIN_PER_S = 100 / 75; // a full power meter lasts ~75 s without answering
 
 export class Room {
@@ -74,7 +76,7 @@ export class Room {
     this.endsAt = 0; this.countdownEnds = 0; this.overtime = false;
     this.zombies = []; this.loose = []; this.nextLooseId = 1;
     this.scores = [0, 0, 0, 0];
-    this.event = null; this.nextEventAt = 0; this.eventOrder = [];
+    this.event = null; this.nextEventAt = 0; this.eventOrder = []; this.night = null; this.nights = []; this.nightWarned = false;
     this.qstats = new Map(); this.feed = []; this.results = null; this.epoch = (this.epoch || 0) + 1;
     if (!initial) {
       for (const p of this.players.values()) this.resetPlayer(p, true);
@@ -238,6 +240,7 @@ export class Room {
     let r = this.rng() * table.reduce((s, x) => s + x[1], 0); let item = table[0][0];
     for (const [k, w] of table) { if ((r -= w) <= 0) { item = k; break; } }
     const loot = { item, golden };
+    if (this.night && p.fuses.length < MAX_CARRY - (item === 'fuse' || item === 'gold' ? 1 : 0)) { p.fuses.push(1); loot.moon = true; } // night bonus fuse
     if (item === 'fuse') { p.fuses.push(golden ? 2 : 1); }
     else if (item === 'gold') { p.fuses.push(golden ? 4 : 2); p.stats.golden++; }
     else if (item === 'boots') p.bootsUntil = this.gt + BOOTS_MS;
@@ -289,6 +292,9 @@ export class Room {
       this.zombies.push({ id: i, x: x + (this.rng() - 0.5) * 0.5, y, route: [], repathAt: 0, stunUntil: this.gt + 4000 + i * 500, chasing: false, dir: 1 });
     }
     for (const p of this.players.values()) p.invulnUntil = this.gt + 6000; // safe start
+    const total = this.settings.minutes * 60_000;
+    this.nights = !this.settings.night ? [] : (total >= 3 * 60_000 ? [0.35, 0.7] : [0.35]).map((f) => this.gt + Math.round(total * f));
+    this.night = null; this.nightWarned = false;
     this.emitAll({ t: 'phase', phase: 'play' });
     this.pushFeed('The lights are out! Open lockers, find fuses, power the generator!', 'big');
   }
@@ -350,7 +356,7 @@ export class Room {
     const targets = this.playersInWorld().filter((p) => !this.isZombie(p) && !p.pending);
     for (const z of this.zombies) {
       if (party || z.stunUntil > this.gt) { z.chasing = false; continue; }
-      let best = null, bd = 6.5;
+      let best = null, bd = this.night ? 8.5 : 6.5;
       for (const p of targets) { const d = dist(z.x, z.y, p.x, p.y); if (d < bd) { bd = d; best = p; } }
       z.chasing = !!best;
       if (this.gt >= z.repathAt || (best && !z.route.length)) {
@@ -360,7 +366,7 @@ export class Room {
         const r = path(z.x, z.y, gx, gy, 600);
         z.route = r ? r.map(([x, y]) => [x + 0.5, y + 0.5]) : [];
       }
-      const speed = (z.chasing ? SPEED.zombieChase : SPEED.zombieWander) * (this.event && this.event.kind === 'lights' ? 1.1 : 1);
+      const speed = (z.chasing ? SPEED.zombieChase : SPEED.zombieWander) * (this.night ? 1.18 : this.event && this.event.kind === 'lights' ? 1.1 : 1);
       let tx, ty;
       if (best && bd < 1.2) { tx = best.x; ty = best.y; }
       else if (z.route.length) { [tx, ty] = z.route[0]; if (dist(z.x, z.y, tx, ty) < 0.15) { z.route.shift(); continue; } }
@@ -437,9 +443,29 @@ export class Room {
     }
   }
 
+  tickNight() {
+    if (this.night && this.gt >= this.night.endsAt) {
+      this.night = null; this.emitAll({ t: 'night', stage: 'end' });
+      this.nights = this.nights.filter((t) => t >= this.gt + 15_000); // always some daylight between nights
+      this.pushFeed('☀️ Morning! The sun is back.', 'event');
+    }
+    const next = this.nights[0];
+    if (next === undefined || this.night) return;
+    if (!this.nightWarned && this.gt >= next - NIGHT_WARN_MS) { this.nightWarned = true; this.emitAll({ t: 'night', stage: 'warn', ms: next - this.gt }); }
+    if (this.gt >= next) {
+      this.nights.shift(); this.nightWarned = false;
+      if (this.event) { this.event = null; this.emitAll({ t: 'event', kind: null }); }
+      this.night = { endsAt: this.gt + NIGHT_MS };
+      this.emitAll({ t: 'night', stage: 'start', ms: NIGHT_MS });
+      this.pushFeed('🌙 NIGHT FALLS! Zombies are faster — but correct answers give a bonus fuse!', 'event');
+    }
+  }
+
   tickEvents() {
+    this.tickNight();
     if (this.event && this.gt >= this.event.endsAt) { this.event = null; this.emitAll({ t: 'event', kind: null }); }
-    if (!this.event && this.gt >= this.nextEventAt && this.endsAt - this.gt > OVERTIME_MS + 15_000) {
+    const nightSoon = this.night || (this.nights[0] !== undefined && this.nights[0] - this.gt < 20_000);
+    if (!this.event && !nightSoon && this.gt >= this.nextEventAt && this.endsAt - this.gt > OVERTIME_MS + 15_000) {
       const kind = this.eventOrder.shift() || 'rain'; if (!this.eventOrder.length) this.eventOrder = this.shuffle(['lights', 'party', 'golden', 'rain']);
       this.event = { kind, endsAt: this.gt + EVENTS[kind] };
       this.nextEventAt = this.gt + 55_000 + this.rng() * 25_000;
@@ -494,7 +520,7 @@ export class Room {
     return {
       t: 's', ph: this.phase, pa: this.paused ? 1 : 0, rv: this.rosterVersion, md: this.settings.teams, gl: this.settings.goal,
       tl: this.phase === 'play' ? Math.max(0, this.endsAt - g) : this.phase === 'countdown' ? Math.max(0, this.countdownEnds - g) : 0,
-      ot: this.overtime ? 1 : 0, ev: this.event ? [this.event.kind, Math.max(0, this.event.endsAt - g)] : 0,
+      ot: this.overtime ? 1 : 0, nt: this.night ? Math.max(0, this.night.endsAt - g) : 0, ev: this.event ? [this.event.kind, Math.max(0, this.event.endsAt - g)] : 0,
       sc: this.scores, p: ps,
       z: this.zombies.map((z) => [Math.round(z.x * 100), Math.round(z.y * 100), (z.chasing ? 1 : 0) | (z.stunUntil > g ? 2 : 0) | (z.dir < 0 ? 4 : 0)]),
       f: this.loose.map((f) => [f.id, Math.round(f.x * 100), Math.round(f.y * 100), f.v])
