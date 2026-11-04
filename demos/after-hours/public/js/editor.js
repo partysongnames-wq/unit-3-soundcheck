@@ -47,7 +47,7 @@ function renderMain() {
     h('h2', { text: 'Pack details' }),
     h('label', { class: 'fld' }, 'Pack name', h('input', { id: 'pTitle', value: p.title, maxlength: LIMITS.title, oninput: (e) => { p.title = e.target.value; changed(); } })),
     h('label', { class: 'fld' }, 'Description (optional)', h('textarea', { maxlength: LIMITS.description, oninput: (e) => { p.description = e.target.value; changed(); } }, p.description || '')),
-    h('label', { class: 'fld' }, 'Mini-game words (optional)', h('span', { class: 'hint', text: 'One per line: word = short clue. Used by the Signal Runner waiting game.' }),
+    h('label', { class: 'fld' }, 'Key vocabulary (optional)', h('span', { class: 'hint', text: 'One per line: word = short clue. Saved with the pack for your reference.' }),
       h('textarea', { id: 'vocabIn', oninput: (e) => { p.vocab = parseVocab(e.target.value); changed(); } }, vocabText)),
     statusEl(p)));
 

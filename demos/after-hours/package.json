@@ -1,8 +1,8 @@
 {
   "name": "suksanari-after-hours",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "private": true,
-  "description": "Suksanari: AFTER HOURS — LAN multiplayer English review mission (school-map zombie survival).",
+  "description": "Suksanari: AFTER HOURS — Night Crew. Real-time LAN multiplayer English review game (avatars, lockers, zombie tag, crew race).",
   "type": "module",
   "engines": { "node": ">=18" },
   "scripts": {

@@ -1,738 +1,480 @@
-// Authoritative game engine for Suksanari: AFTER HOURS.
-// Pure logic: no I/O. The server wraps this with HTTP; tests drive it directly.
+// Real-time game engine for Suksanari: AFTER HOURS — Night Crew.
+// Pure logic, no sockets. The server calls tick() ~20×/s and forwards messages produced via `this.out`.
 import { randomBytes, timingSafeEqual } from 'node:crypto';
 import {
-  NODES, CREWS, FUSE_START, ZOMBIE_SPAWNS, COSTS, BARRICADE_ROUNDS, CORNER_MAX_ROUNDS,
-  MAX_HORDES, edgeKey, neighbours, fusesNeeded
-} from '../public/js/shared/map-data.js';
+  LOCKERS, GENERATOR, SPAWNS, ZOMBIE_SPAWNS, SPEED, CREWS, INTERACT_DIST,
+  collides, move, path, dist, walkableTiles, isWalkableTile
+} from '../public/js/shared/world.js';
 import { validatePack, publicQuestion } from '../public/js/shared/packs.js';
+import { cleanAvatar, randomAvatar, EMOTES } from '../public/js/shared/avatar.js';
+import { createBrain, think } from '../public/js/shared/botbrain.js';
 
 export const MAX_PLAYERS = 40;
-export const PHASES = ['lobby', 'question', 'reveal', 'vote', 'resolve', 'extraction', 'debrief'];
 export const CONNECTED_MS = 30_000;
 const CALLSIGN_RE = /^[A-Za-z0-9][A-Za-z0-9 _-]{1,15}$/;
-const BLOCKED_WORDS = /(fuck|shit|bitch|sex|porn|cunt|dick)/i;
-const EXTRACTION_MS = 11_000;
-const AUTO_REVEAL_MS = 16_000;
-const AUTO_RESOLVE_MS = 8_000;
+const BLOCKED = /(fuck|shit|bitch|sex|porn|cunt|dick|slut|whore)/i;
+const COUNTDOWN_MS = 3500;
+const OVERTIME_MS = 60_000;
+const ZOMBIFIED_MS = 8000;
+const INVULN_MS = 3000;
+const BOOTS_MS = 8000;
+const SHIELD_MS = 40_000;
+const QUESTION_TIMEOUT_MS = 45_000;
+const LOCKER_PLAYER_COOLDOWN_MS = 9000;
+const LOOSE_FUSE_MS = 35_000;
+const MAX_CARRY = 3;
+const EVENTS = { lights: 15_000, party: 10_000, golden: 20_000, rain: 3000 };
 
-export class GameError extends Error {
-  constructor(status, code, message) { super(message); this.status = status; this.code = code; }
-}
-
-const token = (bytes) => randomBytes(bytes).toString('hex');
+export class GameError extends Error { constructor(status, code, message) { super(message); this.status = status; this.code = code; } }
+const tok = (n) => randomBytes(n).toString('hex');
 const CODE_ALPHABET = 'ACDEFGHJKMNPQRTUVWXYZ2346789';
-export function makeRoomCode(rng = Math.random) {
-  let s = '';
-  for (let i = 0; i < 5; i++) s += CODE_ALPHABET[Math.floor(rng() * CODE_ALPHABET.length)];
-  return s;
-}
-
+export function makeRoomCode(rng = Math.random) { let s = ''; for (let i = 0; i < 5; i++) s += CODE_ALPHABET[Math.floor(rng() * CODE_ALPHABET.length)]; return s; }
 export function safeEqual(a, b) {
   if (typeof a !== 'string' || typeof b !== 'string') return false;
-  const ba = Buffer.from(a); const bb = Buffer.from(b);
-  if (ba.length !== bb.length) return false;
-  return timingSafeEqual(ba, bb);
+  const x = Buffer.from(a), y = Buffer.from(b);
+  return x.length === y.length && timingSafeEqual(x, y);
 }
-
 export function normaliseCallsign(raw) {
   if (typeof raw !== 'string') return null;
   const s = raw.replace(/\s+/g, ' ').trim();
-  if (!CALLSIGN_RE.test(s) || BLOCKED_WORDS.test(s)) return null;
-  return s;
+  return CALLSIGN_RE.test(s) && !BLOCKED.test(s) ? s : null;
 }
-
-const clampInt = (v, lo, hi, dflt) => {
-  const n = Number(v);
-  return Number.isFinite(n) ? Math.max(lo, Math.min(hi, Math.round(n))) : dflt;
-};
+const clampInt = (v, lo, hi, d) => { const n = Number(v); return Number.isFinite(n) ? Math.max(lo, Math.min(hi, Math.round(n))) : d; };
+const BOT_NAMES = ['Sleepy Ghost', 'Mochi Cat', 'Jelly Bean', 'Star Fox', 'Pudding', 'Comet Kid', 'Lotus Pop', 'Mango Moon', 'Pixel Puff', 'Boba Bat', 'Cloud Nine', 'Sunny Owl', 'Kiwi Spark', 'Taro Cake', 'Nova Bun', 'Peach Fizz'];
 
 export class Room {
-  /**
-   * @param {object} opts { code, pack, settings, now, rng, demoBots }
-   */
-  constructor({ code, pack, settings = {}, now = Date.now, rng = Math.random, demoBots = 0, connectedMs = CONNECTED_MS }) {
+  constructor({ code, pack, settings = {}, now = Date.now, rng = Math.random, demoBots = 0, connectedMs = CONNECTED_MS, out = () => {} }) {
     const v = validatePack(pack);
     if (!v.ok) throw new GameError(400, 'bad_pack', `Pack is invalid: ${v.errors.slice(0, 3).join(' ')}`);
-    this.code = code;
-    this.hostToken = token(24);
-    // Snapshot: deep copy & freeze so editor changes can never mutate a running room.
+    this.code = code; this.hostToken = tok(24);
     this.pack = deepFreeze(JSON.parse(JSON.stringify(v.pack)));
-    this.now = now; this.rng = rng; this.connectedMs = connectedMs;
-    this.settings = {
-      questionSeconds: clampInt(settings.questionSeconds, 15, 120, 40),
-      voteSeconds: clampInt(settings.voteSeconds, 10, 60, 20),
-      autoAdvance: !!settings.autoAdvance
-    };
-    this.createdAt = now(); this.lastActivity = now();
-    this.players = new Map();
-    this.version = 1; this.epoch = 1;
-    this.waiters = new Set();
-    this.demo = demoBots > 0;
-    this.connectedSig = '';
-    this.resetMission();
+    this.qById = new Map(this.pack.questions.map((q) => [q.id, q]));
+    this.now = now; this.rng = rng; this.connectedMs = connectedMs; this.out = out;
+    this.settings = { minutes: clampInt(settings.minutes, 1, 15, 8) };
+    this.players = new Map(); this.byNum = new Map(); this.nextNum = 1;
+    this.lastActivity = now(); this.lastTick = now();
+    this.rosterVersion = 1; this.demo = demoBots > 0;
+    this.reset(true);
     for (let i = 0; i < Math.min(demoBots, MAX_PLAYERS); i++) this.addBot(i);
   }
 
-  // ---------- lifecycle ----------
-  resetMission() {
-    this.phase = 'lobby';
-    this.paused = false; this.pausedRemaining = null;
-    this.roundIndex = -1; this.deadline = null; this.phaseStartedAt = this.now();
-    this.answers = new Map(); this.eligible = new Set(); this.votes = new Map();
-    this.crewOptions = []; this.results = []; this.lastReveal = null;
-    this.mission = null; this.summary = null; this.eventSeq = 0;
+  // ---------------- lifecycle ----------------
+  reset(initial = false) {
+    this.phase = 'lobby'; this.paused = false; this.gt = 0; // game clock (ms), runs only while playing
+    this.endsAt = 0; this.countdownEnds = 0; this.overtime = false;
+    this.zombies = []; this.loose = []; this.nextLooseId = 1;
+    this.scores = [0, 0, 0, 0];
+    this.event = null; this.nextEventAt = 0; this.eventOrder = [];
+    this.qstats = new Map(); this.feed = []; this.results = null; this.epoch = (this.epoch || 0) + 1;
+    if (!initial) {
+      for (const p of this.players.values()) this.resetPlayer(p, true);
+      this.rosterVersion++;
+      this.emitAll({ t: 'phase', phase: 'lobby' });
+    }
   }
 
-  get roundId() { return `e${this.epoch}r${this.roundIndex}`; }
-  get totalRounds() { return this.pack.questions.length; }
-  touch() { this.lastActivity = this.now(); }
-  // Version bump; waiting long-polls are released in a batch (at most every 150 ms) to bound traffic.
-  bump() {
-    this.version++;
-    if (this.flushTimer) return;
-    this.flushTimer = setTimeout(() => {
-      this.flushTimer = null;
-      const ws = [...this.waiters]; this.waiters.clear();
-      for (const w of ws) w();
-    }, 150);
-    if (this.flushTimer.unref) this.flushTimer.unref();
+  resetPlayer(p, respawn) {
+    p.fuses = []; p.shieldUntil = 0; p.bootsUntil = 0; p.zombieUntil = 0; p.invulnUntil = 0;
+    p.pending = null; p.lockerCd = new Map(); p.emote = null; p.streak = 0;
+    p.stats = { answered: 0, correct: 0, delivered: 0, golden: 0, cures: 0, bestStreak: 0 };
+    p.queue = this.shuffle(this.pack.questions.map((q) => q.id));
+    if (respawn) { const [x, y] = this.spawnPoint(); p.x = x; p.y = y; }
   }
 
+  shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(this.rng() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+  spawnPoint() { const s = SPAWNS[Math.floor(this.rng() * SPAWNS.length)]; return [s[0] + (this.rng() - 0.5) * 0.4, s[1] + (this.rng() - 0.5) * 0.4]; }
   isHost(t) { return safeEqual(t, this.hostToken); }
+  touch() { this.lastActivity = this.now(); }
+  online(p) { return p.bot || (p.connected && this.now() - p.lastSeen < this.connectedMs); }
+  emitAll(msg) { this.out('all', msg); }
+  emitTo(p, msg) { if (!p.bot) this.out(p.id, msg); }
+  emitHost(msg) { this.out('host', msg); }
+  pushFeed(text, kind = 'info', crew = null) { this.feed.push({ text, kind, crew, at: this.gt }); if (this.feed.length > 8) this.feed.shift(); this.emitAll({ t: 'feed', text, kind, crew }); }
 
-  isConnected(p) { return p.bot || (this.now() - p.lastSeen) < this.connectedMs; }
+  // ---------------- players ----------------
+  crewSize(c) { let n = 0; for (const p of this.players.values()) if (p.crew === c) n++; return n; }
+  pickCrew() { let best = 0, n = Infinity; for (const c of CREWS) { const k = this.crewSize(c.id); if (k < n) { n = k; best = c.id; } } return best; }
 
-  crewMembers(c) { return [...this.players.values()].filter((p) => p.crew === c); }
-
-  activeCrewIds() {
-    if (this.mission) return this.mission.crews.filter((c) => c.active).map((c) => c.id);
-    return CREWS.map((c) => c.id).filter((id) => this.crewMembers(id).length > 0);
-  }
-
-  pickCrew() {
-    let pool = CREWS.map((c) => c.id);
-    if (this.mission) {
-      const act = this.mission.crews.filter((c) => c.active).map((c) => c.id);
-      if (act.length) pool = act;
-    }
-    let best = pool[0]; let bestN = Infinity;
-    for (const id of pool) {
-      const n = this.crewMembers(id).length;
-      if (n < bestN) { best = id; bestN = n; }
-    }
-    return best;
-  }
-
-  // ---------- players ----------
-  join({ callsign, playerId, secret } = {}) {
+  join({ callsign, avatar, playerId, secret } = {}) {
     this.touch();
     if (playerId !== undefined || secret !== undefined) {
       const p = typeof playerId === 'string' ? this.players.get(playerId) : null;
       if (p && !p.bot && safeEqual(secret, p.secret)) {
+        if (avatar) { p.avatar = cleanAvatar(avatar); this.rosterVersion++; }
         p.lastSeen = this.now();
-        this.bump();
         return { player: p, reconnected: true };
       }
-      if (!callsign) throw new GameError(401, 'bad_identity', 'Saved identity not recognised. Join again with a callsign.');
+      if (!callsign) throw new GameError(401, 'bad_identity', 'Saved player not found. Join again with a nickname.');
     }
     const name = normaliseCallsign(callsign);
-    if (!name) throw new GameError(400, 'bad_callsign', 'Callsign must be 2-16 letters/numbers (no real names).');
-    const humans = [...this.players.values()];
-    if (humans.length >= MAX_PLAYERS) throw new GameError(409, 'room_full', `Room is full (${MAX_PLAYERS} players).`);
-    if (humans.some((p) => p.callsign.toLowerCase() === name.toLowerCase())) {
-      throw new GameError(409, 'callsign_taken', 'That callsign is taken. Try another.');
-    }
-    const p = {
-      id: token(8), secret: token(16), callsign: name, crew: this.pickCrew(),
-      joinedAt: this.now(), lastSeen: this.now(), bot: false
-    };
-    this.players.set(p.id, p);
-    // Late join during a question: you may answer it, and you count from now on.
-    if (this.phase === 'question') this.eligible.add(p.id);
-    this.bump();
+    if (!name) throw new GameError(400, 'bad_callsign', 'Nickname must be 2–16 letters or numbers (not your real name).');
+    if (this.players.size >= MAX_PLAYERS) throw new GameError(409, 'room_full', `Room is full (${MAX_PLAYERS} players).`);
+    for (const p of this.players.values()) if (p.callsign.toLowerCase() === name.toLowerCase()) throw new GameError(409, 'callsign_taken', 'That nickname is taken. Try another!');
+    const p = { id: tok(8), secret: tok(16), num: this.nextNum++, callsign: name, crew: this.pickCrew(), avatar: cleanAvatar(avatar || randomAvatar(this.rng)), bot: false, connected: false, lastSeen: this.now(), dir: 1, moving: false, lastPosAt: this.now() };
+    this.resetPlayer(p, true);
+    this.players.set(p.id, p); this.byNum.set(p.num, p); this.rosterVersion++;
     return { player: p, reconnected: false };
   }
 
   addBot(i) {
-    const p = {
-      id: token(8), secret: token(16), callsign: `DEMO-${String(i + 1).padStart(2, '0')}`,
-      crew: this.pickCrew(), joinedAt: this.now(), lastSeen: this.now(), bot: true,
-      skill: 0.45 + this.rng() * 0.45, delay: 0
-    };
-    this.players.set(p.id, p);
+    const name = `${BOT_NAMES[i % BOT_NAMES.length]}${i >= BOT_NAMES.length ? ' ' + i : ''}`.slice(0, 16);
+    const p = { id: tok(8), secret: tok(16), num: this.nextNum++, callsign: name, crew: this.pickCrew(), avatar: randomAvatar(this.rng), bot: true, connected: true, lastSeen: this.now(), dir: 1, moving: false, lastPosAt: this.now(), brain: createBrain(), skill: 0.55 + this.rng() * 0.35, answerAt: 0 };
+    this.resetPlayer(p, true);
+    this.players.set(p.id, p); this.byNum.set(p.num, p); this.rosterVersion++;
   }
 
-  authPlayer(playerId, secret) {
+  auth(playerId, secret) {
     const p = typeof playerId === 'string' ? this.players.get(playerId) : null;
-    if (!p || p.bot || !safeEqual(secret, p.secret)) throw new GameError(401, 'bad_identity', 'Unknown player. Rejoin the room.');
-    p.lastSeen = this.now();
+    if (!p || p.bot || !safeEqual(secret, p.secret)) throw new GameError(401, 'bad_identity', 'Unknown player. Join again.');
     return p;
   }
 
-  seen(p) { p.lastSeen = this.now(); }
+  setAvatar(p, avatar) { p.avatar = cleanAvatar(avatar); this.rosterVersion++; }
 
-  // ---------- answers & votes ----------
-  submitAnswer(p, { roundId, choice }) {
-    this.touch();
-    if (this.phase !== 'question') throw new GameError(409, 'wrong_phase', 'Answers are closed right now.');
-    if (roundId !== this.roundId) throw new GameError(409, 'stale_round', 'That question has already finished.');
-    if (this.paused) throw new GameError(409, 'paused', 'The game is paused.');
-    if (!Number.isInteger(choice) || choice < 0 || choice > 3) throw new GameError(400, 'bad_choice', 'Choose A, B, C or D.');
-    if (this.answers.has(p.id)) {
-      if (this.answers.get(p.id) === choice) return { duplicate: true, choice };
-      throw new GameError(409, 'already_answered', 'Your answer is already locked in.');
+  speedOf(p) { if (this.isZombie(p)) return SPEED.zombified; if (p.bootsUntil > this.gt) return SPEED.boots; return SPEED.player; }
+  isZombie(p) { return p.zombieUntil > this.gt; }
+
+  /** Client-reported movement, validated against speed and walls. Returns a correction or null. */
+  updatePos(p, { x, y, dir, moving }) {
+    p.lastSeen = this.now();
+    if (!Number.isFinite(x) || !Number.isFinite(y)) return { x: p.x, y: p.y };
+    if (p.pending || this.paused || this.phase === 'countdown' || this.phase === 'results') {
+      if (dist(x, y, p.x, p.y) > 0.05) return { x: p.x, y: p.y }; return null;
     }
-    this.eligible.add(p.id);
-    this.answers.set(p.id, choice);
-    this.bump();
-    this.checkAllAnswered();
-    return { duplicate: false, choice };
+    const t = this.now(); const dt = Math.min(0.6, Math.max(0.03, (t - p.lastPosAt) / 1000));
+    const max = SPEED.boots * dt * 1.5 + 0.35;
+    if (dist(x, y, p.x, p.y) > max || collides(x, y)) return { x: p.x, y: p.y };
+    p.x = x; p.y = y; p.lastPosAt = t;
+    p.dir = dir === -1 ? -1 : 1; p.moving = !!moving;
+    return null;
   }
 
-  submitVote(p, { roundId, option }) {
+  emote(p, e) {
+    if (!EMOTES.includes(e)) throw new GameError(400, 'bad_emote', 'Unknown emote.');
+    if (p.emote && this.now() - p.emote.at < 900) return;
+    p.emote = { e, at: this.now() };
+  }
+
+  // ---------------- lockers & questions ----------------
+  openLocker(p, lockerId) {
     this.touch();
-    if (this.phase !== 'vote') throw new GameError(409, 'wrong_phase', 'Voting is closed right now.');
-    if (roundId !== this.roundId) throw new GameError(409, 'stale_round', 'That vote has already finished.');
+    if (this.phase !== 'play') throw new GameError(409, 'wrong_phase', this.phase === 'lobby' ? 'Lockers open when the game starts!' : 'Lockers are closed right now.');
     if (this.paused) throw new GameError(409, 'paused', 'The game is paused.');
-    const crew = this.mission.crews[p.crew];
-    if (!crew || !crew.active) throw new GameError(409, 'no_crew', 'Your crew is not on the map this mission.');
-    const opts = this.crewOptions[p.crew] || [];
-    const opt = opts.find((o) => o.id === option);
-    if (!opt) throw new GameError(400, 'bad_option', 'That action is not available.');
-    if (!opt.affordable) throw new GameError(409, 'unaffordable', 'Your crew does not have enough power cells for that.');
-    this.votes.set(p.id, option);
-    this.bump();
-    this.checkAllVoted();
-    return { option };
+    if (this.isZombie(p)) throw new GameError(409, 'zombified', 'Zombies can\'t open lockers — tag someone or wait it out!');
+    if (p.pending) throw new GameError(409, 'already_open', 'You already have a locker open.');
+    const l = LOCKERS[lockerId];
+    if (!l) throw new GameError(400, 'bad_locker', 'No such locker.');
+    if (dist(p.x, p.y, l.x, l.y) > INTERACT_DIST + 0.25) throw new GameError(409, 'too_far', 'Walk up to the locker first.');
+    if ((p.lockerCd.get(lockerId) || 0) > this.gt) throw new GameError(409, 'cooldown', 'You just used this locker. Try another one!');
+    if (!p.queue.length) p.queue = this.shuffle(this.pack.questions.map((q) => q.id));
+    const qid = p.queue.shift();
+    p.pending = { qid, nonce: tok(6), lockerId, openedAt: this.gt, epoch: this.epoch };
+    p.moving = false;
+    const msg = { t: 'q', nonce: p.pending.nonce, locker: lockerId, question: publicQuestion(this.qById.get(qid)), golden: this.event && this.event.kind === 'golden' };
+    this.emitTo(p, msg);
+    return msg;
   }
 
-  connectedEligible() {
-    return [...this.eligible].map((id) => this.players.get(id)).filter((p) => p && this.isConnected(p));
+  cancelQuestion(p) {
+    if (!p.pending) return;
+    p.queue.splice(Math.min(2, p.queue.length), 0, p.pending.qid);
+    p.lockerCd.set(p.pending.lockerId, this.gt + 2500);
+    p.pending = null; p.invulnUntil = Math.max(p.invulnUntil, this.gt + 1500);
   }
 
-  checkAllAnswered() {
-    if (this.phase !== 'question' || this.paused) return;
-    const pending = this.connectedEligible().filter((p) => !this.answers.has(p.id));
-    if (this.answers.size > 0 && pending.length === 0) this.closeQuestion('all_answered');
+  answer(p, { nonce, choice }) {
+    this.touch();
+    if (!p.pending || typeof nonce !== 'string' || !safeEqual(nonce, p.pending.nonce)) throw new GameError(409, 'stale', 'That question is no longer open.');
+    if (this.phase !== 'play') { p.pending = null; throw new GameError(409, 'wrong_phase', 'The round has ended.'); }
+    if (!Number.isInteger(choice) || choice < 0 || choice > 3) throw new GameError(400, 'bad_choice', 'Choose A, B, C or D.');
+    const q = this.qById.get(p.pending.qid); const lockerId = p.pending.lockerId;
+    p.pending = null;
+    const correct = choice === q.correct;
+    const st = this.qstats.get(q.id) || { n: 0, c: 0 }; st.n++; if (correct) st.c++; this.qstats.set(q.id, st);
+    p.stats.answered++;
+    p.lockerCd.set(lockerId, this.gt + LOCKER_PLAYER_COOLDOWN_MS);
+    p.invulnUntil = Math.max(p.invulnUntil, this.gt + 1500);
+    let loot = null;
+    if (correct) {
+      p.stats.correct++; p.streak++; p.stats.bestStreak = Math.max(p.stats.bestStreak, p.streak);
+      loot = this.rollLoot(p);
+      if (p.streak > 0 && p.streak % 3 === 0 && p.fuses.length < MAX_CARRY) { p.fuses.push(1); loot.combo = true; }
+    } else {
+      p.streak = 0;
+      p.queue.splice(Math.min(3, p.queue.length), 0, q.id); // try it again a bit later
+    }
+    const res = { t: 'res', correct, choice, correctIndex: q.correct, explanation: q.explanation, loot, streak: p.streak };
+    this.emitTo(p, res);
+    if (correct) this.emitAll({ t: 'fx', k: 'loot', n: p.num, item: loot.item });
+    return res;
   }
 
-  checkAllVoted() {
-    if (this.phase !== 'vote' || this.paused) return;
-    const voters = [...this.players.values()].filter((p) => this.isConnected(p) && this.mission.crews[p.crew]?.active);
-    if (voters.length > 0 && voters.every((p) => this.votes.has(p.id))) this.closeVote('all_voted');
+  rollLoot(p) {
+    const golden = this.event && this.event.kind === 'golden';
+    const room = MAX_CARRY - p.fuses.length;
+    const table = [];
+    if (room > 0) table.push(['fuse', 50], ['gold', 9]);
+    table.push(['boots', 14], ['shield', 14], ['zap', 13]);
+    let r = this.rng() * table.reduce((s, x) => s + x[1], 0); let item = table[0][0];
+    for (const [k, w] of table) { if ((r -= w) <= 0) { item = k; break; } }
+    const loot = { item, golden };
+    if (item === 'fuse') { p.fuses.push(golden ? 2 : 1); }
+    else if (item === 'gold') { p.fuses.push(golden ? 4 : 2); p.stats.golden++; }
+    else if (item === 'boots') p.bootsUntil = this.gt + BOOTS_MS;
+    else if (item === 'shield') p.shieldUntil = this.gt + SHIELD_MS;
+    else if (item === 'zap') {
+      let hit = 0; for (const z of this.zombies) if (dist(z.x, z.y, p.x, p.y) < 6) { z.stunUntil = this.gt + 5000; hit++; }
+      loot.hit = hit; this.emitAll({ t: 'fx', k: 'zap', x: p.x, y: p.y });
+    }
+    return loot;
   }
 
-  // ---------- host controls ----------
+  // ---------------- host controls ----------------
   hostAction(action) {
     this.touch();
     switch (action) {
       case 'start':
-        if (this.phase !== 'lobby') throw new GameError(409, 'wrong_phase', 'Mission already started.');
-        if (this.players.size === 0) throw new GameError(409, 'no_players', 'Wait for at least one player to join.');
-        this.startMission();
-        this.openQuestion(0);
+        if (this.phase !== 'lobby') throw new GameError(409, 'wrong_phase', 'Already started.');
+        if (this.players.size === 0) throw new GameError(409, 'no_players', 'Wait for at least one player.');
+        for (const p of this.players.values()) { this.resetPlayer(p, true); }
+        this.phase = 'countdown'; this.countdownEnds = this.gt + COUNTDOWN_MS; this.paused = false;
+        this.emitAll({ t: 'phase', phase: 'countdown' });
         break;
-      case 'reveal':
-        if (this.phase !== 'question') throw new GameError(409, 'wrong_phase', 'Reveal only works during a question.');
-        this.closeQuestion('teacher');
-        break;
-      case 'next':
-        if (this.phase === 'question') this.closeQuestion('teacher');
-        else if (this.phase === 'reveal') this.openVote();
-        else if (this.phase === 'vote') this.closeVote('teacher');
-        else if (this.phase === 'resolve') this.afterResolve();
-        else if (this.phase === 'extraction') this.toDebrief();
-        else throw new GameError(409, 'wrong_phase', 'Nothing to advance.');
-        break;
-      case 'pause':
-        if (this.paused) return;
-        if (['lobby', 'debrief'].includes(this.phase)) throw new GameError(409, 'wrong_phase', 'Nothing to pause.');
-        this.paused = true;
-        this.pausedRemaining = this.deadline ? Math.max(0, this.deadline - this.now()) : null;
-        this.deadline = null;
-        break;
-      case 'resume':
-        if (!this.paused) return;
-        this.paused = false;
-        if (this.pausedRemaining !== null) this.deadline = this.now() + Math.max(3000, this.pausedRemaining);
-        else this.phaseStartedAt = this.now();
-        this.pausedRemaining = null;
-        break;
-      case 'end':
-        if (this.phase === 'lobby') throw new GameError(409, 'wrong_phase', 'Mission has not started.');
-        if (this.phase === 'extraction' || this.phase === 'debrief') return;
-        if (this.phase === 'question') this.closeQuestion('teacher', true);
-        this.paused = false;
-        this.toExtraction();
-        break;
-      case 'reset':
-        this.epoch++;
-        this.resetMission();
-        break;
-      default:
-        throw new GameError(400, 'bad_action', 'Unknown action.');
-    }
-    this.bump();
-  }
-
-  // ---------- mission ----------
-  startMission() {
-    const crews = CREWS.map((c) => {
-      const members = this.crewMembers(c.id).length;
-      return { id: c.id, node: c.start, energy: 1, carrying: false, cornered: false, corneredRounds: 0, active: members > 0, atGate: false };
-    });
-    // Too few players for some crews? Rebalance so every player is in an active crew.
-    const active = crews.filter((c) => c.active).length;
-    this.mission = {
-      crews,
-      fuses: { ...FUSE_START },
-      installed: 0,
-      needed: fusesNeeded(this.totalRounds, active),
-      power: false,
-      hordes: ZOMBIE_SPAWNS.map((n, i) => ({ id: i, node: n, prev: n })),
-      nextHordeId: ZOMBIE_SPAWNS.length,
-      barricades: [],
-      events: [], log: []
-    };
-  }
-
-  openQuestion(i) {
-    this.phase = 'question';
-    this.roundIndex = i;
-    this.answers = new Map(); this.votes = new Map(); this.crewOptions = [];
-    this.eligible = new Set([...this.players.values()].filter((p) => this.isConnected(p)).map((p) => p.id));
-    this.phaseStartedAt = this.now();
-    this.deadline = this.now() + this.settings.questionSeconds * 1000;
-    this.paused = false; this.pausedRemaining = null;
-    for (const p of this.players.values()) if (p.bot) p.delay = this.now() + 2000 + this.rng() * 9000;
-  }
-
-  closeQuestion(reason, silent = false) {
-    if (this.phase !== 'question') return;
-    const q = this.pack.questions[this.roundIndex];
-    const crewRes = CREWS.map((c) => {
-      const crew = this.mission.crews[c.id];
-      if (!crew.active) return { crew: c.id, active: false, correct: 0, counted: 0, accuracy: null, gained: 0 };
-      // Counted = eligible members who answered, plus eligible members still connected (non-answer = not correct).
-      // Disconnected non-answerers and players who joined after the question closed are not counted.
-      let counted = 0; let correct = 0;
-      for (const id of this.eligible) {
-        const p = this.players.get(id);
-        if (!p || p.crew !== c.id) continue;
-        const answered = this.answers.has(id);
-        if (!answered && !this.isConnected(p)) continue;
-        counted++;
-        if (answered && this.answers.get(id) === q.correct) correct++;
-      }
-      const accuracy = counted ? correct / counted : null;
-      const gained = accuracy === null ? 0 : Math.round(accuracy * 2);
-      return { crew: c.id, active: true, correct, counted, accuracy, gained };
-    });
-    for (const r of crewRes) if (r.active) this.mission.crews[r.crew].energy = Math.min(9, this.mission.crews[r.crew].energy + r.gained);
-    const counts = [0, 0, 0, 0];
-    for (const ch of this.answers.values()) counts[ch]++;
-    const classCounted = crewRes.reduce((s, r) => s + r.counted, 0);
-    const classCorrect = crewRes.reduce((s, r) => s + r.correct, 0);
-    const res = { round: this.roundIndex, questionId: q.id, correct: q.correct, counts, classCorrect, classCounted, crews: crewRes, reason };
-    this.results[this.roundIndex] = res;
-    this.lastReveal = res;
-    if (silent) return;
-    this.phase = 'reveal';
-    this.phaseStartedAt = this.now();
-    this.deadline = this.settings.autoAdvance ? this.now() + AUTO_REVEAL_MS : null;
-    this.bump();
-  }
-
-  openVote() {
-    this.phase = 'vote';
-    this.votes = new Map();
-    this.crewOptions = this.mission.crews.map((c) => (c.active ? this.optionsFor(c) : []));
-    this.phaseStartedAt = this.now();
-    this.deadline = this.now() + this.settings.voteSeconds * 1000;
-    for (const p of this.players.values()) if (p.bot) p.delay = this.now() + 1500 + this.rng() * 5000;
-  }
-
-  optionsFor(crew) {
-    const m = this.mission; const opts = [];
-    const add = (id, kind, label, cost, extra = {}) => opts.push({ id, kind, label, cost, affordable: crew.energy >= cost, ...extra });
-    const hordeAt = (n) => m.hordes.some((h) => h.node === n);
-    if (crew.cornered) {
-      add('repel', 'repel', 'Barricade & push the horde back', COSTS.barricade);
-      add('hold', 'hold', 'Signal for help and hold on', 0);
-      return opts;
-    }
-    if (crew.node === 'GATE') {
-      add('hold', 'hold', 'Hold the gate until dawn', 0);
-      add('move:COURT', 'move', 'Go back to the Flag Court', COSTS.move, { target: 'COURT' });
-      return opts;
-    }
-    if ((m.fuses[crew.node] || 0) > 0 && !crew.carrying) add('collect', 'collect', `Search the ${NODES[crew.node].short} for a fuse`, COSTS.collect);
-    for (const n of neighbours(crew.node)) {
-      if (NODES[n].kind === 'spawn') continue;
-      if (n === 'GATE' && !m.power) continue;
-      const danger = hordeAt(n);
-      const why = n === 'GEN' && crew.carrying ? ' (install fuse)' : (n === 'GATE' ? ' (escape route)' : '');
-      add(`move:${n}`, 'move', `Move to the ${NODES[n].short}${why}${danger ? ' — horde there!' : ''}`, COSTS.move, { target: n, danger });
-    }
-    for (const other of m.crews) {
-      if (other.id === crew.id || !other.active || !other.cornered) continue;
-      if (other.node === crew.node || neighbours(crew.node).includes(other.node)) {
-        add(`rescue:${other.id}`, 'rescue', `Rescue Crew ${CREWS[other.id].name}`, COSTS.rescue, { target: other.node, crew: other.id });
-      }
-    }
-    const threat = this.threatEdge(crew.node);
-    if (threat && !m.barricades.some((b) => b.key === edgeKey(crew.node, threat))) {
-      add(`barricade:${threat}`, 'barricade', `Barricade the path to the ${NODES[threat].short}`, COSTS.barricade, { target: threat });
-    }
-    add('hold', 'hold', 'Hold position and keep watch', 0);
-    return opts;
-  }
-
-  // Edge from `node` along which the nearest horde would arrive.
-  threatEdge(node) {
-    let best = null; let bestD = Infinity;
-    for (const h of this.mission.hordes) {
-      const path = this.path(h.node, node, true);
-      if (path && path.length >= 2 && path.length - 1 < bestD) { bestD = path.length - 1; best = path[path.length - 2]; }
-    }
-    return bestD <= 3 ? best : null;
-  }
-
-  // BFS shortest path from a to b; zombies cannot cross barricades or enter a powered gate.
-  path(a, b, forZombie = false) {
-    if (a === b) return [a];
-    const prev = new Map([[a, null]]); const queue = [a];
-    while (queue.length) {
-      const cur = queue.shift();
-      for (const n of neighbours(cur)) {
-        if (prev.has(n)) continue;
-        if (forZombie) {
-          if (this.mission.barricades.some((x) => x.key === edgeKey(cur, n))) continue;
-          if (n === 'GATE') continue;
-        }
-        prev.set(n, cur);
-        if (n === b) {
-          const out = [n]; let c = cur;
-          while (c !== null) { out.unshift(c); c = prev.get(c); }
-          return out;
-        }
-        queue.push(n);
-      }
-    }
-    return null;
-  }
-
-  tally(crewId) {
-    const opts = this.crewOptions[crewId] || [];
-    const counts = new Map(opts.map((o) => [o.id, 0]));
-    for (const [pid, opt] of this.votes) {
-      const p = this.players.get(pid);
-      if (p && p.crew === crewId && counts.has(opt)) counts.set(opt, counts.get(opt) + 1);
-    }
-    let best = null; let bestN = 0;
-    for (const o of opts) { const n = counts.get(o.id); if (n > bestN && o.affordable) { best = o; bestN = n; } }
-    if (!best) best = opts.find((o) => o.id === 'hold') || opts[0];
-    return { winner: best, counts: Object.fromEntries(counts) };
-  }
-
-  closeVote() {
-    if (this.phase !== 'vote') return;
-    const m = this.mission; const ev = []; const roundNo = this.roundIndex;
-    const decisions = [];
-    // 1. crew actions in crew order
-    for (const crew of m.crews) {
-      if (!crew.active) continue;
-      const { winner, counts } = this.tally(crew.id);
-      decisions.push({ crew: crew.id, option: winner.id, label: winner.label, counts });
-      if (!winner || crew.energy < winner.cost) { ev.push({ t: 'hold', crew: crew.id }); continue; }
-      crew.energy -= winner.cost;
-      const [kind, arg] = winner.id.split(':');
-      if (kind === 'move') {
-        const from = crew.node; crew.node = arg;
-        ev.push({ t: 'move', crew: crew.id, from, to: arg });
-        this.afterArrive(crew, ev);
-      } else if (kind === 'collect') {
-        m.fuses[crew.node]--; crew.carrying = true;
-        ev.push({ t: 'collect', crew: crew.id, node: crew.node });
-      } else if (kind === 'barricade') {
-        m.barricades.push({ key: edgeKey(crew.node, arg), a: crew.node, b: arg, rounds: BARRICADE_ROUNDS });
-        ev.push({ t: 'barricade', crew: crew.id, a: crew.node, b: arg });
-      } else if (kind === 'repel') {
-        this.repel(crew.node, ev, crew.id);
-        crew.cornered = false; crew.corneredRounds = 0;
-        ev.push({ t: 'freed', crew: crew.id, by: crew.id });
-      } else if (kind === 'rescue') {
-        const target = m.crews[Number(arg)];
-        if (target && target.cornered) {
-          const from = crew.node;
-          if (from !== target.node) { crew.node = target.node; ev.push({ t: 'move', crew: crew.id, from, to: target.node }); }
-          this.repel(target.node, ev, crew.id);
-          target.cornered = false; target.corneredRounds = 0;
-          ev.push({ t: 'freed', crew: target.id, by: crew.id });
-          this.afterArrive(crew, ev);
-        }
-      } else {
-        ev.push({ t: 'hold', crew: crew.id });
-      }
-    }
-    // 2. hordes advance (from round 2; each horde moves every other round)
-    if (roundNo >= 1) {
-      m.hordes.forEach((h, idx) => {
-        if ((roundNo + idx) % 2 !== 0) return;
-        if (m.crews.some((c) => c.active && c.cornered && c.node === h.node)) return;
-        const targets = m.crews.filter((c) => c.active && c.node !== 'GATE');
-        let bestPath = null;
-        for (const c of targets) {
-          const p = this.path(h.node, c.node, true);
-          if (p && (!bestPath || p.length < bestPath.length)) bestPath = p;
-        }
-        if (bestPath && bestPath.length >= 2) {
-          h.prev = h.node; h.node = bestPath[1];
-          ev.push({ t: 'horde', h: h.id, from: h.prev, to: h.node });
-        } else if (targets.length) {
-          ev.push({ t: 'blocked', h: h.id, node: h.node });
-        }
-      });
-    }
-    // 3. cornering
-    for (const c of m.crews) {
-      if (!c.active || c.node === 'GATE' || c.cornered) continue;
-      if (m.hordes.some((h) => h.node === c.node)) {
-        c.cornered = true; c.corneredRounds = 0;
-        const lost = c.energy > 0 ? 1 : 0; c.energy -= lost;
-        ev.push({ t: 'cornered', crew: c.id, node: c.node, lost });
-      }
-    }
-    // 4. timers: barricades decay, hordes lose interest after a while (no dead ends)
-    m.barricades.forEach((b) => b.rounds--);
-    const expired = m.barricades.filter((b) => b.rounds <= 0);
-    m.barricades = m.barricades.filter((b) => b.rounds > 0);
-    for (const b of expired) ev.push({ t: 'barricade_gone', a: b.a, b: b.b });
-    for (const c of m.crews) {
-      if (!c.cornered) continue;
-      c.corneredRounds++;
-      if (c.corneredRounds > CORNER_MAX_ROUNDS) {
-        this.repel(c.node, ev, null);
-        c.cornered = false; c.corneredRounds = 0;
-        ev.push({ t: 'freed', crew: c.id, by: null });
-      }
-    }
-    // 5. reinforcements
-    if ([3, 6, 9].includes(roundNo) && m.hordes.length < MAX_HORDES && roundNo < this.totalRounds - 1) {
-      const node = ZOMBIE_SPAWNS[(roundNo / 3) % 2];
-      const h = { id: m.nextHordeId++, node, prev: node };
-      m.hordes.push(h);
-      ev.push({ t: 'spawn', h: h.id, node });
-    }
-    m.events = ev;
-    m.decisions = decisions;
-    m.log.push({ round: roundNo, events: ev, decisions });
-    this.eventSeq++;
-    this.phase = 'resolve';
-    this.phaseStartedAt = this.now();
-    this.deadline = this.settings.autoAdvance ? this.now() + AUTO_RESOLVE_MS : null;
-    this.bump();
-  }
-
-  afterArrive(crew, ev) {
-    const m = this.mission;
-    if (crew.node === 'GEN' && crew.carrying) {
-      crew.carrying = false; m.installed++;
-      ev.push({ t: 'install', crew: crew.id, installed: m.installed });
-      if (!m.power && m.installed >= m.needed) { m.power = true; ev.push({ t: 'power' }); }
-    }
-    if (crew.node === 'GATE') { crew.atGate = true; ev.push({ t: 'gate', crew: crew.id }); }
-    else crew.atGate = false;
-  }
-
-  // Push every horde on `node` back one step (to where it came from, else a neighbour without crews) and barricade.
-  repel(node, ev, byCrew) {
-    const m = this.mission;
-    for (const h of m.hordes.filter((x) => x.node === node)) {
-      const occupied = new Set(m.crews.filter((c) => c.active).map((c) => c.node));
-      let back = h.prev !== node && !occupied.has(h.prev) ? h.prev : null;
-      if (!back) back = neighbours(node).find((n) => n !== 'GATE' && !occupied.has(n)) || ZOMBIE_SPAWNS[h.id % 2];
-      const from = h.node; h.node = back; h.prev = back;
-      ev.push({ t: 'repel', h: h.id, from, to: back, by: byCrew });
-      if (byCrew !== null && neighbours(node).includes(back)) {
-        const key = edgeKey(node, back);
-        if (!m.barricades.some((b) => b.key === key)) m.barricades.push({ key, a: node, b: back, rounds: 2 });
-      }
+      case 'pause': if (this.phase === 'play' || this.phase === 'countdown') { this.paused = true; this.emitAll({ t: 'phase', phase: this.phase, paused: true }); } else throw new GameError(409, 'wrong_phase', 'Nothing to pause.'); break;
+      case 'resume': if (this.paused) { this.paused = false; this.lastTick = this.now(); this.emitAll({ t: 'phase', phase: this.phase, paused: false }); } break;
+      case 'addtime': if (this.phase !== 'play') throw new GameError(409, 'wrong_phase', 'Only during the game.'); this.endsAt += 60_000; if (this.endsAt - this.gt > OVERTIME_MS) this.overtime = false; break;
+      case 'end': if (this.phase === 'play' || this.phase === 'countdown') this.finish(); else throw new GameError(409, 'wrong_phase', 'The game is not running.'); break;
+      case 'reset': this.reset(); break;
+      default: throw new GameError(400, 'bad_action', 'Unknown action.');
     }
   }
 
-  afterResolve() {
-    if (this.roundIndex + 1 >= this.totalRounds) this.toExtraction();
-    else this.openQuestion(this.roundIndex + 1);
+  startPlay() {
+    this.phase = 'play';
+    this.endsAt = this.gt + this.settings.minutes * 60_000;
+    this.nextEventAt = this.gt + 60_000;
+    this.eventOrder = this.shuffle(['lights', 'party', 'golden', 'rain']);
+    const n = Math.min(12, 4 + Math.ceil(this.players.size / 5));
+    this.zombies = [];
+    for (let i = 0; i < n; i++) {
+      const [x, y] = ZOMBIE_SPAWNS[i % ZOMBIE_SPAWNS.length];
+      this.zombies.push({ id: i, x: x + (this.rng() - 0.5) * 0.5, y, route: [], repathAt: 0, stunUntil: this.gt + 4000 + i * 500, chasing: false, dir: 1 });
+    }
+    for (const p of this.players.values()) p.invulnUntil = this.gt + 6000; // safe start
+    this.emitAll({ t: 'phase', phase: 'play' });
+    this.pushFeed('The lights are out! Open lockers, find fuses, power the generator!', 'big');
   }
 
-  toExtraction() {
-    const m = this.mission;
-    const active = m.crews.filter((c) => c.active);
-    const atGate = active.filter((c) => c.node === 'GATE').length;
-    const counted = this.results.reduce((s, r) => s + (r ? r.classCounted : 0), 0);
-    const correct = this.results.reduce((s, r) => s + (r ? r.classCorrect : 0), 0);
-    const classAccuracy = counted ? correct / counted : 0;
-    const stars = (m.power ? 1 : 0) + (active.length && atGate === active.length ? 1 : 0) + (classAccuracy >= 0.7 ? 1 : 0);
-    const crewStats = CREWS.map((c) => {
-      const rs = this.results.filter(Boolean).map((r) => r.crews[c.id]).filter((x) => x && x.counted);
-      const cc = rs.reduce((s, x) => s + x.correct, 0); const cn = rs.reduce((s, x) => s + x.counted, 0);
-      return { crew: c.id, active: m.crews[c.id].active, accuracy: cn ? cc / cn : null, atGate: m.crews[c.id].node === 'GATE', node: m.crews[c.id].node };
-    });
-    const perQuestion = this.results.filter(Boolean).map((r) => ({ round: r.round, accuracy: r.classCounted ? r.classCorrect / r.classCounted : null }));
-    this.summary = {
-      power: m.power, installed: m.installed, needed: m.needed, atGate, activeCrews: active.length,
-      classAccuracy, stars, crewStats, perQuestion, roundsPlayed: this.results.filter(Boolean).length,
-      outcome: m.power && atGate === active.length ? 'full' : (m.power ? 'gate' : 'fence')
-    };
-    this.phase = 'extraction';
-    this.phaseStartedAt = this.now();
-    this.deadline = this.now() + EXTRACTION_MS;
+  finish() {
+    this.phase = 'results'; this.paused = false;
+    for (const p of this.players.values()) if (p.pending) p.pending = null;
+    const order = CREWS.map((c) => ({ crew: c.id, score: this.scores[c.id], members: this.crewSize(c.id) })).filter((c) => c.members > 0).sort((a, b) => b.score - a.score);
+    let place = 0, last = null; order.forEach((c, i) => { if (c.score !== last) { place = i + 1; last = c.score; } c.place = place; });
+    let n = 0, c = 0; for (const s of this.qstats.values()) { n += s.n; c += s.c; }
+    const perQuestion = this.pack.questions.map((q, i) => { const s = this.qstats.get(q.id) || { n: 0, c: 0 }; return { i, id: q.id, prompt: q.prompt, n: s.n, c: s.c, acc: s.n ? s.c / s.n : null, correct: q.correct, explanation: q.explanation, options: q.options }; });
+    const hardest = perQuestion.filter((q) => q.n >= 2).sort((a, b) => a.acc - b.acc).slice(0, 3);
+    this.results = { crews: order, answers: n, correct: c, accuracy: n ? c / n : 0, perQuestion: perQuestion.map(({ i, n: nn, acc }) => ({ i, n: nn, acc })), hardest, players: this.players.size };
+    this.emitAll({ t: 'phase', phase: 'results' });
+    this.emitAll({ t: 'results', results: this.publicResults() });
+    this.emitHost({ t: 'results', results: this.hostResults() });
+    for (const p of this.players.values()) this.emitTo(p, { t: 'mystats', stats: p.stats, badges: this.badges(p) });
   }
 
-  toDebrief() { this.phase = 'debrief'; this.deadline = null; this.phaseStartedAt = this.now(); }
+  hostResults() { return this.results && { ...this.publicResults(), hardest: this.results.hardest }; }
+  publicResults() { const r = this.results; return r && { crews: r.crews, answers: r.answers, correct: r.correct, accuracy: r.accuracy, perQuestion: r.perQuestion, players: r.players }; }
 
-  // ---------- clock ----------
+  badges(p) {
+    const s = p.stats; const b = [];
+    if (s.answered >= 4 && s.correct / s.answered >= 0.8) b.push({ id: 'sharp', name: 'Sharp Mind', icon: '🧠' });
+    if (s.bestStreak >= 3) b.push({ id: 'combo', name: 'Combo Star', icon: '🔥' });
+    if (s.delivered >= 5) b.push({ id: 'power', name: 'Power Runner', icon: '⚡' });
+    if (s.golden >= 1) b.push({ id: 'gold', name: 'Golden Find', icon: '🌟' });
+    if (s.cures >= 1) b.push({ id: 'tag', name: 'Tag Master', icon: '🧟' });
+    if (!b.length && s.answered >= 1) b.push({ id: 'brave', name: 'Brave Explorer', icon: '🔦' });
+    return b;
+  }
+
+  // ---------------- simulation ----------------
   tick() {
-    const now = this.now();
-    // connected-set changes should reach the host's indicators
-    const sig = [...this.players.values()].map((p) => (this.isConnected(p) ? 1 : 0)).join('');
-    if (sig !== this.connectedSig) { this.connectedSig = sig; this.bump(); }
-    if (this.paused) return;
-    if (this.demo) this.tickBots(now);
-    if (this.phase === 'question') {
-      if (this.deadline && now >= this.deadline) this.closeQuestion('timer');
-      else this.checkAllAnswered();
-    } else if (this.phase === 'vote') {
-      if (this.deadline && now >= this.deadline) this.closeVote('timer');
-      else this.checkAllVoted();
-    } else if (this.deadline && now >= this.deadline) {
-      if (this.phase === 'reveal') { this.openVote(); this.bump(); }
-      else if (this.phase === 'resolve') { this.afterResolve(); this.bump(); }
-      else if (this.phase === 'extraction') { this.toDebrief(); this.bump(); }
-    }
+    const t = this.now(); const dtMs = Math.min(120, Math.max(0, t - this.lastTick)); this.lastTick = t;
+    if (this.paused || this.phase === 'lobby' || this.phase === 'results') { if (this.phase === 'lobby') this.tickBots(dtMs, true); return; }
+    this.gt += dtMs;
+    if (this.phase === 'countdown') { if (this.gt >= this.countdownEnds) this.startPlay(); return; }
+    const dt = dtMs / 1000;
+    // questions timing out
+    for (const p of this.players.values()) if (p.pending && this.gt - p.pending.openedAt > QUESTION_TIMEOUT_MS) { this.cancelQuestion(p); this.emitTo(p, { t: 'qclose', reason: 'timeout' }); }
+    this.tickBots(dtMs, false);
+    this.tickZombies(dt);
+    this.tickTags();
+    this.tickItems();
+    this.tickEvents();
+    if (!this.overtime && this.endsAt - this.gt <= OVERTIME_MS) { this.overtime = true; this.pushFeed('FINAL MINUTE — every fuse counts DOUBLE!', 'big'); this.emitAll({ t: 'fx', k: 'overtime' }); }
+    if (this.gt >= this.endsAt) this.finish();
   }
 
-  // Goal-directed choice used by DEMO bots and automated simulations (never shown to students).
-  planOption(crewId) {
-    const m = this.mission; const crew = m.crews[crewId];
-    const opts = (this.crewOptions[crewId] || []).filter((o) => o.affordable);
-    const byId = (id) => opts.find((o) => o.id === id);
-    if (!opts.length) return null;
-    if (crew.cornered) return byId('repel') || byId('hold');
-    const rescue = opts.find((o) => o.kind === 'rescue'); if (rescue) return rescue;
-    const carried = m.crews.filter((c) => c.carrying).length;
-    const stillNeeded = m.needed - m.installed - carried;
-    if (byId('collect') && stillNeeded > 0) return byId('collect');
-    let goal = null;
-    if (crew.node === 'GATE') return byId('hold');
-    if (crew.carrying) goal = 'GEN';
-    else if (m.power) goal = 'GATE';
-    else if (stillNeeded > 0) {
-      let best = null;
-      for (const [n, k] of Object.entries(m.fuses)) {
-        if (k <= 0) continue;
-        const p = this.path(crew.node, n);
-        if (p && (!best || p.length < best.length)) best = p;
+  playersInWorld() { return [...this.players.values()].filter((p) => this.online(p)); }
+
+  tickZombies(dt) {
+    const party = this.event && this.event.kind === 'party';
+    const targets = this.playersInWorld().filter((p) => !this.isZombie(p) && !p.pending);
+    for (const z of this.zombies) {
+      if (party || z.stunUntil > this.gt) { z.chasing = false; continue; }
+      let best = null, bd = 6.5;
+      for (const p of targets) { const d = dist(z.x, z.y, p.x, p.y); if (d < bd) { bd = d; best = p; } }
+      z.chasing = !!best;
+      if (this.gt >= z.repathAt || (best && !z.route.length)) {
+        let gx, gy;
+        if (best) { gx = best.x; gy = best.y; z.repathAt = this.gt + 450; }
+        else { const tiles = this.walkable || (this.walkable = walkableTiles()); const [tx, ty] = tiles[Math.floor(this.rng() * tiles.length)]; gx = tx + 0.5; gy = ty + 0.5; z.repathAt = this.gt + 4000 + this.rng() * 3000; if (dist(gx, gy, z.x, z.y) > 10) { z.repathAt = 0; continue; } }
+        const r = path(z.x, z.y, gx, gy, 600);
+        z.route = r ? r.map(([x, y]) => [x + 0.5, y + 0.5]) : [];
       }
-      goal = best ? best[best.length - 1] : 'COURT';
-    } else goal = 'COURT';
-    if (goal && goal !== crew.node) {
-      const p = this.path(crew.node, goal);
-      const step = p && p[1];
-      const mv = byId(`move:${step}`);
-      if (mv && !mv.danger) return mv;
+      const speed = (z.chasing ? SPEED.zombieChase : SPEED.zombieWander) * (this.event && this.event.kind === 'lights' ? 1.1 : 1);
+      let tx, ty;
+      if (best && bd < 1.2) { tx = best.x; ty = best.y; }
+      else if (z.route.length) { [tx, ty] = z.route[0]; if (dist(z.x, z.y, tx, ty) < 0.15) { z.route.shift(); continue; } }
+      else continue;
+      const d = dist(z.x, z.y, tx, ty) || 1; const step = Math.min(d, speed * dt);
+      const [nx, ny] = move(z.x, z.y, (tx - z.x) / d * step, (ty - z.y) / d * step, 0.28);
+      if (Math.abs(nx - z.x) > 0.001) z.dir = nx > z.x ? 1 : -1;
+      z.x = nx; z.y = ny;
     }
-    const bar = opts.find((o) => o.kind === 'barricade'); if (bar) return bar;
-    return byId('hold');
   }
 
-  tickBots(now) {
+  dropFuses(p) {
+    for (const v of p.fuses) {
+      let x = p.x, y = p.y;
+      for (let k = 0; k < 6; k++) { const a = this.rng() * Math.PI * 2, r = 0.5 + this.rng() * 0.9; const cx = p.x + Math.cos(a) * r, cy = p.y + Math.sin(a) * r; if (!collides(cx, cy, 0.2)) { x = cx; y = cy; break; } }
+      this.loose.push({ id: this.nextLooseId++, x, y, v, until: this.gt + LOOSE_FUSE_MS, from: p.crew });
+    }
+    p.fuses = [];
+  }
+
+  zombify(p, by) {
+    if (p.shieldUntil > this.gt) { p.shieldUntil = 0; p.invulnUntil = this.gt + 1500; this.emitAll({ t: 'fx', k: 'block', n: p.num }); return false; }
+    p.zombieUntil = this.gt + ZOMBIFIED_MS; p.invulnUntil = 0; p.streak = p.streak; p.bootsUntil = 0;
+    this.dropFuses(p);
+    this.emitAll({ t: 'fx', k: 'tag', n: p.num, by });
+    return true;
+  }
+
+  tickTags() {
+    const ps = this.playersInWorld();
+    const canBeTagged = (p) => !this.isZombie(p) && !p.pending && p.invulnUntil <= this.gt;
+    for (const z of this.zombies) {
+      if (z.stunUntil > this.gt || (this.event && this.event.kind === 'party')) continue;
+      for (const p of ps) {
+        if (!canBeTagged(p) || dist(z.x, z.y, p.x, p.y) > 0.6) continue;
+        this.zombify(p, 'zombie'); z.stunUntil = this.gt + 1800;
+        break;
+      }
+    }
+    // zombified players pass it on to players from OTHER crews (playground tag)
+    for (const zp of ps) {
+      if (!this.isZombie(zp)) continue;
+      for (const p of ps) {
+        if (p === zp || p.crew === zp.crew || !canBeTagged(p) || dist(zp.x, zp.y, p.x, p.y) > 0.6) continue;
+        if (this.zombify(p, zp.num)) {
+          zp.zombieUntil = 0; zp.invulnUntil = this.gt + INVULN_MS; zp.stats.cures++;
+          this.emitAll({ t: 'fx', k: 'cure', n: zp.num });
+        } else { zp.invulnUntil = this.gt + 600; }
+        break;
+      }
+    }
+    for (const p of ps) if (p.zombieUntil && p.zombieUntil <= this.gt && p.zombieUntil > this.gt - 100) { p.invulnUntil = this.gt + INVULN_MS; }
+  }
+
+  tickItems() {
+    const ps = this.playersInWorld();
+    this.loose = this.loose.filter((f) => f.until > this.gt);
+    for (const f of this.loose) {
+      if (f.taken) continue;
+      for (const p of ps) {
+        if (this.isZombie(p) || p.fuses.length >= MAX_CARRY || dist(p.x, p.y, f.x, f.y) > 0.75) continue;
+        p.fuses.push(f.v); f.taken = true; this.emitAll({ t: 'fx', k: 'pickup', n: p.num }); break;
+      }
+    }
+    this.loose = this.loose.filter((f) => !f.taken);
+    for (const p of ps) {
+      if (!p.fuses.length || this.isZombie(p) || dist(p.x, p.y, GENERATOR.x, GENERATOR.y) > GENERATOR.r) continue;
+      const pts = p.fuses.reduce((s, v) => s + v, 0) * (this.overtime ? 2 : 1);
+      this.scores[p.crew] += pts; p.stats.delivered += pts; p.fuses = [];
+      this.emitAll({ t: 'fx', k: 'deliver', n: p.num, crew: p.crew, pts });
+      this.pushFeed(`${p.callsign} powered up +${pts} for Crew ${CREWS[p.crew].name}!`, 'good', p.crew);
+    }
+  }
+
+  tickEvents() {
+    if (this.event && this.gt >= this.event.endsAt) { this.event = null; this.emitAll({ t: 'event', kind: null }); }
+    if (!this.event && this.gt >= this.nextEventAt && this.endsAt - this.gt > OVERTIME_MS + 15_000) {
+      const kind = this.eventOrder.shift() || 'rain'; if (!this.eventOrder.length) this.eventOrder = this.shuffle(['lights', 'party', 'golden', 'rain']);
+      this.event = { kind, endsAt: this.gt + EVENTS[kind] };
+      this.nextEventAt = this.gt + 55_000 + this.rng() * 25_000;
+      const label = { lights: 'LIGHTS OUT! Stay close to your crew…', party: 'ZOMBIE DANCE PARTY! They can\'t chase you — go go go!', golden: 'GOLDEN LOCKERS! Correct answers give DOUBLE fuses!', rain: 'FUSE RAIN! Fuses are falling all over school!' }[kind];
+      this.pushFeed(label, 'event');
+      this.emitAll({ t: 'event', kind, ms: EVENTS[kind] });
+      if (kind === 'rain') {
+        const tiles = this.walkable || (this.walkable = walkableTiles());
+        for (let i = 0; i < 8; i++) { const [x, y] = tiles[Math.floor(this.rng() * tiles.length)]; this.loose.push({ id: this.nextLooseId++, x: x + 0.5, y: y + 0.5, v: 1, until: this.gt + LOOSE_FUSE_MS, from: null }); }
+      }
+    }
+  }
+
+  tickBots(dtMs, lobby) {
+    const dt = dtMs / 1000;
     for (const p of this.players.values()) {
-      if (!p.bot || now < p.delay) continue;
-      if (this.phase === 'question' && !this.answers.has(p.id)) {
-        const q = this.pack.questions[this.roundIndex];
-        const choice = this.rng() < p.skill ? q.correct : Math.floor(this.rng() * 4);
-        this.answers.set(p.id, choice); this.eligible.add(p.id); this.bump();
-      } else if (this.phase === 'vote' && !this.votes.has(p.id) && this.mission.crews[p.crew]?.active) {
-        const opts = (this.crewOptions[p.crew] || []).filter((o) => o.affordable);
-        const plan = this.planOption(p.crew);
-        const pick = plan && this.rng() < 0.8 ? plan : opts[Math.floor(this.rng() * opts.length)];
-        if (pick) { this.votes.set(p.id, pick.id); this.bump(); }
+      if (!p.bot) continue;
+      if (p.pending) {
+        if (this.gt >= p.answerAt) { const q = this.qById.get(p.pending.qid); const ch = this.rng() < p.skill ? q.correct : (q.correct + 1 + Math.floor(this.rng() * 3)) % 4; try { this.answer(p, { nonce: p.pending.nonce, choice: ch }); } catch { p.pending = null; } }
+        continue;
       }
+      const lockerReady = (id) => (p.lockerCd.get(id) || 0) <= this.gt;
+      const d = think(p.brain, { x: p.x, y: p.y, fuses: lobby ? 0 : p.fuses.length, zombified: this.isZombie(p) }, { now: this.now(), zombies: this.zombies, lockerReady }, this.rng);
+      const sp = this.speedOf(p) * dt * (lobby ? 0.5 : 0.9);
+      const [nx, ny] = move(p.x, p.y, d.dx * sp, d.dy * sp);
+      p.moving = Math.hypot(nx - p.x, ny - p.y) > 0.001; if (Math.abs(nx - p.x) > 0.001) p.dir = nx > p.x ? 1 : -1;
+      p.x = nx; p.y = ny;
+      if (!lobby && d.atLocker !== null && !this.isZombie(p)) {
+        try { this.openLocker(p, d.atLocker); p.answerAt = this.gt + 2500 + this.rng() * 4000; } catch { /* cooldown etc. */ }
+      }
+      if (lobby && this.rng() < 0.002) p.emote = { e: EMOTES[Math.floor(this.rng() * EMOTES.length)], at: this.now() };
     }
   }
 
-  // ---------- views ----------
-  view({ player = null, host = false } = {}) {
-    const now = this.now();
-    const q = this.roundIndex >= 0 ? this.pack.questions[this.roundIndex] : null;
-    const showQ = q && ['question', 'reveal', 'vote', 'resolve'].includes(this.phase);
-    const revealed = ['reveal', 'vote', 'resolve'].includes(this.phase) && this.lastReveal && this.lastReveal.round === this.roundIndex;
-    const players = [...this.players.values()];
-    const crews = CREWS.map((c) => {
-      const mem = players.filter((p) => p.crew === c.id);
-      const mc = this.mission ? this.mission.crews[c.id] : null;
-      const elig = mem.filter((p) => this.eligible.has(p.id));
-      return {
-        id: c.id, name: c.name, color: c.color,
-        members: mem.length, connected: mem.filter((p) => this.isConnected(p)).length,
-        answered: this.phase === 'question' ? elig.filter((p) => this.answers.has(p.id)).length : null,
-        expected: this.phase === 'question' ? elig.filter((p) => this.answers.has(p.id) || this.isConnected(p)).length : null,
-        voted: this.phase === 'vote' ? mem.filter((p) => this.votes.has(p.id)).length : null,
-        node: mc ? mc.node : c.start, energy: mc ? mc.energy : 0, carrying: mc ? mc.carrying : false,
-        cornered: mc ? mc.cornered : false, active: mc ? mc.active : mem.length > 0,
-        options: this.phase === 'vote' || this.phase === 'resolve' ? (this.crewOptions[c.id] || []) : [],
-        tally: this.phase === 'vote' && host ? this.tally(c.id).counts : null
-      };
-    });
-    const connectedEligible = this.phase === 'question' ? this.connectedEligible() : [];
-    const out = {
-      code: this.code, phase: this.phase, paused: this.paused, version: this.version, demo: this.demo,
-      roundIndex: this.roundIndex, totalRounds: this.totalRounds, roundId: this.roundId,
-      remainingMs: this.paused ? this.pausedRemaining : (this.deadline ? Math.max(0, this.deadline - now) : null),
-      packTitle: this.pack.title,
-      settings: { ...this.settings },
-      playerCount: players.length, maxPlayers: MAX_PLAYERS,
-      answeredCount: this.phase === 'question' ? this.answers.size : null,
-      expectedCount: this.phase === 'question' ? new Set([...connectedEligible.map((p) => p.id), ...this.answers.keys()]).size : null,
-      question: showQ ? publicQuestion(q) : null,
-      reveal: revealed ? {
-        correct: q.correct, explanation: q.explanation, counts: this.lastReveal.counts,
-        classCorrect: this.lastReveal.classCorrect, classCounted: this.lastReveal.classCounted,
-        crews: this.lastReveal.crews.map((r) => ({ crew: r.crew, active: r.active, accuracy: r.accuracy, gained: r.gained, counted: r.counted }))
-      } : null,
-      crews,
-      mission: this.mission ? {
-        fuses: { ...this.mission.fuses }, installed: this.mission.installed, needed: this.mission.needed, power: this.mission.power,
-        hordes: this.mission.hordes.map((h) => ({ id: h.id, node: h.node })),
-        barricades: this.mission.barricades.map((b) => ({ a: b.a, b: b.b, rounds: b.rounds })),
-        events: this.phase === 'resolve' ? this.mission.events : [],
-        decisions: this.phase === 'resolve' ? this.mission.decisions : [],
-        eventSeq: this.eventSeq
-      } : null,
-      summary: ['extraction', 'debrief'].includes(this.phase) ? this.summary : null,
-      vocab: this.pack.vocab
+  // ---------------- views ----------------
+  roster() {
+    return [...this.players.values()].map((p) => ({ n: p.num, name: p.callsign, crew: p.crew, avatar: p.avatar, bot: p.bot }));
+  }
+
+  /** Compact world snapshot broadcast ~10×/s. Contains no answers. */
+  snapshot() {
+    const now = this.now(); const g = this.gt;
+    const ps = [];
+    for (const p of this.players.values()) {
+      if (!this.online(p)) continue;
+      let f = 0;
+      if (p.moving) f |= 1; if (p.dir < 0) f |= 2; if (this.isZombie(p)) f |= 4; if (p.shieldUntil > g) f |= 8;
+      if (p.bootsUntil > g) f |= 16; if (p.pending) f |= 32; if (p.invulnUntil > g) f |= 64; if (p.fuses.some((v) => v >= 2)) f |= 128;
+      const em = p.emote && now - p.emote.at < 2500 ? p.emote.e : 0;
+      ps.push([p.num, Math.round(p.x * 100), Math.round(p.y * 100), f, p.fuses.length, em]);
+    }
+    return {
+      t: 's', ph: this.phase, pa: this.paused ? 1 : 0, rv: this.rosterVersion,
+      tl: this.phase === 'play' ? Math.max(0, this.endsAt - g) : this.phase === 'countdown' ? Math.max(0, this.countdownEnds - g) : 0,
+      ot: this.overtime ? 1 : 0, ev: this.event ? [this.event.kind, Math.max(0, this.event.endsAt - g)] : 0,
+      sc: this.scores, p: ps,
+      z: this.zombies.map((z) => [Math.round(z.x * 100), Math.round(z.y * 100), (z.chasing ? 1 : 0) | (z.stunUntil > g ? 2 : 0) | (z.dir < 0 ? 4 : 0)]),
+      f: this.loose.map((f) => [f.id, Math.round(f.x * 100), Math.round(f.y * 100), f.v])
     };
-    if (host) {
-      out.roster = CREWS.map((c) => players.filter((p) => p.crew === c.id).map((p) => ({ callsign: p.callsign, connected: this.isConnected(p), bot: p.bot })));
-    }
-    if (player) {
-      const myAns = this.phase === 'question' || revealed ? this.answers.get(player.id) : undefined;
-      const res = revealed && myAns !== undefined ? myAns === q.correct : null;
-      out.me = {
-        id: player.id, callsign: player.callsign, crew: player.crew,
-        answer: myAns === undefined ? null : myAns, correct: res,
-        vote: this.phase === 'vote' ? (this.votes.get(player.id) || null) : null,
-        eligible: this.eligible.has(player.id)
-      };
-    }
-    return out;
+  }
+
+  hostStats() {
+    let n = 0, c = 0; for (const s of this.qstats.values()) { n += s.n; c += s.c; }
+    const crews = CREWS.map((cr) => ({ id: cr.id, members: this.crewSize(cr.id), online: [...this.players.values()].filter((p) => p.crew === cr.id && this.online(p)).length }));
+    const hardest = this.pack.questions.map((q, i) => { const s = this.qstats.get(q.id) || { n: 0, c: 0 }; return { i, n: s.n, acc: s.n ? s.c / s.n : null }; }).filter((x) => x.n >= 2).sort((a, b) => a.acc - b.acc).slice(0, 3);
+    return { t: 'stats', answers: n, correct: c, accuracy: n ? c / n : null, players: this.players.size, crews, hardest, settings: this.settings, demo: this.demo, packTitle: this.pack.title, questions: this.pack.questions.length };
   }
 }
 
-function deepFreeze(o) {
-  if (o && typeof o === 'object') { Object.freeze(o); for (const v of Object.values(o)) deepFreeze(v); }
-  return o;
-}
+function deepFreeze(o) { if (o && typeof o === 'object') { Object.freeze(o); for (const v of Object.values(o)) deepFreeze(v); } return o; }
+export { isWalkableTile };

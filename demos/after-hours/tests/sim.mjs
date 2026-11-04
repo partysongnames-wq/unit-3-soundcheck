@@ -1,160 +1,106 @@
-// SIMULATED classroom load test: N automated HTTP clients (NOT real student devices).
-// Usage: node tests/sim.mjs 20     (or 40)
-// Each client long-polls like a phone, answers with ~85% accuracy after a random delay,
-// votes with a simple crew strategy, and some clients disconnect + reconnect mid-mission.
+// SIMULATED classroom: N automated WebSocket clients (NOT real student devices) play a full game.
+// Usage: node tests/sim.mjs 20   |   node tests/sim.mjs 40
 import assert from 'node:assert/strict';
 import { createServer } from '../server.mjs';
 import { STARTER_PACK } from '../public/js/shared/packs.js';
-import { pickOption } from './helpers.mjs';
+import { SPEED, move } from '../public/js/shared/world.js';
+import { createBrain, think } from '../public/js/shared/botbrain.js';
 
-const N = Number(process.argv[2] || 20);
-const ACC = Number(process.env.SIM_ACCURACY || 0.85);
-const CONNECTED_MS = 2500; // shortened "disconnected" threshold so the simulation runs quickly
-const server = createServer({ port: 0, log: () => {}, connectedMs: CONNECTED_MS, pollWaitMs: 1500 });
+const N = Number(process.argv[2] || 20); const MINUTES = Number(process.env.SIM_MINUTES || 2); const ACC = 0.8;
+const logs = [];
+const server = createServer({ port: 0, log: (...a) => logs.push(a.join(' ')) });
 await new Promise((r) => server.listen(0, '127.0.0.1', r));
-const base = `http://127.0.0.1:${server.address().port}`;
-const stats = { requests: 0, ok: 0, rejected: {}, serverErrors: 0, answerMs: [], voteMs: [] };
-
-async function call(path, { method = 'GET', body, headers = {} } = {}) {
-  stats.requests++;
-  const res = await fetch(base + path, { method, headers: { 'Content-Type': 'application/json', ...headers }, body: body ? JSON.stringify(body) : undefined });
-  const data = await res.json().catch(() => null);
-  if (res.status >= 500) stats.serverErrors++;
-  if (res.ok) stats.ok++; else stats.rejected[data?.error || res.status] = (stats.rejected[data?.error || res.status] || 0) + 1;
-  return { status: res.status, data };
-}
+const port = server.address().port; const base = `http://127.0.0.1:${port}`;
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
-const rnd = (a, b) => a + Math.random() * (b - a);
+const post = async (p, body, headers = {}) => { const r = await fetch(base + p, { method: 'POST', headers: { 'Content-Type': 'application/json', ...headers }, body: JSON.stringify(body || {}) }); return { status: r.status, data: await r.json() }; };
+const qById = new Map(STARTER_PACK.questions.map((q) => [q.prompt, q]));
+const stats = { snapshots: 0, opens: 0, answers: 0, correct: 0, corrections: 0, errors: {}, qLatency: [], resLatency: [], bytes: 0, fatals: 0 };
 
 class Client {
-  constructor(i) { this.i = i; this.callsign = `Sim ${String(i).padStart(2, '0')}`; this.online = true; this.answered = new Set(); this.voted = new Set(); this.v = null; this.version = 0; }
-  get H() { return { 'X-Player-Id': this.id, 'X-Player-Secret': this.secret }; }
-  async join(code) {
-    this.code = code;
-    const r = await call(`/api/rooms/${code}/join`, { method: 'POST', body: { callsign: this.callsign } });
-    assert.equal(r.status, 200, JSON.stringify(r.data));
-    Object.assign(this, { id: r.data.playerId, secret: r.data.secret, crew: r.data.crew });
+  constructor(i) { this.i = i; this.name = `Sim Kid ${String(i).padStart(2, '0')}`; this.brain = createBrain(); this.zombies = []; this.flags = 0; this.fuses = 0; this.question = null; }
+  async join(code) { const r = await post(`/api/rooms/${code}/join`, { callsign: this.name, avatar: { hair: this.i % 8, outfit: this.i % 6 } }); assert.equal(r.status, 200); Object.assign(this, { code, id: r.data.playerId, secret: r.data.secret, num: r.data.num, crew: r.data.crew }); }
+  connect() {
+    return new Promise((resolve) => {
+      this.ws = new WebSocket(`ws://127.0.0.1:${port}/ws`);
+      this.ws.onopen = () => this.ws.send(JSON.stringify({ t: 'hello', code: this.code, role: 'player', playerId: this.id, secret: this.secret }));
+      this.ws.onmessage = (e) => { stats.bytes += e.data.length; this.onMsg(JSON.parse(e.data), resolve); };
+      this.ws.onclose = () => { this.open = false; };
+    });
   }
-  async reconnect() {
-    const r = await call(`/api/rooms/${this.code}/join`, { method: 'POST', body: { playerId: this.id, secret: this.secret } });
-    assert.equal(r.status, 200); assert.equal(r.data.playerId, this.id, 'same identity'); assert.equal(r.data.crew, this.crew, 'same crew');
-    this.reconnects = (this.reconnects || 0) + 1; this.online = true; this.version = 0;
+  onMsg(m, resolve) {
+    if (m.t === 'welcome') { this.open = true; this.x = m.you.x; this.y = m.you.y; this.welcomes = (this.welcomes || 0) + 1; this.crewSeen = m.you.crew; resolve(); }
+    else if (m.t === 's') { stats.snapshots++; this.phase = m.ph; this.zombies = m.z.map((z) => ({ x: z[0] / 100, y: z[1] / 100 })); const me = m.p.find((p) => p[0] === this.num); if (me) { this.flags = me[3]; this.fuses = me[4]; } }
+    else if (m.t === 'corr') { stats.corrections++; this.x = m.x; this.y = m.y; }
+    else if (m.t === 'q') {
+      stats.qLatency.push(performance.now() - this.openedAt); this.question = m;
+      const q = qById.get(m.question.prompt); const choice = Math.random() < ACC ? q.correct : (q.correct + 1) % 4;
+      setTimeout(() => { if (!this.open) return; this.answerAt = performance.now(); this.ws.send(JSON.stringify({ t: 'answer', nonce: m.nonce, c: choice })); }, 1200 + Math.random() * 2500);
+    }
+    else if (m.t === 'res') { stats.resLatency.push(performance.now() - this.answerAt); stats.answers++; if (m.correct) stats.correct++; this.question = null; }
+    else if (m.t === 'err') { stats.errors[m.code] = (stats.errors[m.code] || 0) + 1; if (m.about === 'open') this.question = null; }
+    else if (m.t === 'fatal') stats.fatals++;
+    else if (m.t === 'mystats') this.mystats = m;
   }
-  async run(stopFlag) {
-    while (!stopFlag.stop) {
-      if (!this.online) { await sleep(200); continue; }
-      const r = await call(`/api/rooms/${this.code}/state?since=${this.version}`, { headers: this.H });
-      if (r.status !== 200) { await sleep(300); continue; }
-      this.v = r.data; this.version = r.data.version;
-      this.act(r.data);
-    }
-  }
-  act(v) {
-    if (v.paused) return;
-    if (v.phase === 'question' && !this.answered.has(v.roundId) && v.me.answer === null) {
-      this.answered.add(v.roundId);
-      const rid = v.roundId;
-      setTimeout(async () => {
-        if (!this.online) { this.answered.delete(rid); return; }
-        // pick correct with probability ACC — the client does not know the answer, so the harness reads it from the pack
-        const q = STARTER_PACK.questions[v.roundIndex]; const choice = Math.random() < ACC ? q.correct : (q.correct + 1 + Math.floor(Math.random() * 3)) % 4;
-        const t = performance.now();
-        const res = await call(`/api/rooms/${this.code}/answer`, { method: 'POST', headers: this.H, body: { roundId: rid, choice } });
-        stats.answerMs.push(performance.now() - t);
-        if (res.status === 200 && Math.random() < 0.1) { // occasional double-tap / stale resend
-          const d = await call(`/api/rooms/${this.code}/answer`, { method: 'POST', headers: this.H, body: { roundId: rid, choice: (choice + 1) % 4 } });
-          assert.equal(d.status, 409);
-        }
-      }, rnd(300, 2500));
-    }
-    if (v.phase === 'vote' && !this.voted.has(v.roundId) && v.crews[this.crew].active) {
-      this.voted.add(v.roundId);
-      const rid = v.roundId;
-      setTimeout(async () => {
-        if (!this.online) return;
-        const o = pickOption(v, this.crew); if (!o) return;
-        const t = performance.now();
-        await call(`/api/rooms/${this.code}/vote`, { method: 'POST', headers: this.H, body: { roundId: rid, option: o.id } });
-        stats.voteMs.push(performance.now() - t);
-      }, rnd(200, 1500));
-    }
+  step(dt) {
+    if (!this.open || this.question || this.phase !== 'play') return;
+    const d = think(this.brain, { x: this.x, y: this.y, fuses: this.fuses, zombified: this.flags & 4 }, { now: performance.now(), zombies: this.zombies, lockerReady: () => true });
+    const sp = (this.flags & 4 ? SPEED.zombified : this.flags & 16 ? SPEED.boots : SPEED.player) * dt * 0.95;
+    [this.x, this.y] = move(this.x, this.y, d.dx * sp, d.dy * sp);
+    this.ws.send(JSON.stringify({ t: 'pos', x: this.x, y: this.y, d: d.dx < 0 ? -1 : 1, m: true }));
+    if (d.atLocker !== null && !(this.flags & 4)) { stats.opens++; this.openedAt = performance.now(); this.question = { pending: true }; this.ws.send(JSON.stringify({ t: 'open', l: d.atLocker })); setTimeout(() => { if (this.question && this.question.pending) this.question = null; }, 1500); }
   }
 }
 
 const t0 = performance.now();
-const created = await call('/api/rooms', { method: 'POST', body: { pack: STARTER_PACK, settings: { questionSeconds: 20, voteSeconds: 12 } } });
-const { code, hostToken } = created.data; const HH = { 'X-Host-Token': hostToken };
-const host = async (a) => { const r = await call(`/api/rooms/${code}/host/${a}`, { method: 'POST', headers: HH, body: {} }); return r; };
-const hostState = async () => (await call(`/api/rooms/${code}/state?since=0`, { headers: HH })).data;
-
-const lateCount = N >= 4 ? 2 : 0;
-const clients = Array.from({ length: N }, (_, i) => new Client(i));
-await Promise.all(clients.slice(0, N - lateCount).map((c) => c.join(code))); // simultaneous joins
-const flag = { stop: false };
-const loops = clients.slice(0, N - lateCount).map((c) => c.run(flag));
-let s = await hostState();
-assert.equal(s.playerCount, N - lateCount);
-const crewSizes = s.crews.map((c) => c.members);
-assert.ok(Math.max(...crewSizes) - Math.min(...crewSizes) <= 1, `balanced crews ${crewSizes}`);
-assert.equal((await host('start')).status, 200);
-
-const timeline = [];
+const room = (await post('/api/rooms', { pack: STARTER_PACK, settings: { minutes: MINUTES } })).data;
+const H = { 'X-Host-Token': room.hostToken };
+const late = 2; const clients = Array.from({ length: N }, (_, i) => new Client(i));
+await Promise.all(clients.slice(0, N - late).map((c) => c.join(room.code)));
+await Promise.all(clients.slice(0, N - late).map((c) => c.connect()));
+const host = new WebSocket(`ws://127.0.0.1:${port}/ws`); let hostResults = null; let hostSnaps = 0;
+host.onopen = () => host.send(JSON.stringify({ t: 'hello', code: room.code, role: 'host', token: room.hostToken }));
+host.onmessage = (e) => { const m = JSON.parse(e.data); if (m.t === 's') hostSnaps++; if (m.t === 'results' && m.results.hardest) hostResults = m.results; };
+assert.equal((await post(`/api/rooms/${room.code}/host/start`, {}, H)).status, 200);
 const dropped = clients.slice(0, 3);
-let round = -1;
-const deadline = Date.now() + 10 * 60_000;
-while (Date.now() < deadline) {
-  s = await hostState();
-  if (s.roundIndex !== round && s.phase === 'question') {
-    round = s.roundIndex;
-    if (round === 2 && lateCount) { // late joiners arrive mid-question
-      await Promise.all(clients.slice(N - lateCount).map((c) => c.join(code)));
-      loops.push(...clients.slice(N - lateCount).map((c) => c.run(flag)));
-    }
-    if (round === 4) dropped.forEach((c) => { c.online = false; });       // three phones lose Wi-Fi
-    if (round === 6) await Promise.all(dropped.map((c) => c.reconnect())); // and come back with the same identity
-  }
-  if (s.phase === 'reveal') {
-    timeline.push({ q: s.roundIndex + 1, answered: `${s.reveal.classCounted} counted`, correct: s.reveal.classCorrect, crews: s.reveal.crews.map((c) => c.accuracy === null ? '-' : Math.round(c.accuracy * 100) + '%').join('/') });
-    await sleep(150); await host('next');
-  } else if (s.phase === 'resolve') { await sleep(100); await host('next'); }
-  else if (s.phase === 'extraction') { await host('next'); }
-  else if (s.phase === 'debrief') break;
-  else await sleep(150);
-}
-s = await hostState();
-assert.equal(s.phase, 'debrief', 'mission reached debrief');
-const summary = s.summary;
-const missionSec = ((performance.now() - t0) / 1000).toFixed(1);
-
-// Reset and replay start: crews kept, old round ids rejected
-const oldRound = clients[0].v.roundId;
-assert.equal((await host('reset')).status, 200);
-const afterReset = await hostState();
-assert.equal(afterReset.phase, 'lobby'); assert.equal(afterReset.playerCount, N);
-assert.equal((await host('start')).status, 200);
-const stale = await call(`/api/rooms/${code}/answer`, { method: 'POST', headers: clients[0].H, body: { roundId: oldRound, choice: 0 } });
-assert.equal(stale.status, 409);
-await host('end'); await host('next');
-assert.equal((await hostState()).phase, 'debrief');
-flag.stop = true;
-await Promise.race([Promise.all(loops), sleep(3000)]);
+let last = performance.now(); const gameMs = MINUTES * 60_000 + 6000; let phaseDone = false;
+const timeline = [];
+const loop = setInterval(() => { const now = performance.now(); const dt = (now - last) / 1000; last = now; for (const c of clients) if (c.ws) c.step(dt); }, 66);
+const events = [
+  [25_000, async () => { await Promise.all(clients.slice(N - late).map((c) => c.join(room.code))); await Promise.all(clients.slice(N - late).map((c) => c.connect())); timeline.push('late joiners connected'); }],
+  [35_000, async () => { dropped.forEach((c) => c.ws.close()); timeline.push('3 clients dropped'); }],
+  [55_000, async () => { for (const c of dropped) { const r = await post(`/api/rooms/${room.code}/join`, { playerId: c.id, secret: c.secret }); assert.equal(r.data.playerId, c.id); assert.equal(r.data.crew, c.crew); await c.connect(); } timeline.push('3 clients reconnected (same id + crew)'); }]
+];
+for (const [at, fn] of events) setTimeout(fn, at);
+while (performance.now() - t0 < gameMs + 8000) { await sleep(500); if (clients.every((c) => !c.open || c.phase === 'results')) { phaseDone = clients.some((c) => c.phase === 'results'); if (phaseDone) break; } }
+clearInterval(loop);
+await sleep(800);
+assert.ok(phaseDone, 'game reached results');
+assert.ok(hostResults, 'host received results with review');
+const withStats = clients.filter((c) => c.mystats).length;
+// reset back to lobby
+assert.equal((await post(`/api/rooms/${room.code}/host/reset`, {}, H)).status, 200);
+await sleep(400);
+for (const c of clients) c.ws.close(); host.close();
 server.closeAllConnections?.(); server.close();
-
-const pct = (a, p) => { const s2 = a.slice().sort((x, y) => x - y); return s2.length ? s2[Math.min(s2.length - 1, Math.floor(p * s2.length))].toFixed(1) : '-'; };
-console.log(`\n=== SIMULATED ${N}-client run (automated HTTP clients, NOT real student devices) ===`);
-console.table(timeline);
+const pct = (a, p) => { const s = a.slice().sort((x, y) => x - y); return s.length ? s[Math.min(s.length - 1, Math.floor(p * s.length))].toFixed(1) : '-'; };
+const secs = (performance.now() - t0) / 1000;
+console.log(`\n=== SIMULATED ${N}-client game (automated WebSocket clients, NOT real student devices) ===`);
+console.log(timeline.join(' → '));
 console.log({
-  clients: N, lateJoiners: lateCount, disconnectedThenReconnected: dropped.length,
-  reconnectsSameIdentity: dropped.filter((c) => c.reconnects === 1).length,
-  outcome: summary.outcome, stars: summary.stars, power: summary.power, fuses: `${summary.installed}/${summary.needed}`,
-  crewsAtGate: `${summary.atGate}/${summary.activeCrews}`, classAccuracy: `${Math.round(summary.classAccuracy * 100)}%`,
-  roundsPlayed: summary.roundsPlayed, missionSeconds: Number(missionSec),
-  requests: stats.requests, ok: stats.ok, rejected: stats.rejected, serverErrors: stats.serverErrors,
-  answerLatencyMs: { p50: pct(stats.answerMs, 0.5), p95: pct(stats.answerMs, 0.95), n: stats.answerMs.length },
-  voteLatencyMs: { p50: pct(stats.voteMs, 0.5), p95: pct(stats.voteMs, 0.95), n: stats.voteMs.length },
-  resetThenStaleAnswer: stale.status
+  clients: N, gameMinutes: MINUTES, wallSeconds: Number(secs.toFixed(1)),
+  crews: hostResults.crews.map((c) => `#${c.place} crew${c.crew}: ${c.score}`).join(', '),
+  answers: hostResults.answers, classAccuracy: `${Math.round(hostResults.accuracy * 100)}%`, toughest: hostResults.hardest.map((q) => `Q${q.i + 1} ${Math.round(q.acc * 100)}%`).join(', '),
+  lockerOpens: stats.opens, answersAcked: stats.answers, positionCorrections: stats.corrections,
+  rejected: stats.errors, fatals: stats.fatals, serverErrorsLogged: logs.filter((l) => /error/i.test(l)).length,
+  snapshotsReceived: stats.snapshots, snapshotsPerClientPerSec: Number((stats.snapshots / N / secs).toFixed(1)),
+  downstreamKBps: Number((stats.bytes / 1024 / secs).toFixed(1)),
+  openToQuestionMs: { p50: pct(stats.qLatency, 0.5), p95: pct(stats.qLatency, 0.95) },
+  answerToResultMs: { p50: pct(stats.resLatency, 0.5), p95: pct(stats.resLatency, 0.95) },
+  privateStatsDelivered: `${withStats}/${N}`, hostSnapshots: hostSnaps
 });
-assert.equal(stats.serverErrors, 0, 'no 5xx');
-assert.equal(summary.roundsPlayed, 12);
-console.log(`PASS: simulated ${N}-client mission completed (${summary.outcome}).`);
+assert.equal(logs.filter((l) => /error/i.test(l)).length, 0, 'no server errors');
+assert.equal(stats.fatals, 0);
+assert.ok(stats.answers > N, 'clients answered questions');
+assert.equal(withStats, N, 'every client got private end-of-game stats');
+console.log(`PASS: simulated ${N}-client game completed.`);
 process.exit(0);

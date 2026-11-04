@@ -1,111 +1,123 @@
-// HTTP API + security tests against a real in-process server on a random port.
+// HTTP + WebSocket tests against a real in-process server (Node 22 built-in WebSocket client).
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import net from 'node:net';
 import { createServer } from '../server.mjs';
 import { STARTER_PACK } from '../public/js/shared/packs.js';
+import { LOCKERS, lockerStand } from '../public/js/shared/world.js';
 
-let server; let base;
-test.before(async () => {
-  server = createServer({ port: 0, log: () => {}, pollWaitMs: 300 });
-  await new Promise((r) => server.listen(0, '127.0.0.1', r));
-  base = `http://127.0.0.1:${server.address().port}`;
-});
+let server, base, port;
+test.before(async () => { server = createServer({ port: 0, log: () => {} }); await new Promise((r) => server.listen(0, '127.0.0.1', r)); port = server.address().port; base = `http://127.0.0.1:${port}`; });
 test.after(() => new Promise((r) => { server.closeAllConnections?.(); server.close(r); }));
 
 async function call(path, { method = 'GET', body, headers = {}, raw } = {}) {
   const res = await fetch(base + path, { method, headers: { 'Content-Type': 'application/json', ...headers }, body: raw !== undefined ? raw : body !== undefined ? JSON.stringify(body) : undefined });
-  let data = null; const text = await res.text();
-  try { data = JSON.parse(text); } catch { data = text; }
+  const text = await res.text(); let data; try { data = JSON.parse(text); } catch { data = text; }
   return { status: res.status, data, headers: res.headers };
 }
-function rawRequest(path) {
-  return new Promise((resolve) => {
-    const s = net.connect(server.address().port, '127.0.0.1', () => s.write(`GET ${path} HTTP/1.1\r\nHost: x\r\nConnection: close\r\n\r\n`));
-    let buf = ''; s.on('data', (d) => { buf += d; }); s.on('end', () => resolve(buf.split('\r\n')[0]));
-  });
+function wsClient(hello) {
+  const ws = new WebSocket(`ws://127.0.0.1:${port}/ws`); const inbox = []; const waiters = [];
+  ws.onmessage = (e) => { const m = JSON.parse(e.data); inbox.push(m); for (const w of [...waiters]) if (w.pred(m)) { waiters.splice(waiters.indexOf(w), 1); w.res(m); } };
+  ws.onopen = () => ws.send(JSON.stringify(hello));
+  const closed = new Promise((r) => { ws.onclose = r; });
+  return {
+    ws, inbox, closed, send: (m) => ws.send(JSON.stringify(m)),
+    wait(pred, ms = 4000) { const hit = inbox.find(pred); if (hit) return Promise.resolve(hit); return new Promise((res, rej) => { const w = { pred, res }; waiters.push(w); setTimeout(() => rej(new Error('timeout')), ms); }); }
+  };
 }
+const newRoom = async (extra = {}) => (await call('/api/rooms', { method: 'POST', body: { pack: STARTER_PACK, settings: { minutes: 3 }, ...extra } })).data;
+const join = async (code, callsign) => (await call(`/api/rooms/${code}/join`, { method: 'POST', body: { callsign } })).data;
 
-test('create room validates pack; host token required for controls', async () => {
+test('room creation validates pack; host token required', async () => {
   assert.equal((await call('/api/rooms', { method: 'POST', body: { pack: { title: 'x', questions: [] } } })).status, 400);
-  assert.equal((await call('/api/rooms', { method: 'POST', raw: '{not json' })).status, 400);
-  const r = await call('/api/rooms', { method: 'POST', body: { pack: STARTER_PACK } });
-  assert.equal(r.status, 201);
-  assert.match(r.data.code, /^[A-Z0-9]{5}$/);
-  assert.ok(r.data.hostToken.length >= 40, 'unguessable token');
-  const c = r.data.code;
-  assert.equal((await call(`/api/rooms/${c}/host/start`, { method: 'POST', body: {} })).status, 403);
-  assert.equal((await call(`/api/rooms/${c}/host/start`, { method: 'POST', body: {}, headers: { 'X-Host-Token': 'guess' } })).status, 403);
-  assert.equal((await call('/api/rooms/ZZZZZ/state')).status, 404);
+  assert.equal((await call('/api/rooms', { method: 'POST', raw: '{bad' })).status, 400);
+  const r = await newRoom();
+  assert.match(r.code, /^[A-Z0-9]{5}$/); assert.ok(r.hostToken.length >= 40);
+  assert.equal((await call(`/api/rooms/${r.code}/host/start`, { method: 'POST', body: {} })).status, 403);
+  assert.equal((await call(`/api/rooms/${r.code}/host/start`, { method: 'POST', body: {}, headers: { 'X-Host-Token': 'guess' } })).status, 403);
+  assert.equal((await call('/api/rooms/ZZZZZ/join', { method: 'POST', body: { callsign: 'Abc' } })).status, 404);
 });
 
-test('join, hidden answers in public state, answer/vote flow, stale + duplicate rejection', async () => {
-  const room = (await call('/api/rooms', { method: 'POST', body: { pack: STARTER_PACK } })).data;
-  const H = { 'X-Host-Token': room.hostToken };
-  const p = (await call(`/api/rooms/${room.code}/join`, { method: 'POST', body: { callsign: 'Quiet Fox 12' } })).data;
-  const P = { 'X-Player-Id': p.playerId, 'X-Player-Secret': p.secret };
-  const p2 = (await call(`/api/rooms/${room.code}/join`, { method: 'POST', body: { callsign: 'Swift Moth 7' } })).data;
-  const P2 = { 'X-Player-Id': p2.playerId, 'X-Player-Secret': p2.secret };
-  assert.equal((await call(`/api/rooms/${room.code}/state`)).status, 401, 'state requires identity');
-  assert.equal((await call(`/api/rooms/${room.code}/state`, { headers: { 'X-Player-Id': p.playerId, 'X-Player-Secret': 'x' } })).status, 401);
-  assert.equal((await call(`/api/rooms/${room.code}/host/start`, { method: 'POST', body: {}, headers: H })).status, 200);
-  const st = await call(`/api/rooms/${room.code}/state?since=0`, { headers: P });
-  const s = JSON.stringify(st.data);
-  assert.equal(st.data.phase, 'question');
-  assert.equal(s.includes(room.hostToken), false);
-  assert.equal(s.includes(STARTER_PACK.questions[0].explanation), false);
-  assert.equal(st.data.reveal, null);
-  assert.equal((await call(`/api/rooms/${room.code}/answer`, { method: 'POST', headers: P, body: { roundId: 'e1r5', choice: 1 } })).status, 409);
-  assert.equal((await call(`/api/rooms/${room.code}/answer`, { method: 'POST', headers: P, body: { roundId: st.data.roundId, choice: 1 } })).status, 200);
-  const dup = await call(`/api/rooms/${room.code}/answer`, { method: 'POST', headers: P, body: { roundId: st.data.roundId, choice: 2 } });
-  assert.equal(dup.status, 409); assert.equal(dup.data.error, 'already_answered');
-  assert.equal((await call(`/api/rooms/${room.code}/state?since=0`, { headers: P })).data.phase, 'question', 'still open until everyone answered');
-  assert.equal((await call(`/api/rooms/${room.code}/answer`, { method: 'POST', headers: P2, body: { roundId: st.data.roundId, choice: 0 } })).status, 200);
-  // everyone answered -> auto reveal
-  const rv = await call(`/api/rooms/${room.code}/state?since=0`, { headers: P });
-  assert.equal(rv.data.phase, 'reveal'); assert.equal(rv.data.reveal.correct, STARTER_PACK.questions[0].correct);
-  assert.equal(rv.data.me.correct, true);
-  await call(`/api/rooms/${room.code}/host/next`, { method: 'POST', body: {}, headers: H });
-  const vt = await call(`/api/rooms/${room.code}/state?since=0`, { headers: P });
-  assert.equal(vt.data.phase, 'vote');
-  assert.equal((await call(`/api/rooms/${room.code}/vote`, { method: 'POST', headers: P, body: { roundId: vt.data.roundId, option: 'teleport' } })).status, 400);
-  assert.equal((await call(`/api/rooms/${room.code}/vote`, { method: 'POST', headers: P, body: { roundId: vt.data.roundId, option: 'hold' } })).status, 200);
-  assert.equal((await call(`/api/rooms/${room.code}/vote`, { method: 'POST', headers: P, body: { roundId: 'e1r0x', option: 'hold' } })).status, 409, 'stale vote');
-  // reconnect same identity
-  const re = await call(`/api/rooms/${room.code}/join`, { method: 'POST', body: { playerId: p.playerId, secret: p.secret } });
-  assert.equal(re.data.playerId, p.playerId); assert.equal(re.data.reconnected, true); assert.equal(re.data.crew, p.crew);
+test('WebSocket: bad credentials are refused; players get roster + world snapshots', async () => {
+  const r = await newRoom();
+  const bad = wsClient({ t: 'hello', code: r.code, role: 'host', token: 'nope' });
+  assert.equal((await bad.wait((m) => m.t === 'fatal')).code, 'bad_token'); await bad.closed;
+  const bad2 = wsClient({ t: 'hello', code: r.code, role: 'player', playerId: 'x', secret: 'y' });
+  assert.equal((await bad2.wait((m) => m.t === 'fatal')).code, 'bad_identity');
+  const p = await join(r.code, 'Sparkly Fox');
+  const c = wsClient({ t: 'hello', code: r.code, role: 'player', playerId: p.playerId, secret: p.secret });
+  const w = await c.wait((m) => m.t === 'welcome');
+  assert.equal(w.you.name, 'Sparkly Fox');
+  const roster = await c.wait((m) => m.t === 'roster');
+  assert.equal(JSON.stringify(roster).includes(p.secret), false);
+  const s = await c.wait((m) => m.t === 's');
+  assert.equal(s.ph, 'lobby'); assert.equal(JSON.stringify(s).includes(r.hostToken), false);
+  const host = wsClient({ t: 'hello', code: r.code, role: 'host', token: r.hostToken });
+  assert.equal((await host.wait((m) => m.t === 'welcome')).role, 'host');
+  assert.ok(await host.wait((m) => m.t === 'stats'));
+  c.ws.close(); host.ws.close();
 });
 
-test('body size limits and input validation', async () => {
-  const room = (await call('/api/rooms', { method: 'POST', body: { pack: STARTER_PACK } })).data;
-  const big = 'x'.repeat(10_000);
-  assert.equal((await call(`/api/rooms/${room.code}/join`, { method: 'POST', raw: JSON.stringify({ callsign: big }) })).status, 413);
-  assert.equal((await call(`/api/rooms/${room.code}/join`, { method: 'POST', body: { callsign: '<img src=x>' } })).status, 400);
-  assert.equal((await call(`/api/rooms/${room.code}/join`, { method: 'POST', raw: '[1,2]' })).status, 400);
-  const huge = 'y'.repeat(3.5 * 1024 * 1024);
-  assert.equal((await call('/api/rooms', { method: 'POST', raw: JSON.stringify({ pack: { title: huge } }) })).status, 413);
+test('WebSocket game flow: locker question → answer → result with WHY; errors are reported', async () => {
+  const r = await newRoom();
+  const p = await join(r.code, 'Lucky Mochi');
+  const c = wsClient({ t: 'hello', code: r.code, role: 'player', playerId: p.playerId, secret: p.secret });
+  await c.wait((m) => m.t === 'welcome');
+  c.send({ t: 'open', l: 0 });
+  assert.equal((await c.wait((m) => m.t === 'err')).code, 'wrong_phase');
+  await call(`/api/rooms/${r.code}/host/start`, { method: 'POST', body: {}, headers: { 'X-Host-Token': r.hostToken } });
+  await c.wait((m) => m.t === 's' && m.ph === 'play', 6000);
+  // walk to locker 4 in small valid steps
+  const L = LOCKERS[4]; const [tx, ty] = lockerStand(L);
+  let me = (await c.wait((m) => m.t === 's' && m.p.length)).p[0]; let x = me[1] / 100, y = me[2] / 100;
+  c.send({ t: 'open', l: 4 }); assert.equal((await c.wait((m) => m.t === 'err' && m.code === 'too_far')).code, 'too_far');
+  // route: move along the corridor row then to the stand point
+  const steps = [];
+  const goto = (gx, gy) => { while (Math.hypot(gx - x, gy - y) > 0.05) { const d = Math.hypot(gx - x, gy - y); const k = Math.min(1, 0.3 / d); x += (gx - x) * k; y += (gy - y) * k; steps.push([x, y]); } };
+  goto(x, 13.5); goto(tx, 13.5); goto(tx, ty);
+  for (const [sx, sy] of steps) { c.send({ t: 'pos', x: sx, y: sy, d: 1, m: true }); await new Promise((res) => setTimeout(res, 80)); }
+  const corr = c.inbox.filter((m) => m.t === 'corr').length;
+  assert.equal(corr, 0, 'valid walking is never corrected');
+  c.send({ t: 'open', l: 4 });
+  const q = await c.wait((m) => m.t === 'q');
+  assert.equal('correct' in q.question, false); assert.equal('explanation' in q.question, false);
+  c.send({ t: 'answer', nonce: 'forged', c: 0 });
+  assert.equal((await c.wait((m) => m.t === 'err' && m.about === 'answer')).code, 'stale');
+  c.send({ t: 'answer', nonce: q.nonce, c: 2 });
+  const res = await c.wait((m) => m.t === 'res');
+  assert.equal(typeof res.correct, 'boolean'); assert.ok(res.explanation.length > 10); assert.ok(Number.isInteger(res.correctIndex));
+  c.send({ t: 'answer', nonce: q.nonce, c: 2 });
+  assert.equal((await c.wait((m) => m.t === 'err' && m.about === 'answer' && m.code === 'stale' && m !== c.inbox.find((x) => x.code === 'stale'))).code, 'stale');
+  // teleport is corrected
+  c.send({ t: 'pos', x: 38, y: 13.5, d: 1, m: true });
+  assert.ok(await c.wait((m) => m.t === 'corr'));
+  c.ws.close();
 });
 
-test('static files are served safely (no traversal, no dotfiles, no server source)', async () => {
-  const ok = await call('/host.html');
-  assert.equal(ok.status, 200); assert.match(ok.headers.get('content-security-policy'), /default-src 'self'/);
-  assert.equal(ok.headers.get('x-content-type-options'), 'nosniff');
-  assert.equal((await call('/js/shared/packs.js')).status, 200);
-  for (const p of ['/../server.mjs', '/%2e%2e/server.mjs', '/..%2fserver.mjs', '/.git/config', '/js/../../package.json', '/%00', '/server.mjs']) {
-    const r = await call(p);
-    assert.notEqual(r.status, 200, `${p} must not be served`);
-  }
-  assert.match(await rawRequest('/../../server.mjs'), / 404 /);
-  assert.match(await rawRequest('/..%2f..%2fserver.mjs'), / (404|400) /);
-  assert.equal((await call('/host.html', { method: 'POST', body: {} })).status, 405);
+test('WebSocket limits: oversized frames close the socket; non-ws upgrade paths refused', async () => {
+  const r = await newRoom(); const p = await join(r.code, 'Big Sender');
+  const c = wsClient({ t: 'hello', code: r.code, role: 'player', playerId: p.playerId, secret: p.secret });
+  await c.wait((m) => m.t === 'welcome');
+  c.ws.send('x'.repeat(40_000));
+  await c.closed;
+  const line = await new Promise((resolve) => { const s = net.connect(port, '127.0.0.1', () => s.write('GET /nope HTTP/1.1\r\nHost: x\r\nUpgrade: websocket\r\nConnection: Upgrade\r\nSec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==\r\nSec-WebSocket-Version: 13\r\n\r\n')); let b = ''; s.on('data', (d) => { b += d; }); s.on('end', () => resolve(b.split('\r\n')[0])); s.on('close', () => resolve(b.split('\r\n')[0])); });
+  assert.match(line, /404/);
 });
 
-test('41st player is rejected over HTTP', async () => {
-  const room = (await call('/api/rooms', { method: 'POST', body: { pack: STARTER_PACK } })).data;
-  const res = await Promise.all(Array.from({ length: 41 }, (_, i) => call(`/api/rooms/${room.code}/join`, { method: 'POST', body: { callsign: `Unit ${i}` } })));
-  assert.equal(res.filter((r) => r.status === 200).length, 40);
-  const rej = res.filter((r) => r.status !== 200);
-  assert.equal(rej.length, 1); assert.equal(rej[0].status, 409); assert.equal(rej[0].data.error, 'room_full');
-  const crews = [0, 0, 0, 0]; res.filter((r) => r.status === 200).forEach((r) => crews[r.data.crew]++);
+test('41st join rejected over HTTP; crews 10/10/10/10', async () => {
+  const r = await newRoom();
+  const res = await Promise.all(Array.from({ length: 41 }, (_, i) => call(`/api/rooms/${r.code}/join`, { method: 'POST', body: { callsign: `Kid ${i}` } })));
+  assert.equal(res.filter((x) => x.status === 200).length, 40);
+  assert.equal(res.find((x) => x.status !== 200).data.error, 'room_full');
+  const crews = [0, 0, 0, 0]; res.filter((x) => x.status === 200).forEach((x) => crews[x.data.crew]++);
   assert.deepEqual(crews, [10, 10, 10, 10]);
+});
+
+test('input limits and safe static files', async () => {
+  const r = await newRoom();
+  assert.equal((await call(`/api/rooms/${r.code}/join`, { method: 'POST', raw: JSON.stringify({ callsign: 'x'.repeat(9000) }) })).status, 413);
+  assert.equal((await call(`/api/rooms/${r.code}/join`, { method: 'POST', body: { callsign: '<img>' } })).status, 400);
+  const ok = await call('/play.html'); assert.equal(ok.status, 200); assert.match(ok.headers.get('content-security-policy'), /default-src 'self'/);
+  for (const p of ['/../server.mjs', '/%2e%2e/server.mjs', '/.git/config', '/server.mjs', '/js/../../package.json']) assert.notEqual((await call(p)).status, 200, p);
+  assert.equal((await call('/host.html', { method: 'POST', body: {} })).status, 405);
 });
