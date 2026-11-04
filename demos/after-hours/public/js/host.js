@@ -66,7 +66,7 @@ function onStatus(s, m) {
 const feedItems = [];
 function onMessage(m) {
   switch (m.t) {
-    case 'welcome': if (m.settings) settings = m.settings; setPhase(m.phase, m.paused); $('demoTag').classList.toggle('hidden', !m.demo); if (m.results) { results = m.results; } break;
+    case 'welcome': if (view && m.vocab) view.setVocab(m.vocab); if (m.settings) settings = m.settings; setPhase(m.phase, m.paused); $('demoTag').classList.toggle('hidden', !m.demo); if (m.results) { results = m.results; } break;
     case 'roster': roster = m.list; view.setRoster(m.list); if (phase === 'lobby') renderLobby(); break;
     case 's': snap = m; view.push(m); if (m.ph !== phase || !!m.pa !== paused) setPhase(m.ph, !!m.pa); renderTop(); renderBoard(); break;
     case 'stats': stats = m; settings = m.settings; renderStats(); if (phase === 'lobby') renderLobby(); break;
@@ -139,7 +139,7 @@ function countdown() {
 const fmt = (ms) => { const s = Math.ceil(ms / 1000); return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`; };
 function renderTop() {
   const t = $('bigTimer');
-  t.textContent = snap.ph === 'play' ? fmt(snap.tl) : snap.ph === 'lobby' ? `LOBBY · ${roster.length}` : snap.ph === 'results' ? 'FINISHED' : 'GET READY';
+  t.textContent = snap.ph === 'play' ? fmt(snap.tl) : snap.ph === 'lobby' ? 'LOBBY' : snap.ph === 'results' ? 'FINISHED' : 'GET READY';
   t.classList.toggle('ot', !!snap.ot && snap.ph === 'play');
 }
 function renderBoard() {

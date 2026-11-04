@@ -35,5 +35,5 @@ export function cleanAvatar(input) {
   return a;
 }
 
-export const EMOTES = ['wave', 'dance', 'heart', 'laugh', 'wow', 'star'];
-export const EMOTE_ICON = { wave: '👋', dance: '💃', heart: '💖', laugh: '😂', wow: '😮', star: '⭐' };
+export const EMOTES = ['wave', 'dance', 'heart', 'laugh', 'wow', 'star', 'sing', 'clap', 'cool'];
+export const EMOTE_ICON = { wave: '👋', dance: '💃', heart: '💖', laugh: '😂', wow: '😮', star: '⭐', sing: '🎤', clap: '👏', cool: '😎' };

@@ -214,7 +214,7 @@ export function createServer({ port = 8787, joinBaseUrl = '', now = Date.now, lo
     clearTimeout(hello);
     c.entry = entry; entry.conns.add(c);
     const p = c.playerId ? room.players.get(c.playerId) : null;
-    reply({ t: 'welcome', role: c.role, code: room.code, you: p ? { n: p.num, name: p.callsign, crew: p.crew, x: p.x, y: p.y, avatar: p.avatar } : null, phase: room.phase, paused: room.paused, results: room.phase === 'results' ? (c.role === 'host' ? room.hostResults() : room.publicResults()) : null, demo: room.demo, settings: room.settings });
+    reply({ t: 'welcome', role: c.role, code: room.code, you: p ? { n: p.num, name: p.callsign, crew: p.crew, x: p.x, y: p.y, avatar: p.avatar } : null, phase: room.phase, paused: room.paused, results: room.phase === 'results' ? (c.role === 'host' ? room.hostResults() : room.publicResults()) : null, demo: room.demo, settings: room.settings, vocab: room.pack.vocab || [] });
     if (p && p.pending) room.cancelQuestion(p);
     if (c.role === 'host') reply(room.hostStats());
   }

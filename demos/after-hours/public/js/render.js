@@ -1,5 +1,5 @@
 // World view: camera, cached static map chunks, interpolated players/zombies, effects and event overlays.
-import { W, H, LOCKERS, GENERATOR, CREWS, LAMPS } from './shared/world.js';
+import { W, H, LOCKERS, GENERATOR, CREWS, LAMPS, ROOM_OF } from './shared/world.js';
 import { EMOTE_ICON } from './shared/avatar.js';
 import { renderStatic, drawLocker, drawGenerator, drawFuse, drawAvatar, drawZombie, outlinedText, star, rr, INK, TAU } from './art.js';
 
@@ -30,6 +30,7 @@ export class WorldView {
     else this.S = Math.min(w / W, h / H);
     this.overlay.width = this.cv.width; this.overlay.height = this.cv.height;
   }
+  setVocab(list) { this.vocab = (list || []).map((v) => v.word).filter(Boolean); }
   setRoster(list) { this.roster = new Map(list.map((p) => [p.n, p])); }
   setMe(n) { this.me = n; }
   setLocal(x, y, dir, moving) { this.local = { x, y, dir, moving }; }
@@ -147,6 +148,7 @@ export class WorldView {
     for (const [lx, ly] of LAMPS) ents.push({ y: ly, draw: () => this.lamp(c, lx * S, ly * S, S) });
     ents.sort((a, b) => a.y - b.y || (a.me ? 1 : 0) - (b.me ? 1 : 0));
     for (const e of ents) e.draw();
+    this.karaoke(c, S, st);
     // dusk: a soft violet tint with warm pools of light (stays bright and readable)
     c.fillStyle = 'rgba(88,52,160,0.15)'; c.fillRect(-ox, -oy, this.w, this.h);
     c.globalCompositeOperation = 'lighter';
@@ -170,6 +172,36 @@ export class WorldView {
     // event overlays
     if (this.event === 'lights') this.lightsOut(st, ox, oy);
     if (this.event === 'party' && !this.reduced) this.disco();
+  }
+
+  // Karaoke room: lyric screen scrolling the pack's key words, coloured spotlights, music notes over singers
+  karaoke(c, S, st) {
+    const t = this.reduced ? 0 : this.t;
+    const words = this.vocab && this.vocab.length ? this.vocab : ['la', 'la', 'la', 'sing!'];
+    const i = Math.floor(t / 1.2) % words.length;
+    c.save(); c.beginPath(); c.roundRect(36.35 * S, 1.2 * S, 3.3 * S, 0.65 * S, S * 0.08); c.clip();
+    c.fillStyle = '#151032'; c.fillRect(36.35 * S, 1.2 * S, 3.3 * S, 0.65 * S);
+    const f = Math.max(9, S * 0.36); c.font = `900 ${f}px "Trebuchet MS", Arial`; c.textBaseline = 'middle'; c.textAlign = 'center';
+    const prog = (t / 1.2) % 1; const word = `♪ ${words[i]} ♪`; const wW = c.measureText(word).width;
+    c.fillStyle = '#ffffff'; c.fillText(word, 38 * S, 1.53 * S);
+    c.save(); c.beginPath(); c.rect(38 * S - wW / 2, 1.2 * S, wW * prog, 0.65 * S); c.clip(); c.fillStyle = '#ff5fa2'; c.fillText(word, 38 * S, 1.53 * S); c.restore();
+    c.restore();
+    if (!this.reduced) {
+      c.globalCompositeOperation = 'lighter';
+      const cols = ['rgba(255,95,162,0.22)', 'rgba(46,196,255,0.22)', 'rgba(255,210,63,0.20)'];
+      cols.forEach((col, k) => {
+        const sx = (36.6 + k * 1.4) * S, sy = 2.2 * S; const tx = (37.5 + Math.sin(t * (0.8 + k * 0.3) + k * 2) * 1.6) * S, ty = (8 + Math.cos(t * (0.6 + k * 0.2) + k) * 5) * S;
+        c.fillStyle = col; c.beginPath(); c.moveTo(sx, sy); c.lineTo(tx - S * 1.1, ty); c.lineTo(tx + S * 1.1, ty); c.closePath(); c.fill();
+        c.beginPath(); c.ellipse(tx, ty, S * 1.1, S * 0.45, 0, 0, TAU); c.fill();
+      });
+      c.globalCompositeOperation = 'source-over';
+    }
+    for (const p of st.players.values()) {
+      const row = ROOM_OF[Math.floor(p.y)]; if (!row || row[Math.floor(p.x)] !== 'AV') continue;
+      const ph = (t * 0.8 + p.n * 0.37) % 1; c.globalAlpha = 1 - ph;
+      outlinedText(c, ph < 0.5 ? '♪' : '♫', p.x * S + Math.sin(ph * 6 + p.n) * S * 0.3, (p.y - 1.4 - ph * 0.8) * S, S * 0.4, ['#ff5fa2', '#ffd23f', '#2ec4ff'][p.n % 3]);
+      c.globalAlpha = 1;
+    }
   }
 
   lamp(c, x, y, S) {

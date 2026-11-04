@@ -38,6 +38,8 @@ export function drawFloor(c, code, x, y, S) {
     case ';': c.fillStyle = '#5cc7b8'; c.fillRect(px, py, S, S); c.fillStyle = '#79d6c8'; c.beginPath(); c.moveTo(px + S / 2, py + S * 0.15); c.lineTo(px + S * 0.85, py + S / 2); c.lineTo(px + S / 2, py + S * 0.85); c.lineTo(px + S * 0.15, py + S / 2); c.closePath(); c.fill(); break;
     case '=': c.fillStyle = (x % 2) ? '#f7b867' : '#f2ae5c'; c.fillRect(px, py, S, S); c.strokeStyle = 'rgba(150,80,20,0.15)'; c.lineWidth = 1; c.beginPath(); c.moveTo(px + S / 2, py); c.lineTo(px + S / 2, py + S); c.stroke(); break;
     case '_': c.fillStyle = (x + y) % 2 ? '#fbfbf7' : '#e9e9e2'; c.fillRect(px, py, S, S); c.fillStyle = 'rgba(120,120,110,0.12)'; c.fillRect(px + S * (0.2 + r() * 0.5), py + S * (0.2 + r() * 0.5), S * 0.08, S * 0.08); break;
+    case 'd': { const cols = ['#b48cff', '#ff8fc8', '#7fc8ff', '#ffd36b']; c.fillStyle = cols[(x + y * 2) % 4]; c.fillRect(px, py, S, S); c.fillStyle = 'rgba(255,255,255,0.25)'; c.fillRect(px + S * 0.08, py + S * 0.08, S * 0.84, S * 0.84); c.fillStyle = cols[(x + y * 2) % 4]; c.fillRect(px + S * 0.16, py + S * 0.16, S * 0.68, S * 0.68); break; }
+    case 'm': { c.fillStyle = '#5a3a8a'; c.fillRect(px, py, S, S); c.strokeStyle = '#7b55b5'; c.lineWidth = Math.max(1, S * 0.03); for (let i = 1; i < 4; i++) { c.beginPath(); c.moveTo(px, py + i * S / 4); c.lineTo(px + S, py + i * S / 4); c.stroke(); } if (tileAt(x, y + 1) !== 'm') { c.fillStyle = '#ffd23f'; for (let i = 0; i < 4; i++) { c.beginPath(); c.arc(px + S * (0.12 + i * 0.25), py + S * 0.92, S * 0.06, 0, TAU); c.fill(); } } break; }
     case 'k': { c.fillStyle = '#3f8fe0'; c.fillRect(px, py, S, S); c.fillStyle = 'rgba(255,255,255,0.10)'; c.fillRect(px, py + S * 0.1, S, S * 0.12); break; }
     case 'c': { c.fillStyle = (x + y) % 2 ? '#c9c6c0' : '#c3c0ba'; c.fillRect(px, py, S, S); c.fillStyle = 'rgba(90,85,80,0.12)'; for (let i = 0; i < 3; i++) c.fillRect(px + r() * S, py + r() * S, S * 0.05, S * 0.05); break; }
     case 'p': c.fillStyle = '#86d769'; c.fillRect(px, py, S, S); c.fillStyle = '#f2dfb1'; rr(c, px + S * 0.06, py + S * 0.06, S * 0.88, S * 0.88, S * 0.25); fs(c, '#f2dfb1', '#d9bf86', Math.max(1, S * 0.03)); break;
@@ -70,7 +72,7 @@ export function drawWall(c, x, y, S) {
 
 export function drawObject(c, code, x, y, S) {
   const px = x * S, py = y * S; const lw = Math.max(1, S * 0.05); const r = rnd(x * 31 + y * 17);
-  const under = ROOM_OF[y][x] ? FLOOR_OF_ROOM(x, y) : (code === 'V' || code === 'F' ? 'c' : code === 'S' ? '.' : ',');
+  const under = code === 'Q' ? 'm' : ROOM_OF[y][x] ? FLOOR_OF_ROOM(x, y) : (code === 'V' || code === 'F' ? 'c' : code === 'S' ? '.' : ',');
   if (code !== 'G' && code !== '~') drawFloor(c, under, x, y, S);
   switch (code) {
     case 'f': {
@@ -159,6 +161,12 @@ export function drawObject(c, code, x, y, S) {
       c.fillStyle = '#ffd23f'; c.fillRect(px + S * 0.16, py + S * 0.08, S * 0.12, S * 0.06); c.fillRect(px + S * 0.72, py + S * 0.08, S * 0.12, S * 0.06);
       break;
     }
+    case 'Q': {
+      c.fillStyle = '#5a3a8a'; c.fillRect(px, py, S, S);
+      rr(c, px + S * 0.14, py + S * 0.04, S * 0.72, S * 0.92, S * 0.1); fs(c, '#2b2340', INK, lw);
+      for (const [cy, r] of [[0.3, 0.16], [0.68, 0.22]]) { c.beginPath(); c.arc(px + S / 2, py + S * cy, S * r, 0, TAU); fs(c, '#4b4470', '#9b8cff', lw * 0.6); c.beginPath(); c.arc(px + S / 2, py + S * cy, S * r * 0.4, 0, TAU); c.fillStyle = '#9b8cff'; c.fill(); }
+      break;
+    }
     case 'Y': {
       c.fillStyle = 'rgba(30,60,30,0.25)'; c.beginPath(); c.ellipse(px + S / 2, py + S * 0.88, S * 0.4, S * 0.13, 0, 0, TAU); c.fill();
       c.strokeStyle = '#9a6a3f'; c.lineWidth = S * 0.13; c.lineCap = 'round'; c.beginPath(); c.moveTo(px + S * 0.5, py + S * 0.85); c.quadraticCurveTo(px + S * 0.42, py + S * 0.4, px + S * 0.55, py + S * 0.05); c.stroke();
@@ -198,8 +206,13 @@ export function drawDecor(c, S) {
   for (const fy of [12.5, 15.5]) { c.beginPath(); c.arc(13.55 * S, fy * S, S * 0.22, 0, TAU); fs(c, '#2b2d42', INK, lw * 0.5); c.fillStyle = '#9aa0b5'; for (let k = 0; k < 3; k++) { c.beginPath(); c.ellipse(13.55 * S + Math.cos(k * 2.1) * S * 0.12, fy * S + Math.sin(k * 2.1) * S * 0.12, S * 0.1, S * 0.05, k * 2.1, 0, TAU); c.fill(); } }
   // school name on the English building (front building colours: cream with orange balconies)
   plaque(c, 'โรงเรียนศึกษานารี', 4 * S, 8.55 * S, S, '#fff7df', '#9c5b3c');
+  // karaoke stage: big screen on the back wall and a microphone stand
+  rr(c, 36.3 * S, 1.15 * S, 3.4 * S, 0.75 * S, S * 0.1); fs(c, '#151032', INK, lw);
+  c.beginPath(); c.moveTo(37.5 * S, 3.6 * S); c.lineTo(37.5 * S, 2.7 * S); c.strokeStyle = '#c9c9dd'; c.lineWidth = Math.max(1.5, S * 0.06); c.stroke();
+  c.beginPath(); c.ellipse(37.5 * S, 3.62 * S, 0.18 * S, 0.06 * S, 0, 0, TAU); c.fillStyle = '#c9c9dd'; c.fill();
+  c.beginPath(); c.arc(37.5 * S, 2.62 * S, 0.11 * S, 0, TAU); fs(c, '#2b2340', '#c9c9dd', lw * 0.6);
   // room + area labels
-  const labels = [['Gym', 5.5, 1.95], ['Maths', 22.5, 1.95], ['Audio-Visual', 37.5, 1.95], ['English', 4, 9.95], ['Canteen', 11.5, 17.0], ['Thai', 6, 22.95], ['Car park', 25, 20.6], ['Garden', 14.5, 21.6], ['Assembly Court', 29.5, 16.6]];
+  const labels = [['Gym', 5.5, 1.95], ['Maths', 22.5, 1.95], ['Karaoke & AV', 37.5, 4.35], ['English', 4, 9.95], ['Canteen', 11.5, 17.0], ['Thai', 6, 22.95], ['Car park', 25, 20.6], ['Garden', 14.5, 21.6], ['Assembly Court', 29.5, 16.6]];
   for (const [t, lx, ly] of labels) sign(c, t, lx * S, ly * S, S);
 }
 
@@ -210,7 +223,7 @@ function plaque(c, text, x, y, S, bg, fg) {
 }
 
 function sign(c, text, x, y, S) {
-  const f = Math.max(8, S * 0.32); c.font = `900 ${f}px "Trebuchet MS", "Arial Rounded MT Bold", Arial, sans-serif`;
+  const f = Math.max(11, Math.min(20, S * 0.52)); c.font = `900 ${f}px "Trebuchet MS", "Arial Rounded MT Bold", Arial, sans-serif`;
   const w = c.measureText(text).width + f; rr(c, x - w / 2, y - f * 0.62, w, f * 1.24, f * 0.4); fs(c, '#ffffff', INK, Math.max(1, S * 0.04));
   c.fillStyle = INK; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText(text, x, y + f * 0.04);
 }
@@ -220,7 +233,7 @@ export function renderStatic(c, S, x0, y0, x1, y1) {
   for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) {
     const code = tileAt(x, y);
     if (code === '#') drawWall(c, x, y, S);
-    else if ('fTBDKbPXFSVYC'.includes(code)) drawObject(c, code, x, y, S);
+    else if ('fTBDKbPXFSVYCQ'.includes(code)) drawObject(c, code, x, y, S);
     else if (code === 'L' || code === 'G' || code === '~') drawFloor(c, code === 'L' ? (ROOM_OF[y][x] ? FLOOR_OF_ROOM(x, y) : (tileAt(x, y + 1) === 'k' || tileAt(x, y - 1) === 'k' ? 'k' : tileAt(x - 1, y) === 'c' ? 'c' : '.')) : (code === 'G' ? 'k' : ','), x, y, S);
     else drawFloor(c, code, x, y, S);
   }

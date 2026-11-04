@@ -91,3 +91,12 @@ a { color: #6a4cff; font-weight: 800; }
 .modal-card ol, .modal-card ul { font-weight: 700; line-height: 1.45; }
 .warn { background: #fff1c2; border: 3px solid #f2a900; border-radius: 14px; padding: 8px 12px; font-weight: 800; }
 .solo-row .av { width: 44px; height: 44px; flex: none; }
+/* keep the top bar on one line at 1366 px */
+.topbar { gap: 8px; padding: 0 10px; }
+.topbar > * { flex-shrink: 0; white-space: nowrap; }
+.topbar .brand.mini .b1, .topbar .brand.mini .b2 { font-size: 1.25em; }
+.big-timer { font-size: 1.45em; min-width: 110px; padding: 4px 12px; }
+.ctrls { gap: 5px; }
+.ctrls .btn { min-height: 40px; padding: 0 9px; font-size: .9em; }
+.ctrls .btn.icon { width: 40px; padding: 0; }
+.codebox { padding: 3px 10px; }

@@ -3,6 +3,7 @@
 A real-time, Roblox-style classroom game for English review. Every student makes her own character, runs around a bright cartoon school on her phone, answers questions at glowing lockers for loot, and dodges silly zombies while her crew races to power up the school generator. The projector shows the whole school live, with every player on it.
 
 - Students control their own character with a joystick and play at their own pace, so nobody waits for the class.
+- Emotes include 👋 💃 💖 😂 😮 ⭐ 🎤 👏 😎.
 - An avatar creator with hair, colours, outfits (including a school uniform), ears, bows, glasses and crowns. There are also emotes (wave, dance, heart…).
 - Lockers hold the questions. A correct answer gives loot: a fuse, a golden fuse, speed boots, a shield or a zombie zap. Every answer shows the **WHY**.
 - Zombies are cute and silly, and getting tagged is playground tag, not elimination. A tagged player turns into a mini-zombie for 8 s, drops her fuses, and turns back by tagging someone from another crew.
@@ -113,9 +114,9 @@ The school is a cartoon version of the real Suksanari campus, laid out from the 
 |---|---|
 | Gym (north-west) | Orange gym with court lines and benches |
 | Maths building (along the north road) | Long classroom building across the top |
-| Audio-visual room (east side) | Long lilac building down the right side |
+| Audio-visual room (east side) | **Karaoke & AV room** down the right side: stage with speakers and a mic, a karaoke screen that scrolls the pack's key vocabulary words, a disco floor with moving spotlights, sofas, and music notes over anyone inside (try the 🎤 emote) |
 | English classrooms (west side) | Cream building with orange trim (like the front building's balconies), with a "โรงเรียนศึกษานารี" sign |
-| Canteen lunch area | Beside the English building, with red numbered food-stall banners, long tables and wall fans |
+| Canteen lunch area (the narrow strip between the English building and the courts) | Beside the English building, with red numbered food-stall banners, long tables and wall fans |
 | Outdoor sports / basketball courts / assembly area | The big blue court in the middle, with yellow key areas, roof columns, an "อนุสรณ์ ๑๐๐ ปี" (100-year memorial) sign, and the **generator** in the centre circle |
 | Thai class (south-west) | Building with a terracotta-red roof colour |
 | Security, car park, garden | A security booth, a car park with yellow lines and parked cars, garden trees and palm trees along the road, and the front gate at the bottom |
@@ -222,7 +223,7 @@ All results are from 2026-11-04, after the campus-layout map change, on a Linux 
 | `npm test` | **24 / 24 passed**, in two consecutive full runs plus 5 extra runs of the network tests. Everything is checked against the new map: every walkable tile and every locker is reachable, spawns are clear, and you can stand next to the generator. One network test was flaky after the map change: its long walk to a far locker could be caught by a zombie, and it then left a socket open, so the run hung. It now walks to the nearest locker and always closes its socket |
 | `node tests/sim.mjs 20` | **PASS.** 20 simulated clients, 2-minute game, late joiners and reconnects. 137 answers at 76%. 0 server errors. 5 position corrections. 20/20 got their private stats |
 | `node tests/sim.mjs 40` | **PASS.** 40 clients, 215 answers at 83%. 0 server errors. 32 position corrections out of tens of thousands of moves. About 555 KB/s in total downstream. 40/40 got their private stats |
-| `node tests/browser.mjs` | **50 / 50 checks passed, 0 console or page errors** on the new map (same checks as before) |
+| `node tests/browser.mjs` | **52 / 52 checks passed, 0 console or page errors** on the new map. This includes 2 new checks that the teacher top bar stays on one line with 15 players in the lobby and during play (it used to wrap) |
 
 **Note on the new map:** simulated players answered fewer questions per minute than on the old map (40 clients: 215 answers vs 364), because the walks between lockers are longer. That might suit real students, who need reading time anyway. If students seem to run around more than they answer, add lockers or move them closer together.
 

@@ -130,7 +130,7 @@ function onStatus(s, m) {
 
 function onMessage(m) {
   switch (m.t) {
-    case 'welcome':
+    case 'welcome': if (view && m.vocab) view.setVocab(m.vocab);
       if (m.you) { local = local && phase !== 'lobby' ? local : { x: m.you.x, y: m.you.y, dir: 1, moving: false }; me.crew = m.you.crew; }
       if (m.settings) settings = m.settings;
       setPhase(m.phase, m.paused); if (m.results) showResults(m.results, null);

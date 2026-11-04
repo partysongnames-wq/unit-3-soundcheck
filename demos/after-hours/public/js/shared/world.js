@@ -7,8 +7,8 @@ export const SPEED = { player: 4.2, boots: 6.0, zombified: 3.5, sleepy: 2.5, zom
 export const RADIUS = 0.3;
 
 // Walkable floor codes and solid object codes
-const FLOORS = new Set([',', '.', ':', ';', '=', '_', 'p', 'o', 'c', 'k']);
-export const SOLIDS = new Set(['#', 'f', 'T', 'B', 'D', 'K', '~', 'G', 'L', 'b', 'P', 'F', 'X', 'S', 'V', 'Y', 'C']);
+const FLOORS = new Set([',', '.', ':', ';', '=', '_', 'p', 'o', 'c', 'k', 'd', 'm']);
+export const SOLIDS = new Set(['#', 'f', 'T', 'B', 'D', 'K', '~', 'G', 'L', 'b', 'P', 'F', 'X', 'S', 'V', 'Y', 'C', 'Q']);
 
 // Layout loosely follows the real Suksanari campus (north at the top): Gym NW, Maths along the north,
 // Audio-Visual on the east, English classrooms on the west with the canteen beside them, the big covered
@@ -16,7 +16,7 @@ export const SOLIDS = new Set(['#', 'f', 'T', 'B', 'D', 'K', '~', 'G', 'L', 'b',
 export const ROOMS = {
   GYM: { name: 'Gym', wall: '#ffc29a', face: '#e98a52', floor: '=' },
   MATH: { name: 'Maths', wall: '#e6c3a5', face: '#9c5b3c', floor: ':' },
-  AV: { name: 'Audio-Visual', wall: '#c9b6ff', face: '#8f76e0', floor: ';' },
+  AV: { name: 'Karaoke & AV', wall: '#c9b6ff', face: '#7a5ad6', floor: 'd' },
   ENG: { name: 'English', wall: '#f7e6a8', face: '#e3a23a', floor: ':' },
   CAN: { name: 'Canteen', wall: '#fff3dc', face: '#d6453b', floor: '_' },
   THAI: { name: 'Thai', wall: '#efb7a3', face: '#a44f39', floor: ':' }
@@ -63,7 +63,9 @@ function build() {
   // furniture
   for (const x of [3, 4, 7, 8]) set(x, 2, 'b');
   for (const x of [15, 18, 21, 25, 29, 31]) set(x, 3, 'D');
-  for (const y of [4, 9, 15]) { set(37, y, 'D'); set(38, y, 'D'); }
+  // Audio-visual room = karaoke room: stage with speakers at the top, disco floor, sofas
+  fill(36, 2, 39, 3, 'm'); set(36, 2, 'Q'); set(39, 2, 'Q');
+  for (const x of [37, 38]) { set(x, 10, 'b'); set(x, 14, 'b'); }
   for (const y of [11, 14, 17]) { set(3, y, 'D'); set(5, y, 'D'); }
   for (const y of [11, 14]) for (const x of [10, 11, 12]) set(x, y, 'K');
   for (const x of [3, 5, 7, 9]) set(x, 24, 'D');
