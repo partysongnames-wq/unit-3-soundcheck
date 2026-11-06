@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+  <meta name="theme-color" content="#5b3fd6">
+  <title>SnR Daywalkers — Play</title>
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/play.css">
+  <link rel="stylesheet" href="css/stations.css">
+  <link rel="stylesheet" href="css/karaoke.css">
+</head>
+<body class="play">
+  <div id="conn" class="conn-pill hidden" role="status" aria-live="polite"></div>
+
+  <!-- JOIN -->
+  <main id="joinView" class="screen join">
+    <div class="join-card">
+      <div class="brand"><span class="b1">SnR</span><span class="b2">DAYWALKERS</span><span class="b3">☀️ day &amp; night 🌙</span></div>
+      <canvas id="joinArt" class="join-art" width="300" height="150" aria-hidden="true"></canvas>
+      <form id="joinForm" autocomplete="off">
+        <label>Game code<input id="roomIn" maxlength="5" autocapitalize="characters" required placeholder="ABCDE"></label>
+        <label>Nickname <small>(not your real name)</small>
+          <span class="inrow"><input id="nameIn" maxlength="16" required><button type="button" id="diceBtn" class="btn dice" aria-label="Random nickname">🎲</button></span>
+        </label>
+        <button class="btn primary big" type="submit">Next →</button>
+        <p id="joinErr" class="err" role="alert"></p>
+      </form>
+    </div>
+  </main>
+
+  <!-- AVATAR CREATOR -->
+  <main id="avatarView" class="screen avatar hidden">
+    <h1 class="title">Make your character</h1>
+    <div class="preview-wrap"><canvas id="avatarPreview" width="260" height="220" aria-label="Your character preview"></canvas>
+      <button id="randAvatar" class="btn dice small-dice" aria-label="Random look">🎲</button></div>
+    <div id="tabs" class="tabs" role="tablist"></div>
+    <div id="choices" class="choices" role="listbox"></div>
+    <button id="avatarDone" class="btn primary big">Let's go! 🚀</button>
+  </main>
+
+  <!-- GAME -->
+  <main id="gameView" class="screen game hidden">
+    <canvas id="world" aria-label="School map with your character"></canvas>
+    <header class="hud">
+      <div id="hudCrew" class="hud-crew"></div>
+      <div id="hudTimer" class="hud-timer">–:––</div>
+      <button id="sndBtn" class="hud-btn" aria-label="Sound on/off">🔊</button>
+    </header>
+    <div id="energy" class="energy hidden" aria-label="Your power meter"><div class="ebar"><i id="energyFill"></i></div><span id="energyTxt">⚡ Power</span><span id="happyTxt" class="happy" title="Happiness: 70+ gives a bonus point at the generator">🙂 40</span></div>
+    <div id="hudItems" class="hud-items"></div>
+    <div id="toasts" class="toasts" aria-live="polite"></div>
+    <div id="banner" class="banner hidden"></div>
+    <div id="joyZone" class="joy-zone" aria-hidden="true"><div id="joyBase" class="joy-base hidden"><div id="joyKnob" class="joy-knob"></div></div></div>
+    <button id="actBtn" class="act-btn hidden">OPEN ❓</button>
+    <button id="autoBtn" class="auto-btn hidden">🧭 Find a locker</button>
+    <button id="emoteBtn" class="emote-btn" aria-label="Emotes">😊</button>
+    <div id="emoteWheel" class="emote-wheel hidden"></div>
+    <div id="hint" class="hint hidden"></div>
+    <section id="qModal" class="modal hidden" role="dialog" aria-modal="true" aria-label="Locker question"></section>
+    <section id="overlay" class="overlay hidden"></section>
+  </main>
+  <script type="module" src="js/play.js"></script>
+</body>
+</html>

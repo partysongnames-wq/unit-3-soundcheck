@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SnR Daywalkers — Teacher Screen</title>
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/host.css">
+</head>
+<body class="host">
+  <div id="conn" class="conn-pill hidden" role="status" aria-live="polite"></div>
+
+  <main id="setup" class="setup">
+    <canvas id="setupMap" class="bg-map" aria-hidden="true"></canvas>
+    <section class="setup-card">
+      <div class="brand"><span class="b1">SnR</span> <span class="b2">DAYWALKERS</span><div class="b3">☀️ day &amp; night 🌙 · teacher screen</div></div>
+      <div id="resumeBox" class="resume hidden"></div>
+      <label class="field">Question pack <select id="packSelect"></select></label>
+      <p id="packInfo" class="muted small"></p>
+      <div class="row">
+        <label class="field">Teams
+          <select id="teams"><option value="4" selected>4 crews</option><option value="3">3 crews</option><option value="2">2 crews</option><option value="0">Solo (everyone for herself)</option></select>
+        </label>
+        <label class="field">Game length
+          <select id="minutes"><option value="5">5 minutes</option><option value="6">6 minutes</option><option value="8" selected>8 minutes</option><option value="10">10 minutes</option><option value="12">12 minutes</option></select>
+        </label>
+        <label class="field">Goal (optional)
+          <select id="goal"><option value="0" selected>No goal — timer only</option><option value="20">First to 20</option><option value="30">First to 30</option><option value="50">First to 50</option><option value="80">First to 80</option></select>
+        </label>
+      </div>
+      <label class="check-row"><input id="night" type="checkbox" checked> 🌙 Night time — twice per game it gets dark for 30 seconds (spookier, faster zombies, bonus fuses)</label>
+      <p class="muted small">You can change teams in the lobby once you see how many joined. Tip: fewer than 10 players → Solo or 2 crews.</p>
+      <label class="field">Join address for phones (QR code)
+        <input id="joinBase" type="url" placeholder="http://192.168.x.x:8787" autocomplete="off">
+      </label>
+      <p id="lanHint" class="muted small"></p>
+      <div class="row">
+        <button id="createBtn" class="btn primary big">Create game</button>
+        <button id="demoBtn" class="btn big">Try a DEMO (bots)</button>
+      </div>
+      <details class="tips"><summary>Teacher tips (read once)</summary>
+        <ul>
+          <li><b>Before the lesson:</b> test this laptop + 2–3 phones on the school Wi-Fi for 5 minutes. Some networks block phones from reaching the laptop.</li>
+          <li><b>Length:</b> 5 minutes for the first game, then 6–8 minutes once students know the rules. Two short games + the question review beats one long game.</li>
+          <li><b>Pairs work well:</b> one phone per pair halves Wi-Fi load; one student steers, the other reads and answers. Use a pair nickname like "Mochi &amp; Boba".</li>
+          <li><b>Avatars:</b> allow ~2 minutes. Pressing Start pulls everyone into the game, even if they're still designing.</li>
+          <li><b>Who isn't answering?</b> Press 📋 during the game and scan the code with <i>your</i> phone for a private list.</li>
+          <li><b>Rules in one breath:</b> answer locker questions → loot → carry fuses to the generator. Tagged? Tag someone from another crew.</li>
+        </ul>
+      </details>
+      <p class="muted small">Edit questions in the <a href="editor.html">question editor</a>. Each game keeps its own copy of the pack.</p>
+      <p id="setupErr" class="err" role="alert"></p>
+    </section>
+  </main>
+
+  <main id="game" class="game hidden">
+    <header class="topbar">
+      <div class="brand mini"><span class="b1">SnR</span> <span class="b2">DAYWALKERS</span></div>
+      <span id="demoTag" class="tag demo hidden">DEMO · bots</span>
+      <div class="codebox">Code <b id="codeMini"></b></div>
+      <div id="bigTimer" class="big-timer">LOBBY</div>
+      <div class="ctrls">
+        <button id="cStart" class="btn primary">▶ Start</button>
+        <button id="cPause" class="btn">⏸ Pause</button>
+        <button id="cAdd" class="btn">+1 min</button>
+        <button id="cEnd" class="btn">⏹ End</button>
+        <button id="cReset" class="btn danger">↺ Reset</button>
+        <button id="cHow" class="btn icon" title="How to play">❓</button>
+        <button id="cTeacher" class="btn icon" title="Teacher phone view">📋</button>
+        <button id="cMusic" class="btn icon" aria-pressed="true" title="Music">🎵</button>
+        <button id="cSfx" class="btn icon" aria-pressed="true" title="Sound effects">🔊</button>
+        <button id="cFull" class="btn icon" title="Full screen">⛶</button>
+      </div>
+    </header>
+    <div class="stage">
+      <div class="map-wrap">
+        <canvas id="map" aria-label="Live school map"></canvas>
+        <div id="banner" class="banner hidden"></div>
+        <section id="overlay" class="overlay hidden"></section>
+      </div>
+      <aside class="rail">
+        <h2 id="railTitle">Crew race</h2>
+        <div id="board" class="board"></div>
+        <div id="stats" class="statbox"></div>
+        <h3>Live feed</h3>
+        <ul id="feed" class="feed"></ul>
+      </aside>
+    </div>
+  </main>
+  <script type="module" src="js/host.js"></script>
+<a href="karaoke-test.html" target="_blank" rel="noopener" style="position:fixed;bottom:8px;right:8px;z-index:60" class="btn small">🎤 Teacher rehearsal</a>
+</body>
+</html>

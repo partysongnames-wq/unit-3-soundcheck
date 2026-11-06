@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SnR Daywalkers — Pack Editor</title>
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/editor.css">
+</head>
+<body class="editor">
+  <header class="etop no-print">
+    <a class="logo" href="index.html">SnR <span class="k">Daywalkers</span></a>
+    <span class="etitle">Question pack editor</span>
+    <span id="saveState" class="save-state" role="status" aria-live="polite"></span>
+    <a class="btn small" href="host.html">Go to teacher screen →</a>
+  </header>
+  <div class="ewrap no-print">
+    <aside class="side">
+      <h2>Packs</h2>
+      <ul id="packList" class="pack-list"></ul>
+      <div class="side-btns">
+        <button id="newPack" class="btn small">+ New</button>
+        <button id="dupPack" class="btn small">Duplicate</button>
+        <button id="delPack" class="btn small danger">Delete</button>
+        <label class="btn small" for="importFile">Import JSON</label>
+        <input id="importFile" type="file" accept="application/json,.json" class="sr-only">
+        <button id="exportPack" class="btn small">Export JSON</button>
+        <button id="printPack" class="btn small">Print A4 + key</button>
+      </div>
+      <p id="sideMsg" class="msg" role="alert"></p>
+      <p class="muted small">Packs are saved in this browser only (localStorage). Export JSON to back up or share. Rooms already running keep their own copy.</p>
+    </aside>
+    <main id="main" class="emain"></main>
+  </div>
+  <div id="previewModal" class="modal hidden no-print" role="dialog" aria-modal="true" aria-label="Question preview"></div>
+  <section id="printArea" class="print-only"></section>
+  <script type="module" src="js/editor.js"></script>
+</body>
+</html>

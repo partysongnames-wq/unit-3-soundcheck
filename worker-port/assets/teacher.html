@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="referrer" content="no-referrer">
+  <title>SnR Daywalkers — Teacher check</title>
+  <link rel="stylesheet" href="css/base.css">
+  <style>
+    body { margin: 0; font-family: "Trebuchet MS", Arial, sans-serif; background: #f6f2ff; color: #2b2340; }
+    header { position: sticky; top: 0; background: #6a4cff; color: #fff; padding: 10px 14px; border-bottom: 4px solid #2b2340; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+    header b { font-size: 1.2em; }
+    main { padding: 12px 14px 30px; max-width: 640px; margin: 0 auto; }
+    .sum { background: #fff; border: 3px solid #2b2340; border-radius: 14px; padding: 8px 12px; font-weight: 800; margin-bottom: 10px; }
+    table { width: 100%; border-collapse: collapse; background: #fff; border: 3px solid #2b2340; border-radius: 14px; overflow: hidden; font-size: .92em; }
+    th, td { padding: 7px 6px; text-align: left; border-bottom: 1px solid #e4def8; }
+    th { background: #2b2340; color: #fff; font-size: .85em; }
+    tr.warn td { background: #ffe1e7; }
+    .dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; border: 2px solid #2b2340; margin-right: 4px; vertical-align: middle; }
+    .st { font-size: .8em; font-weight: 800; color: #5b5577; }
+    h2 { font-size: 1.1em; margin: 16px 0 6px; }
+    .q { background: #fff; border-radius: 10px; padding: 6px 10px; margin: 4px 0; border-left: 6px solid #6a4cff; font-size: .9em; }
+    .err { color: #d6284f; font-weight: 900; }
+  </style>
+</head>
+<body>
+  <header><b>📋 Teacher check</b><span id="hdr"></span></header>
+  <main>
+    <div id="sum" class="sum">Loading…</div>
+    <table aria-label="Players"><thead><tr><th>Nickname</th><th>Answered</th><th>Correct</th><th>Last answer</th><th>Now</th></tr></thead><tbody id="rows"></tbody></table>
+    <h2>Questions</h2>
+    <div id="qs"></div>
+    <p class="st">Private to you. Refreshes every 3 seconds. Read-only — use the laptop to control the game.</p>
+  </main>
+  <script type="module" src="js/teacher.js"></script>
+</body>
+</html>

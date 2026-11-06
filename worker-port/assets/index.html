@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SnR Daywalkers</title>
+  <link rel="stylesheet" href="css/base.css">
+  <style>
+    body { margin: 0; min-height: 100vh; overflow: hidden; background: #6a4cff; font-family: "Trebuchet MS", "Arial Rounded MT Bold", Arial, sans-serif; color: #2b2340; }
+    #title-map { position: fixed; inset: 0; width: 100vw; height: 100vh; display: block; }
+    .title-wrap { position: relative; min-height: 100vh; display: flex; align-items: center; padding: 16px 5vw; pointer-events: none; }
+    .card { pointer-events: auto; background: #fff; border: 4px solid #2b2340; border-radius: 28px; box-shadow: 0 10px 0 #2b2340; padding: 24px 28px; max-width: 460px; }
+    .b1, .b2 { display: block; font-weight: 900; line-height: .95; }
+    .b1 { color: #6a4cff; font-size: clamp(2.4rem, 6vw, 4rem); }
+    .b2 { color: #ff5fa2; font-size: clamp(2rem, 4.6vw, 3.1rem); -webkit-text-stroke: 2.5px #2b2340; letter-spacing: .01em; }
+    .b3 { letter-spacing: .12em; text-transform: uppercase; font-weight: 900; margin: 6px 0 12px; }
+    .tagline { font-size: 1.1rem; font-weight: 700; margin: 0 0 14px; }
+    .menu { display: flex; flex-direction: column; gap: 10px; }
+    .menu a { display: flex; align-items: center; justify-content: center; min-height: 56px; border: 3px solid #2b2340; border-radius: 16px; box-shadow: 0 5px 0 #2b2340; font-weight: 900; font-size: 1.1rem; text-decoration: none; color: #2b2340; background: #fff; }
+    .menu a.primary { background: #ffd23f; }
+    .foot { font-size: .8rem; color: #5b5577; font-weight: 700; margin: 12px 0 0; }
+    @media (max-width: 600px) { body { overflow: auto; } .title-wrap { padding: 20px 16px; align-items: flex-start; } }
+  </style>
+</head>
+<body>
+  <canvas id="title-map" aria-hidden="true"></canvas>
+  <main class="title-wrap">
+    <div class="card">
+      <span class="b1">SnR</span><span class="b2">DAYWALKERS</span>
+      <div class="b3">☀️ day &amp; night 🌙 · a crew game for English class</div>
+      <p class="tagline">A school day at Suksanari… with cute zombies. Make your character, answer locker questions for loot, rush to the canteen, karaoke stage or gym when the bell rings, survive the spooky nights and power up the generator with your crew!</p>
+      <nav class="menu">
+        <a class="primary" href="host.html">🎮 Teacher: start a game</a>
+        <a href="play.html">📱 Student: join on phone</a>
+        <a href="editor.html">✏️ Edit questions</a>
+      </nav>
+      <p class="foot">Original art drawn in code · runs on your classroom Wi-Fi · no accounts, no real names.</p>
+    </div>
+  </main>
+  <script type="module" src="js/title.js"></script>
+</body>
+</html>

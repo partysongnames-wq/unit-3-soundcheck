@@ -1,0 +1,12 @@
+
+/* Reusable station challenge modal */
+.qcard.station{box-sizing:border-box;max-width:680px;border:3px solid #231942;background:linear-gradient(160deg,#fff,#f2edff);box-shadow:0 18px 60px #09051baa}
+.qcard.station.math{color:#281b17;background:linear-gradient(160deg,#fff9d9,#ffe69a)}
+.qcard.station.flag{color:#1f2440;background:linear-gradient(160deg,#effaff,#d8edff)}
+.qcard.station.math .prompt,.qcard.station.flag .prompt{color:inherit}
+.qcard.station.checkpoint{background:linear-gradient(160deg,#111827,#26354d);color:#f8fafc;border-color:#50e3c2}
+.station-time{height:9px;background:#0002;border-radius:9px;overflow:hidden;margin:10px 0}.station-time i{display:block;height:100%;background:linear-gradient(90deg,#50e3c2,#ffd166,#ff5c8a)}
+.station-flag{display:block;width:min(72%,300px);max-height:170px;object-fit:contain;margin:12px auto;border-radius:10px;box-shadow:0 5px 18px #0004;background:#fff}
+.level-picks{display:grid;gap:12px;margin:18px 0}.level-picks .btn{min-height:58px;font-size:1.05rem}
+.station-candidates{display:grid;grid-template-columns:1fr 1fr;gap:10px}.candidate-choice{min-height:190px;padding:8px;border:2px solid #50e3c2;border-radius:12px;background:#172238;color:#fff;text-align:left;font-weight:800;line-height:1.2;display:flex;flex-direction:column;gap:5px;cursor:pointer}.candidate-choice strong{font-size:.75rem;letter-spacing:.08em}.rider-art{display:block;width:100%;min-height:0;aspect-ratio:180/145;object-fit:contain;border-radius:8px;background:#e8f2ff}.candidate-fallback{font-size:.66rem;line-height:1.15;color:#d9fdf6}.candidate-choice.right{background:#14532d;border-color:#86efac}.candidate-choice.picked{background:#7f1d1d;border-color:#fca5a5}
+@media(max-width:520px){.qcard.station{width:calc(100vw - 18px);max-width:calc(100vw - 18px);max-height:94vh;overflow:auto;padding:12px}.qcard.station.checkpoint{gap:6px}.qcard.station.checkpoint .prompt{font-size:1rem;line-height:1.18;margin:0}.station-candidates{grid-template-columns:1fr 1fr;gap:7px}.candidate-choice{min-height:0;padding:5px;font-size:.75rem;gap:3px}.candidate-choice strong{font-size:.65rem}.candidate-fallback{font-size:.56rem;line-height:1.05}.station-flag{max-height:130px}.qcard.station .prompt{font-size:1.15rem}.qcard.station .answers{gap:8px}}

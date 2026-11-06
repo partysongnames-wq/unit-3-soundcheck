@@ -1,0 +1,19 @@
+.karaoke-modal { position: fixed; inset: 0; z-index: 90; background: #080b1cee; display: grid; place-items: center; overflow-y: auto; padding: max(8px, env(safe-area-inset-top)) 8px max(8px, env(safe-area-inset-bottom)); }
+.karaoke-cabinet { width: min(100%, 440px); margin: auto; padding: 12px; border: 3px solid #c9b6ff; border-radius: 18px; background: radial-gradient(ellipse at top, #382567, #10152e 70%); box-shadow: 0 0 30px #8c59ff55; text-align: center; }
+.karaoke-top { display: flex; align-items: center; justify-content: space-between; gap: 6px; color: #ffda67; font-size: 12px; letter-spacing: 1px; }
+.karaoke-cabinet h2 { font-size: clamp(17px, 5vw, 23px); margin: 8px 0; }
+.karaoke-stats { font-variant-numeric: tabular-nums; font-weight: 800; color: #ffe08a; }
+.karaoke-mascot { display: block; width: 240px; max-width: 100%; height: 76px; margin: auto; }
+.karaoke-highway { width: 100%; height: clamp(160px, 30dvh, 260px); display: block; border: 2px solid #7766ac; border-radius: 10px; }
+.karaoke-pads { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 10px; }
+.karaoke-pad { min-width: 0; min-height: 72px; border: 3px solid #fff8; border-bottom: 7px solid #15152a80; border-radius: 14px; color: #13172c; font-size: 30px; font-weight: 900; touch-action: none; user-select: none; }
+.lane-0 { background: #ff74b5; } .lane-1 { background: #56d8ff; } .lane-2 { background: #ffda67; } .lane-3 { background: #69eba4; }
+.karaoke-pad:disabled { opacity: .5; }
+.karaoke-feedback { min-height: 2.6em; margin: 8px 0 0; font-size: 15px; font-weight: 800; }
+.karaoke-help { font-size: 12px; color: #c7c9e9; margin: 5px 0 10px; }
+.karaoke-trophy { font-size: 70px; margin-top: 25px; }
+.karaoke-result { padding: 26px 14px; }
+.practice-notice { position: fixed; top: 62px; left: 50%; transform: translateX(-50%); z-index: 40; background: #642b74; padding: 6px 12px; border-radius: 12px; font-weight: bold; text-align: center; }
+@media (max-height: 620px) { .karaoke-mascot { height: 40px; width: 126px; } .karaoke-pad { min-height: 56px; } .karaoke-highway { height: 145px; } .karaoke-feedback { min-height: 1.4em; } }
+/* The school UI uses dark headings on pale cards; the arcade has a dark cabinet. */
+.karaoke-cabinet, .karaoke-cabinet h1, .karaoke-cabinet h2, .karaoke-feedback { color: #eef2ff; }

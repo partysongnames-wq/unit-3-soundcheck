@@ -1,0 +1,15 @@
+node_modules/
+.wrangler/
+dist-dry-run/
+dist*/
+evidence/
+preview/
+live-preview/
+latest-live-preview/
+*.log
+*.sqlite
+*.sqlite-shm
+*.sqlite-wal
+.env
+.env.*
+.DS_Store
